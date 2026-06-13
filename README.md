@@ -2,47 +2,52 @@
 
 ### Think. Build. Scale.
 
-TrioCore is a student-led digital solutions startup founded by three Computer Science Engineering students with a shared vision of building impactful digital experiences.
+A premium startup portfolio website built by three Computer Science Engineering students with a vision to create modern digital experiences and innovative business solutions.
 
-Our mission is to help businesses establish a strong digital presence through modern technology, creative design, and innovative solutions.
-
----
-
-## 🌟 About TrioCore
-
-We specialize in creating modern digital solutions that combine functionality, performance, and exceptional user experience.
-
-TrioCore focuses on:
-
-* 🌐 Website Development
-* 📱 Responsive Web Design
-* 🍽️ Restaurant QR Menu Systems
-* 💳 NFC Business Cards
-* 🎨 UI/UX Design
-* 🚀 Landing Pages
-* 🛠️ Website Maintenance
-* 💡 Digital Innovation
+🌐 Live Website: https://triocore.vercel.app
 
 ---
 
-## 👥 Meet The Core
+# ✨ About TrioCore
 
-### 👨‍💻 Krishnendu Adak
+TrioCore is a student-led digital solutions startup focused on helping businesses establish a strong digital presence through modern technology, stunning user experiences, and innovative web solutions.
 
-**Full Stack Developer • ML Enthusiast • Creative Editor**
+Our mission is simple:
+
+**Think. Build. Scale.**
+
+We combine software development, creative design, and engineering innovation to deliver impactful digital products.
+
+---
+
+# 👥 Team
+
+## 👨‍💻 Krishnendu Adak
+
+Full Stack Developer • ML Enthusiast • Creative Editor
+
+### Skills
 
 * Python
-* Flask
 * Java
+* C
+* C++
+* HTML
+* CSS
 * JavaScript
+* Flask
 * Machine Learning
+* Git & GitHub
 * Video Editing
+* UI/UX Design
 
 ---
 
-### 👩‍💻 Nandita Ghosh
+## 👩‍💻 Nandita Ghosh
 
-**Software Developer**
+Software Developer
+
+### Skills
 
 * C
 * C++
@@ -51,16 +56,18 @@ TrioCore focuses on:
 * HTML
 * CSS
 
-Projects:
+### Hardware Projects
 
 * VacuumX
 * SafeMet Smart Helmet
 
 ---
 
-### 👩‍💻 Chandrima Chowdhury
+## 👩‍💻 Chandrima Chowdhury
 
-**Software Developer**
+Software Developer
+
+### Skills
 
 * C
 * C++
@@ -68,72 +75,187 @@ Projects:
 * JavaScript
 * DBMS
 
-Projects:
+### Hardware Projects
 
 * Automatic Vacuum Cleaner
 * Smart Helmet
 * Path Follower Robot
-* Fire Boat (Ongoing)
+* Fire Boat (In Development)
 
 ---
 
-## 🚀 Features
+# 🚀 Features
 
-* Premium Startup Design
-* Responsive Across All Devices
-* Dark & Light Mode
+* Modern Startup UI
+* Fully Responsive Design
+* Mobile First Approach
+* Dark & Light Theme
 * Smooth Scrolling Experience
-* Glassmorphism UI
+* Glassmorphism Effects
 * Interactive Animations
-* Modern User Experience
-* Optimized Performance
+* Team Showcase
+* Service Showcase
+* Innovation Lab
+* Project Showcase
+* Startup Roadmap
+* Contact Section
 
 ---
 
-## 🛠️ Tech Stack
+# 🎨 Design System
 
-### Frontend
+### Theme
+
+* Dark Mode
+* Light Mode
+* Glassmorphism
+* Gradient Effects
+* Modern Startup Aesthetics
+
+### Typography
+
+* Space Grotesk
+* Inter
+
+### Color Palette
+
+* Deep Black
+* Pure White
+* Premium Purple Accent
+* Soft Gradient Effects
+
+---
+
+# ⚡ Animations & Interactions
+
+This project focuses heavily on premium user experience and smooth interactions.
+
+### Included Effects
+
+* Smooth Scroll Experience
+* Reveal On Scroll
+* Mouse Glow Effect
+* Custom Cursor
+* Interactive Hover States
+* Card Tilt Effects
+* Glass Hover Animations
+* Magnetic Buttons
+* Animated Statistics
+* Floating Background Effects
+* Particle System
+* Navbar Transitions
+* Theme Switching Animations
+* Scroll Based Section Reveals
+
+---
+
+# 🛠️ Technologies Used
+
+## Frontend
 
 * HTML5
 * CSS3
-* JavaScript
+* JavaScript (ES6+)
 
-### Tools
+## Libraries & Integrations
 
+* Lenis Smooth Scroll
+* Font Awesome Icons
+* Intersection Observer API
+* Local Storage API
+
+## Development Tools
+
+* VS Code
 * Git
 * GitHub
-* VS Code
 * Canva
-* Figma
 
 ---
 
-## 🎯 Vision
+# 🧩 Sections
 
-We believe technology should be accessible, beautiful, and impactful.
+### Hero Section
 
-TrioCore aims to evolve from a student-led startup into a trusted digital solutions company helping businesses grow in the modern digital world.
+Modern startup introduction with animated visuals.
+
+### About
+
+Company vision and startup story.
+
+### Team
+
+Meet the TrioCore founders.
+
+### Services
+
+Digital solutions and business offerings.
+
+### Innovation Lab
+
+Hardware and engineering projects.
+
+### Showcase
+
+Demo projects and future client work.
+
+### Roadmap
+
+Startup growth timeline.
+
+### Contact
+
+Business inquiry and collaboration section.
 
 ---
 
-## 📫 Connect With Us
+# 🎯 Vision
+
+Our goal is to transform TrioCore from a student-led startup into a trusted technology and digital solutions company.
+
+We believe innovation, consistency, and teamwork can turn ambitious ideas into meaningful products.
+
+---
+
+# 🔗 Connect With Us
 
 ### Krishnendu Adak
 
-GitHub: https://github.com/QuantumSenpai
+GitHub:
+https://github.com/QuantumSenpai
 
-### Nandita Ghosh
+Portfolio:
+https://portfolio-kisu.vercel.app
 
-GitHub: https://github.com/NANDITAGHOSH-001
-
-### Chandrima Chowdhury
-
-GitHub: https://github.com/Chandrima2507
+LinkedIn:
+https://www.linkedin.com
 
 ---
 
-## © 2026 TrioCore
+### Nandita Ghosh
 
-Built with passion, creativity, and innovation.
+GitHub:
+https://github.com/NANDITAGHOSH-001
 
-**Think. Build. Scale.** 🚀
+LinkedIn:
+https://www.linkedin.com/in/nandita-ghosh-828a96327
+
+---
+
+### Chandrima Chowdhury
+
+GitHub:
+https://github.com/Chandrima2507
+
+LinkedIn:
+https://www.linkedin.com/in/chandrima-chawdhury-018811329
+
+---
+
+# © 2026 TrioCore
+
+Built with passion, creativity, innovation, and teamwork.
+
+### Think. Build. Scale. 🚀
+
+Made by the TrioCore Team.
