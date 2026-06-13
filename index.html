@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TrioCore — Think. Build. Scale. A student-led digital solutions startup building modern websites, QR menu systems, NFC cards, and innovative digital experiences." />
+  <meta name="keywords" content="TrioCore, web development, QR menu, NFC cards, digital solutions, startup" />
+  <meta property="og:title" content="TrioCore — Think. Build. Scale." />
+  <meta property="og:description" content="Helping businesses establish a strong digital presence through modern websites, QR menu systems, NFC solutions, and digital experiences." />
+  <meta property="og:type" content="website" />
+  <title>TrioCore — Think. Build. Scale.</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════ LOADER ═══ -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-tc-logo">
+        <span class="loader-tc-text">TC</span>
+        <div class="loader-tc-ring"></div>
+        <div class="loader-tc-ring loader-tc-ring-2"></div>
+      </div>
+      <div class="loader-bar"><div class="loader-fill"></div></div>
+      <span class="loader-text">Initializing TrioCore</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ CURSOR ═══ -->
+  <div id="cursor"></div>
+  <div id="cursor-trail"></div>
+
+  <!-- ═══════════════════════════════════════ SCROLL PROGRESS ═══ -->
+  <div id="scrollProgress"></div>
+
+  <!-- ═══════════════════════════════════════ NAV ════════ -->
+  <nav id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo">
+        <div class="nav-tc-badge">TC</div>
+        <span class="logo-text">TrioCore</span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home"       class="nav-link active">Home</a></li>
+        <li><a href="#about"      class="nav-link">About</a></li>
+        <li><a href="#team"       class="nav-link">Team</a></li>
+        <li><a href="#services"   class="nav-link">Services</a></li>
+        <li><a href="#innovation" class="nav-link">Innovation</a></li>
+        <li><a href="#showcase"   class="nav-link">Showcase</a></li>
+        <li><a href="#roadmap"    class="nav-link">Roadmap</a></li>
+        <li><a href="#contact"    class="nav-link">Contact</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button id="themeToggle" class="theme-btn" aria-label="Toggle theme">
+          <i class="fas fa-sun" id="themeIcon"></i>
+        </button>
+        <a href="#contact" class="btn-primary magnetic">Let's Talk</a>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-close" id="mobileClose" aria-label="Close menu">
+      <i class="fas fa-times"></i>
+    </button>
+    <ul>
+      <li><a href="#home"       class="mob-link">Home</a></li>
+      <li><a href="#about"      class="mob-link">About</a></li>
+      <li><a href="#team"       class="mob-link">Team</a></li>
+      <li><a href="#services"   class="mob-link">Services</a></li>
+      <li><a href="#innovation" class="mob-link">Innovation</a></li>
+      <li><a href="#showcase"   class="mob-link">Showcase</a></li>
+      <li><a href="#roadmap"    class="mob-link">Roadmap</a></li>
+      <li><a href="#contact"    class="mob-link">Contact</a></li>
+    </ul>
+    <a href="#contact" class="btn-primary mob-cta">Let's Talk <i class="fas fa-arrow-right"></i></a>
+  </div>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <main>
+
+    <!-- ══════════════════════════════════════ HERO ════════ -->
+    <section id="home" class="hero">
+      <canvas id="particles-canvas"></canvas>
+      <div class="aurora"></div>
+      <div class="hero-grid"></div>
+      <div class="mouse-glow" id="mouseGlow"></div>
+
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          🚀 Building Digital Solutions
+        </div>
+
+        <h1 class="hero-title">
+          <span class="word">Think.</span>
+          <span class="word accent-word">Build.</span>
+          <span class="word">Scale.</span>
+        </h1>
+
+        <p class="hero-sub">
+          TrioCore helps businesses establish a powerful digital presence through modern websites, QR menu systems, NFC solutions, and innovative technology.
+        </p>
+
+        <div class="hero-ctas">
+          <a href="#showcase" class="btn-primary magnetic">
+            <span>View Our Work</span>
+            <i class="fas fa-arrow-right"></i>
+          </a>
+          <a href="#contact" class="btn-ghost magnetic">
+            <span>Let's Connect</span>
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num" data-count="3">0</span>
+            <span class="stat-label">Core Members</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num" data-count="6">0</span>
+            <span class="stat-label">Services</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num" data-count="15">0</span>
+            <span class="stat-label">Projects Built</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-3d" id="hero3d">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb-ring"></div>
+      </div>
+
+      <div class="scroll-indicator">
+        <div class="scroll-line"></div>
+        <span>Scroll</span>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ ABOUT ═══════ -->
+    <section id="about" class="about section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>Our Story</span>
+          <span class="eyebrow-line"></span>
+        </div>
+
+        <h2 class="section-title reveal-up">Who We Are</h2>
+
+        <div class="about-grid">
+          <div class="about-text reveal-left">
+            <p class="about-lead">
+              TrioCore is a student-led startup founded by three passionate Computer Science Engineers with a shared vision of creating impactful digital solutions.
+            </p>
+            <p class="about-body">
+              We combine software development, creative design, and innovative thinking to help businesses grow in the digital world. From elegant websites to smart NFC solutions — we build things that matter.
+            </p>
+            <div class="about-tags">
+              <span class="tag">Web Dev</span>
+              <span class="tag">UI/UX</span>
+              <span class="tag">NFC Tech</span>
+              <span class="tag">ML</span>
+              <span class="tag">Digital Solutions</span>
+            </div>
+          </div>
+
+          <div class="timeline reveal-right">
+            <div class="timeline-item" data-step="01">
+              <div class="tl-dot"></div>
+              <div class="tl-content">
+                <h4>The Idea</h4>
+                <p>Three CS students, one shared vision — build real things that help real businesses.</p>
+              </div>
+            </div>
+            <div class="timeline-item" data-step="02">
+              <div class="tl-dot"></div>
+              <div class="tl-content">
+                <h4>Team Formation</h4>
+                <p>Krishnendu, Nandita, and Chandrima united their skills to form the core trio.</p>
+              </div>
+            </div>
+            <div class="timeline-item" data-step="03">
+              <div class="tl-dot active"></div>
+              <div class="tl-content">
+                <h4>TrioCore Launch</h4>
+                <p>TrioCore officially founded with a mission to deliver world-class digital experiences.</p>
+              </div>
+            </div>
+            <div class="timeline-item" data-step="04">
+              <div class="tl-dot future"></div>
+              <div class="tl-content">
+                <h4>First Clients</h4>
+                <p>Building towards our first real-world client partnerships and deployments.</p>
+              </div>
+            </div>
+            <div class="timeline-item" data-step="05">
+              <div class="tl-dot future"></div>
+              <div class="tl-content">
+                <h4>Future Products</h4>
+                <p>SaaS tools, AI integrations, and automation services on the horizon.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ TEAM ════════ -->
+    <section id="team" class="team section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>The People</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Meet The Core</h2>
+        <p class="section-sub reveal-up">Three engineers. One mission. Infinite ambition.</p>
+
+        <div class="team-grid">
+
+          <!-- Member 1 — Krishnendu -->
+          <div class="team-card reveal-up tilt-card" data-delay="0">
+            <div class="card-glow"></div>
+            <div class="card-avatar">
+              <div class="avatar-placeholder av-kisu">
+                <span class="avatar-initials">KA</span>
+              </div>
+              <div class="avatar-ring"></div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-name">Krishnendu Adak</h3>
+              <p class="card-role">Full Stack Dev · ML Enthusiast · Creative Editor</p>
+              <div class="card-skills">
+                <span class="skill-chip">Python</span>
+                <span class="skill-chip">Flask</span>
+                <span class="skill-chip">Java</span>
+                <span class="skill-chip">JavaScript</span>
+                <span class="skill-chip">ML</span>
+                <span class="skill-chip">Video Editing</span>
+              </div>
+              <div class="card-projects">
+                <h5>Featured Projects</h5>
+                <ul>
+                  <li><i class="fas fa-code-branch"></i> Sentiment Analysis System</li>
+                  <li><i class="fas fa-code-branch"></i> SortAnime</li>
+                  <li><i class="fas fa-code-branch"></i> AuraAnime</li>
+                </ul>
+              </div>
+              <div class="card-socials">
+                <a href="https://github.com/QuantumSenpai" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Member 2 — Nandita -->
+          <div class="team-card reveal-up tilt-card" data-delay="100">
+            <div class="card-glow"></div>
+            <div class="card-avatar">
+              <div class="avatar-placeholder av-nandita">
+                <span class="avatar-initials">NG</span>
+              </div>
+              <div class="avatar-ring"></div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-name">Nandita Ghosh</h3>
+              <p class="card-role">Software Developer · Hardware Innovator</p>
+              <div class="card-skills">
+                <span class="skill-chip">C</span>
+                <span class="skill-chip">C++</span>
+                <span class="skill-chip">Java</span>
+                <span class="skill-chip">Python</span>
+                <span class="skill-chip">HTML</span>
+                <span class="skill-chip">CSS</span>
+              </div>
+              <div class="card-projects">
+                <h5>Featured Projects</h5>
+                <ul>
+                  <li><i class="fas fa-code-branch"></i> VacuumX</li>
+                  <li><i class="fas fa-code-branch"></i> SafeMet Smart Helmet</li>
+                  <li><i class="fas fa-code-branch"></i> Fitness Club Website</li>
+                </ul>
+              </div>
+              <div class="card-socials">
+                <a href="https://github.com/nanditaghosh01" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Member 3 — Chandrima -->
+          <div class="team-card reveal-up tilt-card" data-delay="200">
+            <div class="card-glow"></div>
+            <div class="card-avatar">
+              <div class="avatar-placeholder av-chandrima">
+                <span class="avatar-initials">CC</span>
+              </div>
+              <div class="avatar-ring"></div>
+            </div>
+            <div class="card-body">
+              <h3 class="card-name">Chandrima Chowdhury</h3>
+              <p class="card-role">Software Developer · Robotics Builder</p>
+              <div class="card-skills">
+                <span class="skill-chip">C</span>
+                <span class="skill-chip">C++</span>
+                <span class="skill-chip">Java</span>
+                <span class="skill-chip">JavaScript</span>
+                <span class="skill-chip">DBMS</span>
+              </div>
+              <div class="card-projects">
+                <h5>Featured Projects</h5>
+                <ul>
+                  <li><i class="fas fa-code-branch"></i> Coaching Institute Website</li>
+                  <li><i class="fas fa-code-branch"></i> Smart Helmet</li>
+                  <li><i class="fas fa-code-branch"></i> Fire Boat (Ongoing)</li>
+                </ul>
+              </div>
+              <div class="card-socials">
+                <a href="https://github.com/Chandrima2507" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ SERVICES ════ -->
+    <section id="services" class="services section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>What We Do</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">What We Build</h2>
+        <p class="section-sub reveal-up">From concept to deployment — we handle the full stack of your digital presence.</p>
+
+        <div class="services-grid">
+          <div class="service-card reveal-up tilt-card" data-delay="0">
+            <div class="service-icon"><i class="fas fa-globe"></i></div>
+            <h3>Website Development</h3>
+            <p>Custom, performant websites tailored to your brand — built with modern tech, optimized for speed and SEO.</p>
+            <div class="service-hover-line"></div>
+          </div>
+          <div class="service-card reveal-up tilt-card" data-delay="80">
+            <div class="service-icon"><i class="fas fa-qrcode"></i></div>
+            <h3>Restaurant QR Menu Systems</h3>
+            <p>Dynamic QR menus that update in real-time, reduce printing costs, and give your customers a modern dining experience.</p>
+            <div class="service-hover-line"></div>
+          </div>
+          <div class="service-card reveal-up tilt-card" data-delay="160">
+            <div class="service-icon"><i class="fas fa-id-card"></i></div>
+            <h3>NFC Business Cards</h3>
+            <p>Tap-to-share digital identity. Smart NFC cards that leave a lasting impression and keep your contacts updated.</p>
+            <div class="service-hover-line"></div>
+          </div>
+          <div class="service-card reveal-up tilt-card" data-delay="0">
+            <div class="service-icon"><i class="fas fa-rocket"></i></div>
+            <h3>Landing Pages</h3>
+            <p>High-converting, visually stunning landing pages designed to turn visitors into leads — fast.</p>
+            <div class="service-hover-line"></div>
+          </div>
+          <div class="service-card reveal-up tilt-card" data-delay="80">
+            <div class="service-icon"><i class="fas fa-user-circle"></i></div>
+            <h3>Portfolio Websites</h3>
+            <p>Personal portfolios that stand out from the crowd — for developers, designers, creators, and professionals.</p>
+            <div class="service-hover-line"></div>
+          </div>
+          <div class="service-card reveal-up tilt-card" data-delay="160">
+            <div class="service-icon"><i class="fas fa-tools"></i></div>
+            <h3>Website Maintenance</h3>
+            <p>Ongoing support, performance optimization, content updates, and security monitoring for your existing site.</p>
+            <div class="service-hover-line"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ INNOVATION ══ -->
+    <section id="innovation" class="innovation section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>Beyond Software</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Innovation Lab</h2>
+        <p class="section-sub reveal-up">Exploring ideas beyond traditional software through engineering and automation projects.</p>
+
+        <div class="innovation-grid">
+          <div class="innov-card reveal-up" data-delay="0">
+            <div class="innov-header">
+              <div class="innov-icon"><i class="fas fa-robot"></i></div>
+              <span class="status-badge active">Active</span>
+            </div>
+            <h3>VacuumX</h3>
+            <p>An autonomous vacuum cleaning robot built with embedded systems and path optimization algorithms.</p>
+            <div class="innov-tech">
+              <span>Embedded C</span><span>Arduino</span><span>Sensors</span>
+            </div>
+          </div>
+
+          <div class="innov-card reveal-up" data-delay="100">
+            <div class="innov-header">
+              <div class="innov-icon"><i class="fas fa-hard-hat"></i></div>
+              <span class="status-badge active">Active</span>
+            </div>
+            <h3>SafeMet Smart Helmet</h3>
+            <p>IoT-integrated smart helmet for worker safety — real-time alerts, gas detection, and accident prevention.</p>
+            <div class="innov-tech">
+              <span>IoT</span><span>Python</span><span>Sensors</span>
+            </div>
+          </div>
+
+          <div class="innov-card reveal-up" data-delay="200">
+            <div class="innov-header">
+              <div class="innov-icon"><i class="fas fa-route"></i></div>
+              <span class="status-badge completed">Completed</span>
+            </div>
+            <h3>Path Follower Robot</h3>
+            <p>An autonomous line-following robot with adaptive speed control and real-time obstacle detection.</p>
+            <div class="innov-tech">
+              <span>C++</span><span>Arduino</span><span>IR Sensors</span>
+            </div>
+          </div>
+
+          <div class="innov-card reveal-up" data-delay="300">
+            <div class="innov-header">
+              <div class="innov-icon"><i class="fas fa-fire"></i></div>
+              <span class="status-badge ongoing">Ongoing</span>
+            </div>
+            <h3>Fire Boat</h3>
+            <p>An autonomous water-based firefighting unit designed for industrial and hazardous area applications.</p>
+            <div class="innov-tech">
+              <span>Embedded C</span><span>Sensors</span><span>Automation</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ SHOWCASE ════ -->
+    <section id="showcase" class="showcase section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>Our Work</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Live Projects</h2>
+        <p class="section-sub reveal-up">Real work, already deployed — click to explore what we've built.</p>
+
+        <div class="showcase-grid">
+
+          <!-- 1. MenuVerse -->
+          <div class="showcase-card reveal-up" data-delay="0">
+            <div class="showcase-img sc-menuverse">
+              <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80&auto=format&fit=crop" alt="MenuVerse QR Menu System" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-purple"></div>
+              <div class="sc-img-label"><i class="fas fa-qrcode"></i> QR Menu System</div>
+              <div class="showcase-overlay">
+                <a href="https://quantumsenpai.github.io/menuverse/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>MenuVerse</h4>
+              <p>Smart QR-based digital menu system — dynamic, real-time, no printing needed.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. AuraAnime -->
+          <div class="showcase-card reveal-up" data-delay="80">
+            <div class="showcase-img sc-aura">
+              <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&q=80&auto=format&fit=crop" alt="AuraAnime Platform" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-blue"></div>
+              <div class="sc-img-label"><i class="fas fa-film"></i> Anime Platform</div>
+              <div class="showcase-overlay">
+                <a href="https://quantumsenpai.github.io/auraanime/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>AuraAnime</h4>
+              <p>Anime discovery platform with curated collections and sleek modern UI.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Electronics Shop -->
+          <div class="showcase-card reveal-up" data-delay="160">
+            <div class="showcase-img sc-electronics">
+              <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80&auto=format&fit=crop" alt="Electronics Shop" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-teal"></div>
+              <div class="sc-img-label"><i class="fas fa-microchip"></i> E-Commerce</div>
+              <div class="showcase-overlay">
+                <a href="https://electronics-shop-sage.vercel.app/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>Electronics Shop</h4>
+              <p>Modern e-commerce storefront for electronics retail with product catalog UI.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Beauty Salon -->
+          <div class="showcase-card reveal-up" data-delay="0">
+            <div class="showcase-img sc-salon">
+              <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80&auto=format&fit=crop" alt="Beauty Salon Website" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-pink"></div>
+              <div class="sc-img-label"><i class="fas fa-spa"></i> Beauty & Wellness</div>
+              <div class="showcase-overlay">
+                <a href="https://beauty-salonshop.vercel.app/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>Beauty Salon</h4>
+              <p>Elegant salon booking website with service gallery and appointment management.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Fitness Club -->
+          <div class="showcase-card reveal-up" data-delay="80">
+            <div class="showcase-img sc-fitness">
+              <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80&auto=format&fit=crop" alt="Fitness Club Website" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-red"></div>
+              <div class="sc-img-label"><i class="fas fa-dumbbell"></i> Fitness & Health</div>
+              <div class="showcase-overlay">
+                <a href="https://chandrima2507.github.io/FITNESSCLUB1WB/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>Fitness Club</h4>
+              <p>High-energy fitness website with membership plans and class scheduling UI.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Coaching Institute -->
+          <div class="showcase-card reveal-up" data-delay="160">
+            <div class="showcase-img sc-coaching">
+              <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80&auto=format&fit=crop" alt="Coaching Institute Website" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-indigo"></div>
+              <div class="sc-img-label"><i class="fas fa-graduation-cap"></i> Education</div>
+              <div class="showcase-overlay">
+                <a href="https://chandrima2507.github.io/coatching-institute-weebsite1/" target="_blank" rel="noopener" class="btn-sm">
+                  <i class="fas fa-external-link-alt"></i> Live Demo
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="live-tag"><i class="fas fa-circle"></i> Live</span>
+              <h4>Coaching Institute</h4>
+              <p>Professional coaching platform with course listings, testimonials, and lead capture.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Restaurant Landing Page -->
+          <div class="showcase-card reveal-up" data-delay="0">
+            <div class="showcase-img sc-restaurant">
+              <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80&auto=format&fit=crop" alt="Restaurant Website" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-amber"></div>
+              <div class="sc-img-label"><i class="fas fa-utensils"></i> Restaurant</div>
+              <div class="showcase-overlay">
+                <a href="#showcase" class="btn-sm btn-sm-ghost">
+                  <i class="fas fa-lock"></i> Coming Soon
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="wip-tag"><i class="fas fa-circle"></i> In Progress</span>
+              <h4>Restaurant Landing</h4>
+              <p>Elegant restaurant landing page with online reservations, menu showcase, and story section.</p>
+              <div class="sc-tech-row">
+                <span>React</span><span>Next.js</span><span>CSS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. Developer Portfolio -->
+          <div class="showcase-card reveal-up" data-delay="80">
+            <div class="showcase-img sc-portfolio">
+              <img src="https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=600&q=80&auto=format&fit=crop" alt="Developer Portfolio" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-purple"></div>
+              <div class="sc-img-label"><i class="fas fa-user-tie"></i> Portfolio</div>
+              <div class="showcase-overlay">
+                <a href="#showcase" class="btn-sm btn-sm-ghost">
+                  <i class="fas fa-lock"></i> Coming Soon
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="wip-tag"><i class="fas fa-circle"></i> In Progress</span>
+              <h4>Dev Portfolio Template</h4>
+              <p>Reusable animated developer portfolio with project showcases and skill timelines.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>JS</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. NFC Card Page -->
+          <div class="showcase-card reveal-up" data-delay="160">
+            <div class="showcase-img sc-nfc">
+              <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80&auto=format&fit=crop" alt="NFC Business Cards" class="sc-real-img" loading="lazy" />
+              <div class="sc-overlay-gradient sc-gradient-teal"></div>
+              <div class="sc-img-label"><i class="fas fa-id-card"></i> NFC Cards</div>
+              <div class="showcase-overlay">
+                <a href="#showcase" class="btn-sm btn-sm-ghost">
+                  <i class="fas fa-lock"></i> Coming Soon
+                </a>
+              </div>
+            </div>
+            <div class="showcase-info">
+              <span class="wip-tag"><i class="fas fa-circle"></i> In Progress</span>
+              <h4>NFC Digital Card</h4>
+              <p>Tap-to-share digital identity card with live portfolio and contact info.</p>
+              <div class="sc-tech-row">
+                <span>HTML</span><span>CSS</span><span>NFC API</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ WHY US ══════ -->
+    <section id="why" class="why section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>The Difference</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Why TrioCore</h2>
+
+        <div class="why-grid">
+          <div class="why-card reveal-up" data-delay="0">
+            <div class="why-icon"><i class="fas fa-bolt"></i></div>
+            <h3>Fast Delivery</h3>
+            <p>We move fast. Most projects ship in days, not weeks. Your time matters.</p>
+          </div>
+          <div class="why-card reveal-up" data-delay="80">
+            <div class="why-icon"><i class="fas fa-paint-brush"></i></div>
+            <h3>Modern Designs</h3>
+            <p>We don't use templates. Every project gets a unique, premium design built from scratch.</p>
+          </div>
+          <div class="why-card reveal-up" data-delay="160">
+            <div class="why-icon"><i class="fas fa-tag"></i></div>
+            <h3>Affordable Pricing</h3>
+            <p>Startup-quality work at student-friendly pricing. Maximum value, no bloat.</p>
+          </div>
+          <div class="why-card reveal-up" data-delay="0">
+            <div class="why-icon"><i class="fas fa-lightbulb"></i></div>
+            <h3>Student Innovation</h3>
+            <p>We bring fresh ideas and modern technical knowledge straight from academic cutting-edges.</p>
+          </div>
+          <div class="why-card reveal-up" data-delay="80">
+            <div class="why-icon"><i class="fas fa-headset"></i></div>
+            <h3>Personalized Support</h3>
+            <p>You're not a ticket number. We work closely with every client from day one.</p>
+          </div>
+          <div class="why-card reveal-up" data-delay="160">
+            <div class="why-icon"><i class="fas fa-handshake"></i></div>
+            <h3>Long-Term Partnership</h3>
+            <p>We grow with you — maintenance, upgrades, and future features all included in our relationship.</p>
+          </div>
+        </div>
+
+        <div class="counters-row reveal-up">
+          <div class="counter-item">
+            <span class="counter-num" data-count="100">0</span><span class="counter-suffix">%</span>
+            <p>Custom Designs</p>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-count="3">0</span><span class="counter-suffix">x</span>
+            <p>Faster Delivery</p>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-count="24">0</span><span class="counter-suffix">/7</span>
+            <p>Support</p>
+          </div>
+          <div class="counter-item">
+            <span class="counter-num" data-count="15">0</span><span class="counter-suffix">+</span>
+            <p>Projects Built</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ ROADMAP ═════ -->
+    <section id="roadmap" class="roadmap section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>The Journey</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Our Roadmap</h2>
+        <p class="section-sub reveal-up">Where we're going — and how we plan to get there.</p>
+
+        <div class="roadmap-timeline">
+          <div class="rm-item reveal-left active">
+            <div class="rm-year">2026</div>
+            <div class="rm-dot active"></div>
+            <div class="rm-content">
+              <h3>Foundations</h3>
+              <ul>
+                <li><i class="fas fa-check"></i> Launch TrioCore</li>
+                <li><i class="fas fa-check"></i> Build Portfolio</li>
+                <li><i class="fas fa-spinner fa-spin"></i> Acquire First Clients</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rm-item reveal-right">
+            <div class="rm-year">2027</div>
+            <div class="rm-dot"></div>
+            <div class="rm-content">
+              <h3>Expansion</h3>
+              <ul>
+                <li><i class="fas fa-circle-dot"></i> Expand Services</li>
+                <li><i class="fas fa-circle-dot"></i> Build SaaS Products</li>
+                <li><i class="fas fa-circle-dot"></i> Grow Team</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rm-item reveal-left">
+            <div class="rm-year">2028</div>
+            <div class="rm-dot future"></div>
+            <div class="rm-content">
+              <h3>Intelligence</h3>
+              <ul>
+                <li><i class="fas fa-circle-dot"></i> AI Solutions</li>
+                <li><i class="fas fa-circle-dot"></i> Automation Services</li>
+                <li><i class="fas fa-circle-dot"></i> Digital Products</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ TECH STACK ══ -->
+    <section id="stack" class="techstack section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>Under The Hood</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Our Tech Stack</h2>
+      </div>
+
+      <div class="marquee-wrapper">
+        <div class="marquee" aria-hidden="true">
+          <div class="marquee-track">
+            <span class="tech-pill"><i class="fab fa-html5"></i> HTML</span>
+            <span class="tech-pill"><i class="fab fa-css3-alt"></i> CSS</span>
+            <span class="tech-pill"><i class="fab fa-js"></i> JavaScript</span>
+            <span class="tech-pill"><i class="fab fa-react"></i> React</span>
+            <span class="tech-pill">Next.js</span>
+            <span class="tech-pill"><i class="fab fa-python"></i> Python</span>
+            <span class="tech-pill">Flask</span>
+            <span class="tech-pill"><i class="fab fa-java"></i> Java</span>
+            <span class="tech-pill"><i class="fab fa-github"></i> GitHub</span>
+            <span class="tech-pill"><i class="fab fa-git-alt"></i> Git</span>
+            <span class="tech-pill">Arduino</span>
+            <span class="tech-pill">VS Code</span>
+            <span class="tech-pill">Canva</span>
+            <span class="tech-pill">Premiere Pro</span>
+            <span class="tech-pill">After Effects</span>
+            <!-- Duplicate for seamless loop -->
+            <span class="tech-pill"><i class="fab fa-html5"></i> HTML</span>
+            <span class="tech-pill"><i class="fab fa-css3-alt"></i> CSS</span>
+            <span class="tech-pill"><i class="fab fa-js"></i> JavaScript</span>
+            <span class="tech-pill"><i class="fab fa-react"></i> React</span>
+            <span class="tech-pill">Next.js</span>
+            <span class="tech-pill"><i class="fab fa-python"></i> Python</span>
+            <span class="tech-pill">Flask</span>
+            <span class="tech-pill"><i class="fab fa-java"></i> Java</span>
+            <span class="tech-pill"><i class="fab fa-github"></i> GitHub</span>
+            <span class="tech-pill"><i class="fab fa-git-alt"></i> Git</span>
+            <span class="tech-pill">Arduino</span>
+            <span class="tech-pill">VS Code</span>
+            <span class="tech-pill">Canva</span>
+            <span class="tech-pill">Premiere Pro</span>
+            <span class="tech-pill">After Effects</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════ CONTACT ═════ -->
+    <section id="contact" class="contact section">
+      <div class="container">
+        <div class="section-eyebrow reveal-up">
+          <span class="eyebrow-line"></span>
+          <span>Get In Touch</span>
+          <span class="eyebrow-line"></span>
+        </div>
+        <h2 class="section-title reveal-up">Let's Build Something Great</h2>
+        <p class="section-sub reveal-up">Have a project in mind? We'd love to hear about it.</p>
+
+        <div class="contact-grid">
+          <div class="contact-form-wrap reveal-left">
+            <form
+              id="contactForm"
+              action="https://formspree.io/f/meewpbrw"
+              method="POST"
+            >
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="name">Your Name</label>
+                  <input type="text" id="name" name="name" placeholder="e.g. Rahul Sharma" required autocomplete="name" />
+                </div>
+                <div class="form-group">
+                  <label for="email">Email Address</label>
+                  <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="phone">Phone (Optional)</label>
+                  <input type="tel" id="phone" name="phone" placeholder="+91 98765 43210" autocomplete="tel" />
+                </div>
+                <div class="form-group">
+                  <label for="service">Service Needed</label>
+                  <select id="service" name="service">
+                    <option value="" disabled selected>Select a service...</option>
+                    <option value="Website Development">Website Development</option>
+                    <option value="QR Menu System">QR Menu System</option>
+                    <option value="NFC Business Cards">NFC Business Cards</option>
+                    <option value="Landing Page">Landing Page</option>
+                    <option value="Portfolio Website">Portfolio Website</option>
+                    <option value="Website Maintenance">Website Maintenance</option>
+                    <option value="Other">Other / Not sure yet</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="budget">Approximate Budget</label>
+                <select id="budget" name="budget">
+                  <option value="" disabled selected>Choose a budget range...</option>
+                  <option value="Under ₹5,000">Under ₹5,000</option>
+                  <option value="₹5,000 – ₹15,000">₹5,000 – ₹15,000</option>
+                  <option value="₹15,000 – ₹30,000">₹15,000 – ₹30,000</option>
+                  <option value="₹30,000+">₹30,000+</option>
+                  <option value="Let's discuss">Let's discuss</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="message">Tell Us About Your Project</label>
+                <textarea id="message" name="message" rows="6" placeholder="I need a website for my restaurant. I'd like it to have a QR menu, online reservations, and a gallery..." required></textarea>
+              </div>
+              <!-- Honeypot spam protection -->
+              <input type="text" name="_gotcha" style="display:none" />
+              <input type="hidden" name="_subject" value="New Project Inquiry — TrioCore" />
+              <button type="submit" class="btn-primary full magnetic" id="submitBtn">
+                <span>Send Message</span>
+                <i class="fas fa-paper-plane"></i>
+              </button>
+              <div id="form-status" class="form-status" aria-live="polite"></div>
+            </form>
+          </div>
+
+          <div class="contact-info reveal-right">
+            <div class="contact-card">
+              <h3>Reach Out Directly</h3>
+              <div class="contact-links">
+                <a href="mailto:triocorebusiness@gmail.com" class="contact-link">
+                  <div class="c-icon"><i class="fas fa-envelope"></i></div>
+                  <div>
+                    <span>Email Us</span>
+                    <p>triocorebusiness@gmail.com</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div class="contact-cta-box">
+              <div class="cta-glow"></div>
+              <div class="cta-icon"><i class="fas fa-bolt"></i></div>
+              <h4>Ready to start?</h4>
+              <p>Let's turn your idea into a product that impresses. Drop us a message and we'll get back to you within 24 hours.</p>
+              <div class="cta-response-badge">
+                <i class="fas fa-clock"></i> We respond within 24 hours
+              </div>
+            </div>
+
+            <div class="contact-values-box reveal-up">
+              <div class="cv-item">
+                <div class="cv-icon"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                  <h5>Confidential</h5>
+                  <p>Your ideas stay yours. We sign NDAs on request.</p>
+                </div>
+              </div>
+              <div class="cv-item">
+                <div class="cv-icon"><i class="fas fa-file-contract"></i></div>
+                <div>
+                  <h5>No Hidden Fees</h5>
+                  <p>Clear quotes before we start, no surprises after.</p>
+                </div>
+              </div>
+              <div class="cv-item">
+                <div class="cv-icon"><i class="fas fa-redo"></i></div>
+                <div>
+                  <h5>Revisions Included</h5>
+                  <p>We iterate until you're completely happy.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════ FOOTER ═════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#home" class="nav-logo footer-logo-link">
+            <div class="footer-tc-badge">TC</div>
+            <span class="logo-text">TrioCore</span>
+          </a>
+          <p>Think. Build. Scale.</p>
+          <div class="footer-socials">
+            <a href="mailto:triocorebusiness@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <h5>Navigate</h5>
+          <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#team">Team</a></li>
+            <li><a href="#services">Services</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h5>Work</h5>
+          <ul>
+            <li><a href="#innovation">Innovation Lab</a></li>
+            <li><a href="#showcase">Showcase</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h5>Services</h5>
+          <ul>
+            <li><a href="#services">Web Development</a></li>
+            <li><a href="#services">QR Menu Systems</a></li>
+            <li><a href="#services">NFC Cards</a></li>
+            <li><a href="#services">Landing Pages</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 TrioCore. All rights reserved.</p>
+        <p>Built with ❤️ by Krishnendu, Nandita &amp; Chandrima</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Back to Top -->
+  <button id="backToTop" aria-label="Back to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>
