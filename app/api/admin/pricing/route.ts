@@ -1,0 +1,130 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db, mockPricingPlans } from "@/lib/db";
+import { pricingPlans } from "@/lib/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { verifyAdminSession } from "@/lib/auth-guard";
+
+export async function GET(req: NextRequest) {
+  try {
+    if (!db) {
+      return NextResponse.json({ plans: mockPricingPlans });
+    }
+
+    const data = await db.select().from(pricingPlans).orderBy(asc(pricingPlans.order));
+    if (data.length === 0) {
+      return NextResponse.json({ plans: mockPricingPlans });
+    }
+    return NextResponse.json({ plans: data });
+  } catch (error) {
+    return NextResponse.json({ plans: mockPricingPlans, error: (error as Error).message });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const authCheck = await verifyAdminSession(req);
+  if (!authCheck.authorized) return authCheck.response!;
+
+  try {
+    const body = await req.json();
+    const { name, price, originalPrice, savings, period, badge, isPopular, isBestValue, desc, features, category, order } = body;
+
+    if (!name || !price || !desc) {
+      return NextResponse.json({ error: "Name, price, and description are required" }, { status: 400 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ success: true, message: "Database not connected" });
+    }
+
+    const featuresArray = Array.isArray(features)
+      ? features
+      : typeof features === "string"
+      ? features.split(",").map((f: string) => f.trim()).filter(Boolean)
+      : [];
+
+    const newPlan = await db.insert(pricingPlans).values({
+      name,
+      price,
+      originalPrice: originalPrice || "",
+      savings: savings || "",
+      period: period || "",
+      badge: badge || "",
+      isPopular: Boolean(isPopular),
+      isBestValue: Boolean(isBestValue),
+      desc,
+      features: featuresArray,
+      category: category || "websites",
+      order: Number(order) || 0,
+    }).returning();
+
+    return NextResponse.json({ success: true, plan: newPlan[0] });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const authCheck = await verifyAdminSession(req);
+  if (!authCheck.authorized) return authCheck.response!;
+
+  try {
+    const body = await req.json();
+    const { id, name, price, originalPrice, savings, period, badge, isPopular, isBestValue, desc, features, category, order } = body;
+
+    if (!id || !name || !price || !desc) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ success: true, message: "Database not connected" });
+    }
+
+    const featuresArray = Array.isArray(features)
+      ? features
+      : typeof features === "string"
+      ? features.split(",").map((f: string) => f.trim()).filter(Boolean)
+      : [];
+
+    const updated = await db.update(pricingPlans).set({
+      name,
+      price,
+      originalPrice: originalPrice || "",
+      savings: savings || "",
+      period: period || "",
+      badge: badge || "",
+      isPopular: Boolean(isPopular),
+      isBestValue: Boolean(isBestValue),
+      desc,
+      features: featuresArray,
+      category: category || "websites",
+      order: Number(order) || 0,
+    }).where(eq(pricingPlans.id, id)).returning();
+
+    return NextResponse.json({ success: true, plan: updated[0] });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const authCheck = await verifyAdminSession(req);
+  if (!authCheck.authorized) return authCheck.response!;
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing plan ID" }, { status: 400 });
+    }
+
+    if (!db) {
+      return NextResponse.json({ success: true });
+    }
+
+    await db.delete(pricingPlans).where(eq(pricingPlans.id, id));
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+  }
+}
