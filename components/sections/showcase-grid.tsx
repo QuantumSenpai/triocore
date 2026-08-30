@@ -14,6 +14,7 @@ interface ShowcaseGridSectionProps {
 
 export function ShowcaseGridSection({ isLoading = false }: ShowcaseGridSectionProps) {
   const [activeTab, setActiveTab] = useState<"All" | "Completed" | "Coming Soon">("All");
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const filteredProjects = showcaseProjects.filter((item) => {
     if (activeTab === "All") return true;
@@ -80,10 +81,11 @@ export function ShowcaseGridSection({ isLoading = false }: ShowcaseGridSectionPr
                     <div>
                       <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-[#14141A]">
                         <Image
-                          src={project.imageUrl}
+                          src={failedImages[project.id] || !project.imageUrl ? "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80" : project.imageUrl}
                           alt={project.title}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          onError={() => setFailedImages((prev) => ({ ...prev, [project.id]: true }))}
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#14141A] via-transparent to-transparent opacity-80" />

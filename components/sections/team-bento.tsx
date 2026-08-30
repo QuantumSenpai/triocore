@@ -13,6 +13,7 @@ export function TeamBentoSection() {
   const [teamList, setTeamList] = useState<TeamMember[]>(staticTeamMembers);
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
   const [loadedAvatars, setLoadedAvatars] = useState<Record<string, boolean>>({});
+  const [failedAvatars, setFailedAvatars] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch("/api/admin/team")
@@ -107,11 +108,15 @@ export function TeamBentoSection() {
                                     <Skeleton className="absolute inset-0 z-10 w-full h-full rounded-full bg-[#14141A]/20 dark:bg-white/10" />
                                   )}
                                   <Image
-                                    src={member.avatarUrl}
+                                    src={failedAvatars[member.id] || !member.avatarUrl ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80" : member.avatarUrl}
                                     alt={member.name}
                                     fill
                                     sizes="(max-width: 768px) 112px, 128px"
                                     onLoad={() => handleAvatarLoaded(member.id)}
+                                    onError={() => {
+                                      setFailedAvatars((prev) => ({ ...prev, [member.id]: true }));
+                                      handleAvatarLoaded(member.id);
+                                    }}
                                     className={cn(
                                       "object-cover transition-transform duration-500 group-hover:scale-110",
                                       isAvatarLoaded ? "opacity-100" : "opacity-0"

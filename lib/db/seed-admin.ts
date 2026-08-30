@@ -7,25 +7,27 @@ import { db } from "./index";
 import { user, account } from "./schema";
 import { eq, and } from "drizzle-orm";
 
+const initialPassword = process.env.ADMIN_INITIAL_PASSWORD || "Admin@TrioCore2026!";
+
 const admins = [
   {
     email: "krishnenduadak1582005@gmail.com",
-    password: "Admin@TrioCore2026!",
+    password: initialPassword,
     name: "Krishnendu Adak",
   },
   {
     email: "crezymoon07@gmail.com",
-    password: "Admin@TrioCore2026!",
+    password: initialPassword,
     name: "Chandrima Chowdhury",
   },
   {
     email: "ninjanio296@gmail.com",
-    password: "Admin@TrioCore2026!",
+    password: initialPassword,
     name: "Nandita Ghosh",
   },
   {
     email: "mddanishraza904@gmail.com",
-    password: "Admin@TrioCore2026!",
+    password: initialPassword,
     name: "MD Danish Raza",
   },
 ];

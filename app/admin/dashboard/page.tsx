@@ -969,7 +969,14 @@ export default function AdminDashboardPage() {
                 >
                   <div className="space-y-3">
                     <div className="relative h-40 w-full rounded-xl overflow-hidden bg-neutral-900 border border-white/10">
-                      <img src={p.imageUrl} alt={p.title} className="h-full w-full object-cover" />
+                      <img
+                        src={p.imageUrl}
+                        alt={p.title}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80";
+                        }}
+                        className="h-full w-full object-cover"
+                      />
                       <span className="absolute top-2.5 right-2.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-black/70 text-white backdrop-blur-md">
                         {p.status}
                       </span>
@@ -1048,7 +1055,14 @@ export default function AdminDashboardPage() {
                       </button>
                     </div>
                     <div className="relative mx-auto h-20 w-20 rounded-full overflow-hidden ring-2 ring-[#374BFF]/30">
-                      <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
+                      <img
+                        src={m.avatarUrl}
+                        alt={m.name}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80";
+                        }}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                     <div>
                       <h4 className="font-heading text-base font-bold text-[#14141A] dark:text-[#F5F6FC]">{m.name}</h4>

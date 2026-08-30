@@ -1,3 +1,10 @@
+const defaultAdmins = [
+  "krishnenduadak1582005@gmail.com",
+  "crezymoon07@gmail.com",
+  "ninjanio296@gmail.com",
+  "mddanishraza904@gmail.com",
+];
+
 let cachedEmails: Set<string> | null = null;
 let lastEnvString = "";
 
@@ -12,6 +19,12 @@ export function getAllowedAdminEmails(): string[] {
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
+
+  if (list.length === 0) {
+    cachedEmails = new Set(defaultAdmins);
+    return defaultAdmins;
+  }
+
   cachedEmails = new Set(list);
   return list;
 }
@@ -25,6 +38,6 @@ export function isAdminEmail(email: string | null | undefined): boolean {
     getAllowedAdminEmails();
   }
   
-  if (!cachedEmails || cachedEmails.size === 0) return true;
+  if (!cachedEmails || cachedEmails.size === 0) return false;
   return cachedEmails.has(normalized);
 }

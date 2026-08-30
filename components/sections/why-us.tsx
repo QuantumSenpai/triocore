@@ -42,7 +42,7 @@ export function WhyUsSection() {
           const whyStatsFromDb = (data.stats as StatRecord[]).filter(
             (s) => s.section === "why_us" || s.key.startsWith("why_")
           );
-          if (whyStatsFromDb.length >= 4) {
+          if (whyStatsFromDb.length >= 1) {
             const formattedStats: StatItem[] = whyStatsFromDb.map((s) => {
               const val = (s.value || "").trim();
               if (val === "24/7" || val === "24 / 7" || val.includes("/")) {
@@ -120,17 +120,21 @@ export function WhyUsSection() {
         </div>
 
         <Reveal direction="up" delay={0.25}>
-          <div className="rounded-3xl bg-gradient-to-br from-[#14141A] via-[#1C1C26] to-[#14141A] p-6 sm:p-14 text-white shadow-2xl relative overflow-hidden border border-[#374BFF]/25">
+          <div className="rounded-3xl bg-gradient-to-br from-[#14141A] via-[#1C1C26] to-[#14141A] p-6 sm:p-10 lg:p-12 text-white shadow-2xl relative overflow-hidden border border-[#374BFF]/25">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#374BFF]/25 via-transparent to-transparent pointer-events-none" />
-            <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/15">
+            
+            <div className="relative z-10 flex flex-wrap items-stretch justify-center gap-3.5 sm:gap-5 lg:gap-6 text-center">
               {stats.map((stat, i) => (
-                <div key={stat.label} className={i > 0 ? "pt-4 sm:pt-0" : ""}>
-                  <p className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-[#F5F6FC] tracking-tight">
+                <div
+                  key={`${stat.label}-${i}`}
+                  className="flex-1 min-w-[135px] sm:min-w-[170px] md:min-w-[190px] max-w-[260px] flex flex-col justify-center items-center py-5 px-3 sm:py-6 sm:px-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-[#374BFF]/40 hover:bg-white/[0.07] transition-all"
+                >
+                  <p className="font-heading text-2xl sm:text-4xl lg:text-5xl font-black text-[#F5F6FC] tracking-tight">
                     {stat.staticDisplay ? (
                       stat.staticDisplay.includes("/") ? (
                         <span className="inline-flex items-center justify-center tabular-nums">
                           <span>{stat.staticDisplay.split("/")[0].trim()}</span>
-                          <span className="mx-1 sm:mx-1.5 text-2xl sm:text-4xl lg:text-5xl font-light text-[#374BFF] dark:text-[#CFFF04] opacity-85 select-none">/</span>
+                          <span className="mx-1 sm:mx-1.5 text-xl sm:text-3xl lg:text-4xl font-light text-[#374BFF] dark:text-[#CFFF04] opacity-85 select-none">/</span>
                           <span>{stat.staticDisplay.split("/")[1].trim()}</span>
                         </span>
                       ) : (
@@ -140,7 +144,7 @@ export function WhyUsSection() {
                       <Counter value={stat.value ?? 0} suffix={stat.suffix} />
                     )}
                   </p>
-                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#CFFF04]">
+                  <p className="mt-2 text-[11px] sm:text-xs md:text-sm font-bold uppercase tracking-wider text-[#CFFF04] text-center line-clamp-2">
                     {stat.label}
                   </p>
                 </div>
