@@ -7,16 +7,30 @@ import { verifyAdminSession } from "@/lib/auth-guard";
 export async function GET(req: NextRequest) {
   try {
     if (!db) {
-      return NextResponse.json({ plans: mockPricingPlans });
+      return NextResponse.json({ plans: mockPricingPlans, pricing: mockPricingPlans });
     }
 
     const data = await db.select().from(pricingPlans).orderBy(asc(pricingPlans.order));
     if (data.length === 0) {
-      return NextResponse.json({ plans: mockPricingPlans });
+      return NextResponse.json({ plans: mockPricingPlans, pricing: mockPricingPlans });
     }
-    return NextResponse.json({ plans: data });
+
+    const formattedData = data.map((plan) => ({
+      ...plan,
+      originalPrice: plan.originalPrice || "",
+      savings: plan.savings || "",
+      period: plan.period || "",
+      badge: plan.badge || "",
+      features: Array.isArray(plan.features)
+        ? plan.features
+        : typeof plan.features === "string"
+        ? (plan.features as string).split(",").map((f) => f.trim()).filter(Boolean)
+        : [],
+    }));
+
+    return NextResponse.json({ plans: formattedData, pricing: formattedData });
   } catch (error) {
-    return NextResponse.json({ plans: mockPricingPlans, error: (error as Error).message });
+    return NextResponse.json({ plans: mockPricingPlans, pricing: mockPricingPlans, error: (error as Error).message });
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { FolderGit2, Code, RotateCw, UserPlus } from "lucide-react";
+import { FolderGit2, Code, RotateCw, UserPlus, ArrowUpRight } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/shared/icons";
 import { Reveal } from "@/components/motion/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,8 +73,7 @@ export function TeamBentoSection() {
             return (
               <Reveal key={member.id} direction="up" delay={index * 0.08}>
                 <div
-                  className="group relative h-[490px] sm:h-[510px] w-full cursor-pointer select-none [perspective:1200px]"
-                  onClick={() => toggleFlip(member.id)}
+                  className="group relative h-[490px] sm:h-[510px] w-full select-none [perspective:1200px]"
                 >
                   <div
                     className={cn(
@@ -83,9 +82,11 @@ export function TeamBentoSection() {
                     )}
                   >
                     <div
+                      onClick={() => toggleFlip(member.id)}
                       className={cn(
-                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border border-[#14141A]/12 dark:border-[#374BFF]/25 shadow-xl transition-all duration-300 overflow-hidden [backface-visibility:hidden]",
-                        "hover:border-[#374BFF] hover:shadow-2xl hover:shadow-[#374BFF]/20"
+                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border border-[#14141A]/12 dark:border-[#374BFF]/25 shadow-xl transition-all duration-300 overflow-hidden [backface-visibility:hidden] cursor-pointer",
+                        "hover:border-[#374BFF] hover:shadow-2xl hover:shadow-[#374BFF]/20",
+                        isFlipped ? "pointer-events-none z-0 opacity-0" : "pointer-events-auto z-10 opacity-100"
                       )}
                     >
                       <div className="absolute -top-14 -right-14 w-32 h-32 bg-[#374BFF]/15 dark:bg-[#374BFF]/25 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
@@ -163,7 +164,8 @@ export function TeamBentoSection() {
 
                     <div
                       className={cn(
-                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border-2 border-[#374BFF] bg-white dark:bg-[#14141A] shadow-2xl shadow-[#374BFF]/25 overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden]"
+                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border-2 border-[#374BFF] bg-white dark:bg-[#14141A] shadow-2xl shadow-[#374BFF]/25 overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden]",
+                        isFlipped ? "pointer-events-auto z-20 opacity-100" : "pointer-events-none z-0 opacity-0"
                       )}
                     >
                       <div className="space-y-4">
@@ -185,12 +187,12 @@ export function TeamBentoSection() {
                           <p className="text-xs font-black uppercase tracking-wider text-[#14141A] dark:text-[#F5F6FC] flex items-center gap-1.5">
                             <Code className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" /> Tech Proficiencies
                           </p>
-                          <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                          <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto pr-1">
                             {(member.skills && member.skills.length > 0) ? (
                               member.skills.map((skill) => (
                                 <span
                                   key={skill}
-                                  className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC]"
+                                  className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:border-[#374BFF] hover:bg-[#374BFF]/15 hover:text-[#374BFF] dark:hover:text-[#CFFF04] transition-all cursor-default select-none shadow-2xs active:scale-95"
                                 >
                                   {skill}
                                 </span>
@@ -205,25 +207,31 @@ export function TeamBentoSection() {
                           <p className="text-xs font-black uppercase tracking-wider text-[#14141A] dark:text-[#F5F6FC] flex items-center gap-1.5">
                             <FolderGit2 className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" /> Featured Projects
                           </p>
-                          <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                          <div className="space-y-2 max-h-36 overflow-y-auto pr-1 overscroll-contain">
                             {(member.projects && member.projects.length > 0) ? (
                               member.projects.map((proj) => (
                                 <div
                                   key={proj.title}
-                                  className="p-2 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                  }}
+                                  className="group/proj p-2.5 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26] hover:border-[#374BFF] hover:bg-[#374BFF]/8 dark:hover:bg-[#374BFF]/15 hover:shadow-md transition-all cursor-pointer"
                                 >
-                                  <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                                    {proj.title}
-                                  </p>
+                                  <div className="flex items-center justify-between gap-1">
+                                    <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC] group-hover/proj:text-[#374BFF] dark:group-hover/proj:text-[#CFFF04] transition-colors">
+                                      {proj.title}
+                                    </p>
+                                    <ArrowUpRight className="h-3 w-3 text-[#374BFF] dark:text-[#CFFF04] opacity-40 group-hover/proj:opacity-100 group-hover/proj:translate-x-0.5 group-hover/proj:-translate-y-0.5 transition-all" />
+                                  </div>
                                   {proj.desc && (
-                                    <p className="text-[10px] text-[#2B2B38] dark:text-[#D5D7E6] leading-snug mt-0.5">
+                                    <p className="text-[10px] text-[#2B2B38] dark:text-[#D5D7E6] leading-snug mt-1">
                                       {proj.desc}
                                     </p>
                                   )}
                                 </div>
                               ))
                             ) : (
-                              <div className="p-2 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]">
+                              <div className="p-2.5 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]">
                                 <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC]">
                                   Active Deployments
                                 </p>
@@ -236,15 +244,16 @@ export function TeamBentoSection() {
                         </div>
                       </div>
 
-                      <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between">
+                      <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between relative z-30">
                         <div className="flex items-center gap-2">
                           {member.githubUrl && (
                             <a
                               href={member.githubUrl}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noreferrer noopener"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              className="relative z-30 inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] hover:scale-110 active:scale-95 shadow-sm transition-all cursor-pointer pointer-events-auto"
                               aria-label={`${member.name} GitHub profile`}
                             >
                               <GithubIcon className="h-3.5 w-3.5" />
@@ -254,9 +263,10 @@ export function TeamBentoSection() {
                             <a
                               href={member.linkedinUrl}
                               target="_blank"
-                              rel="noreferrer"
+                              rel="noreferrer noopener"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              className="relative z-30 inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] hover:scale-110 active:scale-95 shadow-sm transition-all cursor-pointer pointer-events-auto"
                               aria-label={`${member.name} LinkedIn profile`}
                             >
                               <LinkedinIcon className="h-3.5 w-3.5" />
@@ -269,7 +279,7 @@ export function TeamBentoSection() {
                             e.stopPropagation();
                             toggleFlip(member.id);
                           }}
-                          className="text-[11px] text-[#374BFF] dark:text-[#CFFF04] font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                          className="text-[11px] text-[#374BFF] dark:text-[#CFFF04] font-bold flex items-center gap-1 hover:underline cursor-pointer relative z-30 pointer-events-auto"
                         >
                           <RotateCw className="h-3 w-3" /> Flip back
                         </button>

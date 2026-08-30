@@ -203,8 +203,8 @@ export default function AdminDashboardPage() {
       if (srvRes.status === "fulfilled" && srvRes.value.services) {
         setServices(srvRes.value.services);
       }
-      if (prcRes.status === "fulfilled" && prcRes.value.pricing) {
-        setPricing(prcRes.value.pricing);
+      if (prcRes.status === "fulfilled" && (prcRes.value.pricing || prcRes.value.plans)) {
+        setPricing(prcRes.value.pricing || prcRes.value.plans);
       }
       if (statRes.status === "fulfilled" && statRes.value.stats) {
         setStats(statRes.value.stats);
@@ -495,7 +495,7 @@ export default function AdminDashboardPage() {
         savings: plan.savings || "",
         badge: plan.badge || "",
         desc: plan.desc,
-        features: plan.features.join(", "),
+        features: Array.isArray(plan.features) ? plan.features.join(", ") : typeof plan.features === "string" ? plan.features : "",
         category: plan.category || "websites",
         isPopular: Boolean(plan.isPopular),
         isBestValue: Boolean(plan.isBestValue),

@@ -45,19 +45,23 @@ export function PricingSection() {
   const [websitePlans, setWebsitePlans] = useState<PricingPlan[]>(staticWebsitePlans);
   const [localPlans, setLocalPlans] = useState<PricingPlan[]>(staticLocalPlans);
   const [ecomPlans, setEcomPlans] = useState<PricingPlan[]>(staticEcommercePlans);
+  const [maintenanceList, setMaintenanceList] = useState<PricingPlan[]>(maintenancePlans);
 
   useEffect(() => {
     fetch("/api/admin/pricing")
       .then((r) => r.json())
       .then((data) => {
-        if (data && data.plans && data.plans.length > 0) {
-          const web = data.plans.filter((p: any) => p.category === "websites");
-          const loc = data.plans.filter((p: any) => p.category === "local");
-          const ecom = data.plans.filter((p: any) => p.category === "ecommerce");
+        const list = data?.plans || data?.pricing;
+        if (list && Array.isArray(list) && list.length > 0) {
+          const web = list.filter((p: any) => p.category === "websites");
+          const loc = list.filter((p: any) => p.category === "local");
+          const ecom = list.filter((p: any) => p.category === "ecommerce");
+          const main = list.filter((p: any) => p.category === "maintenance");
 
           if (web.length > 0) setWebsitePlans(web);
           if (loc.length > 0) setLocalPlans(loc);
           if (ecom.length > 0) setEcomPlans(ecom);
+          if (main.length > 0) setMaintenanceList(main);
         }
       })
       .catch(() => {});
@@ -500,7 +504,7 @@ export function PricingSection() {
 
         {activeCategory === "maintenance" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {maintenancePlans.map((plan, idx) => (
+            {maintenanceList.map((plan, idx) => (
               <Reveal key={plan.name} direction="up" delay={idx * 0.08}>
                 <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group">
                   <div className="space-y-4">
