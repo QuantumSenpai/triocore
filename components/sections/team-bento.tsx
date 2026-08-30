@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Sparkles, FolderGit2, Code, RotateCw, UserPlus } from "lucide-react";
+import { FolderGit2, Code, RotateCw, UserPlus } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/shared/icons";
 import { Reveal } from "@/components/motion/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { teamMembers } from "@/lib/data/site-content";
+import { teamMembers as staticTeamMembers, TeamMember } from "@/lib/data/site-content";
 import { cn } from "@/lib/utils";
 
 export function TeamBentoSection() {
+  const [teamList, setTeamList] = useState<TeamMember[]>(staticTeamMembers);
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
   const [loadedAvatars, setLoadedAvatars] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    fetch("/api/admin/team")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.members && data.members.length > 0) {
+          setTeamList(data.members);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const toggleFlip = (id: string) => {
     setFlippedCards((prev) => ({
@@ -52,7 +64,7 @@ export function TeamBentoSection() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {teamMembers.map((member, index) => {
+          {teamList.map((member, index) => {
             const isFlipped = Boolean(flippedCards[member.id]);
             const isPlaceholder = member.isPlaceholder;
             const isAvatarLoaded = Boolean(loadedAvatars[member.id]);
@@ -60,85 +72,97 @@ export function TeamBentoSection() {
             return (
               <Reveal key={member.id} direction="up" delay={index * 0.08}>
                 <div
-                  className="group relative h-[480px] sm:h-[500px] w-full cursor-pointer select-none"
+                  className="group relative h-[490px] sm:h-[510px] w-full cursor-pointer select-none [perspective:1200px]"
                   onClick={() => toggleFlip(member.id)}
                 >
                   <div
                     className={cn(
-                      "relative h-full w-full rounded-3xl glass-card border p-6 sm:p-7 transition-all duration-300 overflow-hidden",
-                      isFlipped ? "border-[#374BFF] shadow-xl shadow-[#374BFF]/20" : "hover:border-[#374BFF]"
+                      "relative h-full w-full transition-transform duration-700 [transform-style:preserve-3d]",
+                      isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
                     )}
                   >
                     <div
                       className={cn(
-                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between transition-all duration-300",
-                        isFlipped ? "opacity-0 pointer-events-none scale-95" : "opacity-100 scale-100"
+                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border border-[#14141A]/12 dark:border-[#374BFF]/25 shadow-xl transition-all duration-300 overflow-hidden [backface-visibility:hidden]",
+                        "hover:border-[#374BFF] hover:shadow-2xl hover:shadow-[#374BFF]/20"
                       )}
                     >
-                      <div className="space-y-4 sm:space-y-5">
-                        <div className="relative mx-auto w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden p-[2px] bg-gradient-to-br from-[#374BFF] via-[#374BFF] to-[#14141A] shadow-lg shadow-black/10">
-                          <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-[#14141A]">
-                            {isPlaceholder ? (
-                              <div className="flex h-full w-full flex-col items-center justify-center bg-[#1C1C26] text-[#F5F6FC] p-4 text-center">
-                                <UserPlus className="h-10 w-10 mb-2 text-[#374BFF]" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Slot Available</span>
-                              </div>
-                            ) : (
-                              <>
-                                {!isAvatarLoaded && (
-                                  <Skeleton className="absolute inset-0 z-10 w-full h-full rounded-[14px] bg-[#14141A]/20 dark:bg-white/10" />
-                                )}
-                                <Image
-                                  src={member.avatarUrl}
-                                  alt={member.name}
-                                  fill
-                                  sizes="(max-width: 768px) 128px, 144px"
-                                  onLoad={() => handleAvatarLoaded(member.id)}
-                                  className={cn(
-                                    "object-cover transition-all duration-500 group-hover:scale-105",
-                                    isAvatarLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                      <div className="absolute -top-14 -right-14 w-32 h-32 bg-[#374BFF]/15 dark:bg-[#374BFF]/25 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+                      
+                      <div className="space-y-4 text-center relative z-10">
+                        <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32">
+                          <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[#374BFF] via-[#374BFF]/50 to-[#CFFF04]/50 opacity-40 blur-sm group-hover:opacity-100 group-hover:blur-md transition-all duration-500" />
+                          <div className="relative w-full h-full rounded-full overflow-hidden ring-3 ring-[#374BFF]/30 dark:ring-[#374BFF]/50 p-1 bg-white dark:bg-[#14141A] shadow-md shadow-black/10">
+                            <div className="relative w-full h-full rounded-full overflow-hidden bg-[#14141A]">
+                              {isPlaceholder ? (
+                                <div className="flex h-full w-full flex-col items-center justify-center bg-[#1C1C26] text-[#F5F6FC] p-4 text-center">
+                                  <UserPlus className="h-8 w-8 mb-1 text-[#374BFF]" />
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">Slot Available</span>
+                                </div>
+                              ) : (
+                                <>
+                                  {!isAvatarLoaded && (
+                                    <Skeleton className="absolute inset-0 z-10 w-full h-full rounded-full bg-[#14141A]/20 dark:bg-white/10" />
                                   )}
-                                />
-                              </>
-                            )}
+                                  <Image
+                                    src={member.avatarUrl}
+                                    alt={member.name}
+                                    fill
+                                    sizes="(max-width: 768px) 112px, 128px"
+                                    onLoad={() => handleAvatarLoaded(member.id)}
+                                    className={cn(
+                                      "object-cover transition-transform duration-500 group-hover:scale-110",
+                                      isAvatarLoaded ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="text-center space-y-1">
-                          <h3 className="font-heading text-lg sm:text-xl font-black tracking-tight text-[#14141A] dark:text-[#F5F6FC]">
+                        <div className="space-y-1.5">
+                          <h3 className="font-heading text-lg sm:text-xl font-black tracking-tight text-[#14141A] dark:text-[#F5F6FC] group-hover:text-[#374BFF] transition-colors">
                             {member.name}
                           </h3>
-                          <p className="text-[11px] font-bold uppercase tracking-wider text-[#374BFF] font-sans">
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-[#374BFF] dark:text-[#CFFF04] font-sans leading-snug line-clamp-2 min-h-[32px] flex items-center justify-center">
                             {member.role}
                           </p>
                         </div>
+
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#14141A]/10 dark:border-white/10 bg-[#14141A]/4 dark:bg-white/5 text-[10px] font-bold text-[#14141A]/80 dark:text-[#F5F6FC]/80">
+                          <FolderGit2 className="h-3 w-3 text-[#374BFF] dark:text-[#CFFF04]" />
+                          <span>{(member.projects || []).length} Engineering Builds</span>
+                        </div>
                       </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-3.5 relative z-10">
                         <div className="flex flex-wrap gap-1.5 justify-center">
-                          {member.skills.slice(0, 3).map((skill) => (
+                          {(member.skills || []).slice(0, 4).map((skill) => (
                             <span
                               key={skill}
-                              className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#14141A] text-[#14141A] dark:text-[#F5F6FC]"
+                              className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-[#374BFF]/25 dark:border-[#374BFF]/40 bg-[#374BFF]/8 dark:bg-[#374BFF]/15 text-[#14141A] dark:text-[#F5F6FC] shadow-2xs group-hover:border-[#374BFF]/50 transition-colors"
                             >
                               {skill}
                             </span>
                           ))}
                         </div>
 
-                        <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between text-xs text-[#14141A] dark:text-[#F5F6FC]/70 font-semibold">
-                          <span className="flex items-center gap-1.5">
-                            <Sparkles className="h-3.5 w-3.5 text-[#374BFF]" /> Details
+                        <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between text-xs text-[#14141A] dark:text-[#F5F6FC]/80 font-bold">
+                          <span className="flex items-center gap-1.5 text-[#374BFF] dark:text-[#CFFF04] group-hover:underline">
+                            <RotateCw className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04] transition-transform duration-500 group-hover:rotate-180" />
+                            <span>View Stack & Projects</span>
                           </span>
-                          <RotateCw className="h-3.5 w-3.5 text-[#374BFF] transition-transform group-hover:rotate-180 duration-500" />
+                          <span className="text-[10px] font-black font-heading text-stroke-blue">
+                            0{index + 1}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div
                       className={cn(
-                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between bg-white dark:bg-[#14141A] transition-all duration-300",
-                        isFlipped ? "opacity-100 scale-100" : "opacity-0 pointer-events-none scale-95"
+                        "absolute inset-0 p-6 sm:p-7 flex flex-col justify-between rounded-3xl glass-card border-2 border-[#374BFF] bg-white dark:bg-[#14141A] shadow-2xl shadow-[#374BFF]/25 overflow-hidden [transform:rotateY(180deg)] [backface-visibility:hidden]"
                       )}
                     >
                       <div className="space-y-4">
@@ -147,51 +171,66 @@ export function TeamBentoSection() {
                             <h4 className="font-heading text-base sm:text-lg font-black text-[#14141A] dark:text-[#F5F6FC]">
                               {member.name}
                             </h4>
-                            <p className="text-[11px] text-[#374BFF] font-bold">
+                            <p className="text-[11px] text-[#374BFF] dark:text-[#CFFF04] font-bold">
                               {isPlaceholder ? "Candidate Profile" : "Specializations & Builds"}
                             </p>
                           </div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04]">
                             {isPlaceholder ? "Incoming" : "Verified"}
                           </span>
                         </div>
 
                         <div className="space-y-1.5">
                           <p className="text-xs font-black uppercase tracking-wider text-[#14141A] dark:text-[#F5F6FC] flex items-center gap-1.5">
-                            <Code className="h-3.5 w-3.5 text-[#374BFF]" /> Tech Proficiencies
+                            <Code className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" /> Tech Proficiencies
                           </p>
-                          <div className="flex flex-wrap gap-1">
-                            {member.skills.map((skill) => (
-                              <span
-                                key={skill}
-                                className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC]"
-                              >
-                                {skill}
-                              </span>
-                            ))}
+                          <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                            {(member.skills && member.skills.length > 0) ? (
+                              member.skills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC]"
+                                >
+                                  {skill}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[10px] text-[#14141A]/60 dark:text-[#F5F6FC]/60">Full-Stack Development</span>
+                            )}
                           </div>
                         </div>
 
                         <div className="space-y-1.5">
                           <p className="text-xs font-black uppercase tracking-wider text-[#14141A] dark:text-[#F5F6FC] flex items-center gap-1.5">
-                            <FolderGit2 className="h-3.5 w-3.5 text-[#374BFF]" /> Featured Projects
+                            <FolderGit2 className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" /> Featured Projects
                           </p>
-                          <div className="space-y-1.5">
-                            {member.projects.map((proj) => (
-                              <div
-                                key={proj.title}
-                                className="p-2 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]"
-                              >
-                                <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                                  {proj.title}
-                                </p>
-                                {proj.desc && (
-                                  <p className="text-[10px] text-[#2B2B38] dark:text-[#D5D7E6]">
-                                    {proj.desc}
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                            {(member.projects && member.projects.length > 0) ? (
+                              member.projects.map((proj) => (
+                                <div
+                                  key={proj.title}
+                                  className="p-2 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]"
+                                >
+                                  <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC]">
+                                    {proj.title}
                                   </p>
-                                )}
+                                  {proj.desc && (
+                                    <p className="text-[10px] text-[#2B2B38] dark:text-[#D5D7E6] leading-snug mt-0.5">
+                                      {proj.desc}
+                                    </p>
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-2 rounded-xl border border-[#14141A]/15 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#1C1C26]">
+                                <p className="text-xs font-bold text-[#14141A] dark:text-[#F5F6FC]">
+                                  Active Deployments
+                                </p>
+                                <p className="text-[10px] text-[#2B2B38] dark:text-[#D5D7E6]">
+                                  Custom client and studio projects in development.
+                                </p>
                               </div>
-                            ))}
+                            )}
                           </div>
                         </div>
                       </div>
@@ -204,7 +243,7 @@ export function TeamBentoSection() {
                               target="_blank"
                               rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
+                              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer"
                               aria-label={`${member.name} GitHub profile`}
                             >
                               <GithubIcon className="h-3.5 w-3.5" />
@@ -216,16 +255,23 @@ export function TeamBentoSection() {
                               target="_blank"
                               rel="noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
+                              className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#14141A]/15 dark:border-white/15 bg-[#F5F6FC] dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] hover:text-white hover:bg-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer"
                               aria-label={`${member.name} LinkedIn profile`}
                             >
                               <LinkedinIcon className="h-3.5 w-3.5" />
                             </a>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#14141A] dark:text-[#F5F6FC]/70 font-semibold flex items-center gap-1">
-                          <RotateCw className="h-3 w-3 text-[#374BFF]" /> Tap to close
-                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFlip(member.id);
+                          }}
+                          className="text-[11px] text-[#374BFF] dark:text-[#CFFF04] font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                        >
+                          <RotateCw className="h-3 w-3" /> Flip back
+                        </button>
                       </div>
                     </div>
                   </div>
