@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { 
   Zap, 
   Palette, 
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 import { Counter } from "@/components/motion/counter";
 import { Reveal } from "@/components/motion/reveal";
-import { whyUsValues, whyUsStats } from "@/lib/data/site-content";
+import { whyUsValues, whyUsStats as staticWhyUsStats, StatItem } from "@/lib/data/site-content";
 
 const iconMap: Record<string, typeof Zap> = {
   Zap,
@@ -21,7 +22,56 @@ const iconMap: Record<string, typeof Zap> = {
   ShieldCheck,
 };
 
+interface StatRecord {
+  id: string;
+  key: string;
+  value: string;
+  label: string;
+  section: string;
+  order: number;
+}
+
 export function WhyUsSection() {
+  const [stats, setStats] = useState<StatItem[]>(staticWhyUsStats);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.stats && Array.isArray(data.stats)) {
+          const whyStatsFromDb = (data.stats as StatRecord[]).filter(
+            (s) => s.section === "why_us" || s.key.startsWith("why_")
+          );
+          if (whyStatsFromDb.length >= 4) {
+            const formattedStats: StatItem[] = whyStatsFromDb.map((s) => {
+              const val = (s.value || "").trim();
+              if (val === "24/7" || val === "24 / 7" || val.includes("/")) {
+                return {
+                  staticDisplay: val,
+                  label: s.label,
+                };
+              }
+              const parsedNum = parseInt(val, 10);
+              if (!isNaN(parsedNum)) {
+                const suffix = val.replace(String(parsedNum), "");
+                return {
+                  value: parsedNum,
+                  suffix,
+                  label: s.label,
+                };
+              }
+              return {
+                staticDisplay: val,
+                label: s.label,
+              };
+            });
+            setStats(formattedStats);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -73,10 +123,22 @@ export function WhyUsSection() {
           <div className="rounded-3xl bg-gradient-to-br from-[#14141A] via-[#1C1C26] to-[#14141A] p-6 sm:p-14 text-white shadow-2xl relative overflow-hidden border border-[#374BFF]/25">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#374BFF]/25 via-transparent to-transparent pointer-events-none" />
             <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center divide-y sm:divide-y-0 sm:divide-x divide-white/15">
-              {whyUsStats.map((stat, i) => (
+              {stats.map((stat, i) => (
                 <div key={stat.label} className={i > 0 ? "pt-4 sm:pt-0" : ""}>
-                  <p className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-[#F5F6FC] tracking-tighter">
-                    <Counter value={stat.value} suffix={stat.suffix} />
+                  <p className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-[#F5F6FC] tracking-tight">
+                    {stat.staticDisplay ? (
+                      stat.staticDisplay.includes("/") ? (
+                        <span className="inline-flex items-center justify-center tabular-nums">
+                          <span>{stat.staticDisplay.split("/")[0].trim()}</span>
+                          <span className="mx-1 sm:mx-1.5 text-2xl sm:text-4xl lg:text-5xl font-light text-[#374BFF] dark:text-[#CFFF04] opacity-85 select-none">/</span>
+                          <span>{stat.staticDisplay.split("/")[1].trim()}</span>
+                        </span>
+                      ) : (
+                        <span className="tabular-nums">{stat.staticDisplay}</span>
+                      )
+                    ) : (
+                      <Counter value={stat.value ?? 0} suffix={stat.suffix} />
+                    )}
                   </p>
                   <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#CFFF04]">
                     {stat.label}

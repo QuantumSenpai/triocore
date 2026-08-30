@@ -3,26 +3,37 @@ config({ path: ".env.local" });
 config();
 
 import { db } from "./index";
-import { 
+import {
   showcaseProjects as showcaseProjectsTable,
   teamMembers as teamMembersTable,
   services as servicesTable,
-  pricingPlans as pricingPlansTable
+  pricingPlans as pricingPlansTable,
+  siteStats as siteStatsTable,
 } from "./schema";
-import { 
+import {
   showcaseProjects,
   teamMembers,
   services,
   websiteDevelopmentPlans,
   localBusinessPlans,
   ecommercePlans,
-  maintenancePlans
-} from "@/lib/data/site-content";
+  maintenancePlans,
+} from "../data/site-content";
 import { eq, and, sql } from "drizzle-orm";
+
+const initialSiteStats = [
+  { key: "hero_innovators", value: "3", label: "Core Innovators", section: "hero", order: 1 },
+  { key: "hero_services", value: "6", label: "Service Capabilities", section: "hero", order: 2 },
+  { key: "hero_projects", value: "15+", label: "Projects Engineered", section: "hero", order: 3 },
+  { key: "why_code", value: "100%", label: "Custom Tailored Code", section: "why_us", order: 1 },
+  { key: "why_speed", value: "3x", label: "Faster Turnaround Rate", section: "why_us", order: 2 },
+  { key: "why_access", value: "24/7", label: "Direct Developer Access", section: "why_us", order: 3 },
+  { key: "why_builds", value: "15+", label: "Total Builds Delivered", section: "why_us", order: 4 },
+];
 
 async function main() {
   if (!db) {
-    console.error("[ERROR] No DATABASE_URL found or database connection failed.");
+    console.error("Database connection unavailable. Verify DATABASE_URL in .env.local");
     process.exit(1);
   }
 
@@ -98,6 +109,19 @@ async function main() {
   `);
 
   await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS "site_stats" (
+      "id" text PRIMARY KEY,
+      "section" text DEFAULT 'hero' NOT NULL,
+      "key" text UNIQUE NOT NULL,
+      "value" text NOT NULL,
+      "label" text NOT NULL,
+      "order" integer DEFAULT 0 NOT NULL,
+      "created_at" timestamp DEFAULT now() NOT NULL,
+      "updated_at" timestamp DEFAULT now() NOT NULL
+    );
+  `);
+
+  await db.execute(sql`
     ALTER TABLE "contacts" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'Unread' NOT NULL;
   `);
 
@@ -109,6 +133,7 @@ async function main() {
     await db.delete(teamMembersTable);
     await db.delete(servicesTable);
     await db.delete(pricingPlansTable);
+    await db.delete(siteStatsTable);
     console.log("Tables cleared successfully.\n");
   }
 
@@ -157,7 +182,7 @@ async function main() {
           skills: member.skills,
           projects: member.projects,
           githubUrl: member.githubUrl,
-          linkedinUrl: (member as any).linkedinUrl || null,
+          linkedinUrl: member.linkedinUrl || null,
           order: member.order,
         });
         console.log(`[INSERTED] Team member "${member.name}"`);
@@ -237,6 +262,31 @@ async function main() {
       }
     } catch (error) {
       console.error(`[ERROR] Failed to seed pricing plan "${plan.name}":`, (error as Error).message);
+    }
+  }
+
+  console.log("\n--- Seeding Site Stats ---");
+  for (const stat of initialSiteStats) {
+    try {
+      const existing = await db
+        .select()
+        .from(siteStatsTable)
+        .where(eq(siteStatsTable.key, stat.key));
+
+      if (existing.length > 0) {
+        console.log(`[SKIPPED] Site stat "${stat.key}" already exists`);
+      } else {
+        await db.insert(siteStatsTable).values({
+          key: stat.key,
+          value: stat.value,
+          label: stat.label,
+          section: stat.section,
+          order: stat.order,
+        });
+        console.log(`[INSERTED] Site stat "${stat.key}" (${stat.value} - ${stat.label})`);
+      }
+    } catch (error) {
+      console.error(`[ERROR] Failed to seed site stat "${stat.key}":`, (error as Error).message);
     }
   }
 

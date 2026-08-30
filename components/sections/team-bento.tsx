@@ -18,8 +18,9 @@ export function TeamBentoSection() {
     fetch("/api/admin/team")
       .then((r) => r.json())
       .then((data) => {
-        if (data && data.members && data.members.length > 0) {
-          setTeamList(data.members);
+        const list = data?.members || data?.team;
+        if (list && Array.isArray(list) && list.length > 0) {
+          setTeamList(list);
         }
       })
       .catch(() => {});

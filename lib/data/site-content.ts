@@ -62,9 +62,10 @@ export interface WhyUsValue {
 }
 
 export interface StatItem {
-  value: number;
+  value?: number;
   suffix?: string;
   label: string;
+  staticDisplay?: string;
 }
 
 export interface RoadmapMilestone {
@@ -449,7 +450,7 @@ export const whyUsValues: WhyUsValue[] = [
 export const whyUsStats: StatItem[] = [
   { value: 100, suffix: "%", label: "Custom Tailored Code" },
   { value: 3, suffix: "x", label: "Faster Turnaround Rate" },
-  { value: 24, suffix: "/7", label: "Direct Developer Access" },
+  { staticDisplay: "24 / 7", label: "Direct Developer Access" },
   { value: 15, suffix: "+", label: "Total Builds Delivered" },
 ];
 

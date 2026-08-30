@@ -19,7 +19,8 @@ import {
   Tag,
   Check,
   Archive,
-  RotateCcw
+  RotateCcw,
+  BarChart3
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -89,7 +90,16 @@ interface PricingPlanItem {
   order: number;
 }
 
-type TabType = "inquiries" | "showcase" | "team" | "services" | "pricing";
+interface SiteStat {
+  id: string;
+  key: string;
+  value: string;
+  label: string;
+  section: string;
+  order: number;
+}
+
+type TabType = "inquiries" | "showcase" | "team" | "services" | "pricing" | "stats";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -100,6 +110,7 @@ export default function AdminDashboardPage() {
   const [team, setTeam] = useState<Member[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [pricing, setPricing] = useState<PricingPlanItem[]>([]);
+  const [stats, setStats] = useState<SiteStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -156,17 +167,28 @@ export default function AdminDashboardPage() {
     order: 0,
   });
 
+  const [statModalOpen, setStatModalOpen] = useState(false);
+  const [editingStat, setEditingStat] = useState<SiteStat | null>(null);
+  const [statForm, setStatForm] = useState({
+    key: "",
+    value: "",
+    label: "",
+    section: "hero",
+    order: 0,
+  });
+
   const [submitting, setSubmitting] = useState(false);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [inqRes, projRes, teamRes, srvRes, prcRes] = await Promise.allSettled([
+      const [inqRes, projRes, teamRes, srvRes, prcRes, statRes] = await Promise.allSettled([
         fetch("/api/admin/inquiries").then((r) => r.json()),
         fetch("/api/admin/projects").then((r) => r.json()),
         fetch("/api/admin/team").then((r) => r.json()),
         fetch("/api/admin/services").then((r) => r.json()),
         fetch("/api/admin/pricing").then((r) => r.json()),
+        fetch("/api/admin/stats").then((r) => r.json()),
       ]);
 
       if (inqRes.status === "fulfilled" && inqRes.value.inquiries) {
@@ -175,14 +197,17 @@ export default function AdminDashboardPage() {
       if (projRes.status === "fulfilled" && projRes.value.projects) {
         setProjects(projRes.value.projects);
       }
-      if (teamRes.status === "fulfilled" && teamRes.value.team) {
-        setTeam(teamRes.value.team);
+      if (teamRes.status === "fulfilled" && (teamRes.value.team || teamRes.value.members)) {
+        setTeam(teamRes.value.team || teamRes.value.members);
       }
       if (srvRes.status === "fulfilled" && srvRes.value.services) {
         setServices(srvRes.value.services);
       }
-      if (prcRes.status === "fulfilled" && prcRes.value.plans) {
-        setPricing(prcRes.value.plans);
+      if (prcRes.status === "fulfilled" && prcRes.value.pricing) {
+        setPricing(prcRes.value.pricing);
+      }
+      if (statRes.status === "fulfilled" && statRes.value.stats) {
+        setStats(statRes.value.stats);
       }
     } catch {
       toast.error("Failed to load dashboard data");
@@ -195,25 +220,30 @@ export default function AdminDashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const handleSignOut = () => {
-    toast.success("Signed out of Admin Dashboard");
-    router.push("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" });
+      router.push("/admin/login");
+    } catch {
+      router.push("/admin/login");
+    }
   };
 
-  const handleInquiryStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
       const res = await fetch("/api/admin/inquiries", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ id, status: newStatus }),
       });
+
       if (res.ok) {
         setInquiries((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, status } : item))
+          prev.map((inq) => (inq.id === id ? { ...inq, status: newStatus } : inq))
         );
-        toast.success(`Inquiry marked as ${status}`);
+        toast.success(`Inquiry marked as ${newStatus}`);
       } else {
-        toast.error("Failed to update inquiry status");
+        toast.error("Failed to update status");
       }
     } catch {
       toast.error("Error updating status");
@@ -221,12 +251,12 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteInquiry = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this inquiry?")) return;
+    if (!confirm("Are you sure you want to delete this inquiry?")) return;
     try {
       const res = await fetch(`/api/admin/inquiries?id=${id}`, { method: "DELETE" });
       if (res.ok) {
-        setInquiries((prev) => prev.filter((item) => item.id !== id));
-        toast.success("Inquiry deleted successfully");
+        setInquiries((prev) => prev.filter((inq) => inq.id !== id));
+        toast.success("Inquiry deleted");
       } else {
         toast.error("Failed to delete inquiry");
       }
@@ -235,17 +265,17 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const openProjectModal = (proj?: Project) => {
-    if (proj) {
-      setEditingProject(proj);
+  const openProjectModal = (p?: Project) => {
+    if (p) {
+      setEditingProject(p);
       setProjectForm({
-        title: proj.title,
-        description: proj.description,
-        imageUrl: proj.imageUrl,
-        liveUrl: proj.liveUrl || "",
-        tech: proj.tech.join(", "),
-        status: proj.status,
-        order: proj.order,
+        title: p.title,
+        description: p.description,
+        imageUrl: p.imageUrl,
+        liveUrl: p.liveUrl || "",
+        tech: p.tech.join(", "),
+        status: p.status,
+        order: p.order,
       });
     } else {
       setEditingProject(null);
@@ -279,7 +309,7 @@ export default function AdminDashboardPage() {
       });
 
       if (res.ok) {
-        toast.success(editingProject ? "Project updated" : "Project added successfully");
+        toast.success(editingProject ? "Project updated" : "Project created");
         setProjectModalOpen(false);
         fetchDashboardData();
       } else {
@@ -535,39 +565,112 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const openStatModal = (s?: SiteStat) => {
+    if (s) {
+      setEditingStat(s);
+      setStatForm({
+        key: s.key,
+        value: s.value,
+        label: s.label,
+        section: s.section,
+        order: s.order,
+      });
+    } else {
+      setEditingStat(null);
+      setStatForm({
+        key: "",
+        value: "",
+        label: "",
+        section: "hero",
+        order: stats.length + 1,
+      });
+    }
+    setStatModalOpen(true);
+  };
+
+  const handleSaveStat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const method = editingStat ? "PUT" : "POST";
+      const payload = {
+        ...statForm,
+        id: editingStat ? editingStat.id : undefined,
+      };
+
+      const res = await fetch("/api/admin/stats", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success(editingStat ? "Stat updated" : "Stat added");
+        setStatModalOpen(false);
+        fetchDashboardData();
+      } else {
+        toast.error("Failed to save stat");
+      }
+    } catch {
+      toast.error("Error saving stat");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteStat = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this stat?")) return;
+    try {
+      const res = await fetch(`/api/admin/stats?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setStats((prev) => prev.filter((s) => s.id !== id));
+        toast.success("Stat deleted");
+      } else {
+        toast.error("Failed to delete stat");
+      }
+    } catch {
+      toast.error("Error deleting stat");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F6FC] dark:bg-[#14141A] text-[#14141A] dark:text-[#F5F6FC] transition-colors duration-200">
-      <header className="sticky top-0 z-30 border-b border-[#14141A]/10 dark:border-[#374BFF]/20 bg-white/90 dark:bg-[#14141A]/90 backdrop-blur-xl px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mx-auto max-w-7xl flex items-center justify-between">
+    <div className="min-h-screen bg-[#F5F6FC] dark:bg-[#0C0C10] text-[#14141A] dark:text-[#F5F6FC]">
+      <header className="sticky top-0 z-40 border-b border-[#14141A]/10 dark:border-white/10 bg-white/80 dark:bg-[#0C0C10]/80 backdrop-blur-md px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-4">
-            <Logo size="sm" />
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/40 bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]">
-              Studio CMS
-            </span>
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Logo />
+            </Link>
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04] border border-[#374BFF]/20 uppercase tracking-widest">
+                CMS Dashboard
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#14141A] dark:text-[#F5F6FC] hover:text-[#374BFF] px-3 py-1.5 rounded-xl border border-[#14141A]/12 dark:border-[#374BFF]/25 bg-[#F5F6FC] dark:bg-[#1C1C26] transition-colors"
+              target="_blank"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#14141A]/15 dark:border-white/15 text-xs font-bold hover:border-[#374BFF] transition-colors"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
               <span>Live Site</span>
+              <ExternalLink className="h-3 w-3" />
             </Link>
             <ThemeToggle />
             <button
-              onClick={handleSignOut}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-500/10 transition-colors cursor-pointer"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-xs font-bold hover:bg-red-500/20 transition-colors cursor-pointer"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow mx-auto max-w-7xl w-full p-4 sm:p-6 lg:p-8 space-y-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <main className="mx-auto max-w-7xl p-6 sm:p-8 space-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="glass-card rounded-3xl p-5 border border-[#14141A]/12 dark:border-[#374BFF]/20">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#14141A]/60 dark:text-[#F5F6FC]/70">
@@ -647,6 +750,22 @@ export default function AdminDashboardPage() {
               </p>
             )}
           </div>
+
+          <div className="glass-card rounded-3xl p-5 border border-[#14141A]/12 dark:border-[#374BFF]/20">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#14141A]/60 dark:text-[#F5F6FC]/70">
+                Site Stats
+              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]">
+                <BarChart3 className="h-4 w-4" />
+              </div>
+            </div>
+            {loading ? <Skeleton className="mt-2 h-8 w-12 rounded-lg" /> : (
+              <p className="mt-2 font-heading text-2xl font-black text-[#14141A] dark:text-[#F5F6FC]">
+                {stats.length}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#14141A]/10 dark:border-white/10 pb-4">
@@ -658,6 +777,7 @@ export default function AdminDashboardPage() {
                 ["team", `Team Members (${team.length})`],
                 ["services", `Services (${services.length})`],
                 ["pricing", `Pricing Plans (${pricing.length})`],
+                ["stats", `Site Stats (${stats.length})`],
               ] as [TabType, string][]
             ).map(([tab, label]) => (
               <button
@@ -713,153 +833,157 @@ export default function AdminDashboardPage() {
               <span>Add Plan</span>
             </button>
           )}
+
+          {activeTab === "stats" && (
+            <button
+              onClick={() => openStatModal()}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold shadow-md hover:bg-[#14141A] dark:hover:bg-[#CFFF04] dark:hover:text-[#14141A] transition-all cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Stat</span>
+            </button>
+          )}
         </div>
 
         {activeTab === "inquiries" && (
           <div className="space-y-4">
             {loading ? (
-              <>
-                <AdminInquirySkeleton />
-                <AdminInquirySkeleton />
-                <AdminInquirySkeleton />
-              </>
+              <AdminInquirySkeleton />
             ) : inquiries.length === 0 ? (
-              <div className="glass-card rounded-3xl p-12 text-center text-sm font-medium text-[#14141A]/60 dark:text-[#F5F6FC]/60">
-                No client inquiries recorded yet.
+              <div className="glass-card rounded-3xl p-12 text-center border border-[#14141A]/10 dark:border-white/10 space-y-3">
+                <Mail className="mx-auto h-10 w-10 text-[#374BFF]" />
+                <h3 className="font-heading text-lg font-bold">No Inquiries Found</h3>
+                <p className="text-xs text-[#14141A]/60 dark:text-[#F5F6FC]/60 max-w-sm mx-auto">
+                  Client submissions from the contact form will appear here.
+                </p>
               </div>
             ) : (
-              inquiries.map((inq) => (
-                <div
-                  key={inq.id}
-                  className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-[#374BFF]/20 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#14141A]/10 dark:border-white/10">
-                    <div>
-                      <h3 className="font-heading text-lg font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                        {inq.name}
-                      </h3>
-                      <p className="text-xs text-[#374BFF] font-bold">
-                        {inq.email} {inq.phone && `• ${inq.phone}`}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {inquiries.map((inq) => (
+                  <div
+                    key={inq.id}
+                    className="glass-card rounded-3xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4 shadow-sm hover:border-[#374BFF] transition-colors"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 className="font-heading text-base font-bold">{inq.name}</h4>
+                          <a
+                            href={`mailto:${inq.email}`}
+                            className="text-xs font-semibold text-[#374BFF] dark:text-[#CFFF04] hover:underline"
+                          >
+                            {inq.email}
+                          </a>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                            inq.status === "Unread"
+                              ? "bg-[#374BFF]/10 text-[#374BFF] border-[#374BFF]/30"
+                              : inq.status === "Contacted"
+                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                              : "bg-neutral-500/10 text-neutral-400 border-neutral-500/30"
+                          }`}
+                        >
+                          {inq.status}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 text-[11px] font-bold">
+                        <span className="px-2 py-0.5 rounded-md bg-[#14141A]/5 dark:bg-white/5 border border-[#14141A]/10 dark:border-white/10">
+                          {inq.service}
+                        </span>
+                        {inq.budget && (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            {inq.budget}
+                          </span>
+                        )}
+                        {inq.phone && (
+                          <span className="px-2 py-0.5 rounded-md bg-[#14141A]/5 dark:bg-white/5 border border-[#14141A]/10 dark:border-white/10">
+                            📞 {inq.phone}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-[#14141A]/80 dark:text-[#F5F6FC]/80 leading-relaxed bg-[#14141A]/4 dark:bg-white/4 p-3 rounded-2xl border border-[#14141A]/5 dark:border-white/5 line-clamp-4">
+                        {inq.message}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${
-                          inq.status === "Responded"
-                            ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                            : inq.status === "Archived"
-                            ? "border-neutral-500/40 bg-neutral-500/15 text-neutral-600 dark:text-neutral-400"
-                            : "border-[#374BFF]/40 bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]"
-                        }`}
-                      >
-                        {inq.status}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#14141A]/75 dark:text-[#F5F6FC]/80 font-medium">
-                    <p><strong>Requirement:</strong> {inq.service}</p>
-                    {inq.budget && <p><strong>Budget:</strong> {inq.budget}</p>}
-                  </div>
+                    <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        {inq.status !== "Contacted" && (
+                          <button
+                            onClick={() => handleUpdateStatus(inq.id, "Contacted")}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                          >
+                            Mark Contacted
+                          </button>
+                        )}
+                        {inq.status !== "Archived" && (
+                          <button
+                            onClick={() => handleUpdateStatus(inq.id, "Archived")}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-neutral-500/10 text-neutral-400 hover:bg-neutral-500/20 transition-colors cursor-pointer"
+                          >
+                            Archive
+                          </button>
+                        )}
+                        {inq.status === "Archived" && (
+                          <button
+                            onClick={() => handleUpdateStatus(inq.id, "Unread")}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#374BFF]/10 text-[#374BFF] hover:bg-[#374BFF]/20 transition-colors cursor-pointer"
+                          >
+                            Restore
+                          </button>
+                        )}
+                      </div>
 
-                  <div className="p-3.5 rounded-xl bg-[#F5F6FC] dark:bg-[#14141A] text-xs text-[#14141A] dark:text-[#F5F6FC] leading-relaxed font-sans font-medium">
-                    {inq.message}
-                  </div>
-
-                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleInquiryStatus(inq.id, "Responded")}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-all cursor-pointer"
-                      >
-                        <Check className="h-3 w-3" />
-                        <span>Responded</span>
-                      </button>
-                      <button
-                        onClick={() => handleInquiryStatus(inq.id, "Archived")}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-neutral-500/30 bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 text-xs font-bold hover:bg-neutral-500/20 transition-all cursor-pointer"
-                      >
-                        <Archive className="h-3 w-3" />
-                        <span>Archive</span>
-                      </button>
-                      {inq.status !== "Unread" && (
-                        <button
-                          onClick={() => handleInquiryStatus(inq.id, "Unread")}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF] text-xs font-bold hover:bg-[#374BFF]/20 transition-all cursor-pointer"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={`mailto:${inq.email}?subject=Re: TrioCore Project Inquiry - ${inq.service}`}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold shadow-sm hover:bg-[#14141A] dark:hover:bg-[#CFFF04] dark:hover:text-[#14141A] transition-colors"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        <span>Reply via Email</span>
-                      </a>
                       <button
                         onClick={() => handleDeleteInquiry(inq.id)}
-                        className="p-2 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
                         title="Delete Inquiry"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         )}
 
         {activeTab === "showcase" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
               [1, 2, 3].map((k) => (
                 <div key={k} className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 space-y-4 animate-pulse">
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                  <Skeleton className="h-6 w-3/4 rounded-lg" />
-                  <Skeleton className="h-4 w-full rounded-md" />
+                  <Skeleton className="h-40 w-full rounded-xl" />
+                  <Skeleton className="h-5 w-3/4 rounded-lg" />
                 </div>
               ))
             ) : (
-              projects.map((proj) => (
+              projects.map((p) => (
                 <div
-                  key={proj.id}
-                  className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4"
+                  key={p.id}
+                  className="glass-card rounded-2xl p-5 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/40 bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]">
-                        {proj.status}
+                  <div className="space-y-3">
+                    <div className="relative h-40 w-full rounded-xl overflow-hidden bg-neutral-900 border border-white/10">
+                      <img src={p.imageUrl} alt={p.title} className="h-full w-full object-cover" />
+                      <span className="absolute top-2.5 right-2.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-black/70 text-white backdrop-blur-md">
+                        {p.status}
                       </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => openProjectModal(proj)}
-                          className="p-1.5 rounded-lg text-[#374BFF] hover:bg-[#374BFF]/15 transition-colors cursor-pointer"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProject(proj.id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
                     </div>
-                    <h3 className="font-heading text-lg font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                      {proj.title}
-                    </h3>
-                    <p className="text-xs text-[#14141A]/75 dark:text-[#F5F6FC]/75 leading-relaxed font-medium">
-                      {proj.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {proj.tech.map((t) => (
-                        <span key={t} className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#14141A]/5 dark:bg-white/5 border border-[#14141A]/10 dark:border-white/10">
+                    <div>
+                      <h4 className="font-heading text-base font-bold text-[#14141A] dark:text-[#F5F6FC]">{p.title}</h4>
+                      <p className="text-xs text-[#14141A]/70 dark:text-[#F5F6FC]/70 line-clamp-2 mt-1">{p.description}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {p.tech.map((t) => (
+                        <span
+                          key={t}
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04]"
+                        >
                           {t}
                         </span>
                       ))}
@@ -867,18 +991,25 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between">
-                    <span className="text-[11px] text-[#14141A]/60 dark:text-[#F5F6FC]/60 font-mono font-bold">
-                      Order: #{proj.order}
-                    </span>
-                    <a
-                      href={proj.liveUrl || "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#374BFF]"
-                    >
-                      <span>View URL</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openProjectModal(p)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#374BFF] dark:text-[#CFFF04] hover:underline cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProject(p.id)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:underline cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </div>
+                    {p.liveUrl && (
+                      <a href={p.liveUrl} target="_blank" rel="noreferrer" className="text-xs text-[#374BFF] hover:underline">
+                        Live Link ↗
+                      </a>
+                    )}
                   </div>
                 </div>
               ))
@@ -887,56 +1018,49 @@ export default function AdminDashboardPage() {
         )}
 
         {activeTab === "team" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {loading ? (
-              [1, 2, 3].map((k) => (
+              [1, 2, 3, 4].map((k) => (
                 <div key={k} className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 space-y-4 animate-pulse">
-                  <Skeleton className="h-6 w-32 rounded-lg" />
-                  <Skeleton className="h-4 w-24 rounded-md" />
+                  <Skeleton className="h-20 w-20 rounded-full mx-auto" />
+                  <Skeleton className="h-5 w-3/4 rounded-lg mx-auto" />
                 </div>
               ))
             ) : (
               team.map((m) => (
                 <div
                   key={m.id}
-                  className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4"
+                  className="glass-card rounded-2xl p-5 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4 text-center"
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <img src={m.avatarUrl} alt={m.name} className="h-10 w-10 rounded-xl object-cover" />
-                        <div>
-                          <h3 className="font-heading text-base font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                            {m.name}
-                          </h3>
-                          <p className="text-xs text-[#374BFF] font-bold">{m.role}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openTeamModal(m)}
-                          className="p-1.5 rounded-lg text-[#374BFF] hover:bg-[#374BFF]/15 transition-colors cursor-pointer"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTeam(m.id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => openTeamModal(m)}
+                        className="p-1.5 rounded-lg text-[#374BFF] dark:text-[#CFFF04] hover:bg-[#374BFF]/10 transition-colors cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTeam(m.id)}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-[#14141A]/60 dark:text-[#F5F6FC]/60">
-                        Skills
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {m.skills.map((s) => (
+                    <div className="relative mx-auto h-20 w-20 rounded-full overflow-hidden ring-2 ring-[#374BFF]/30">
+                      <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
+                    </div>
+                    <div>
+                      <h4 className="font-heading text-base font-bold text-[#14141A] dark:text-[#F5F6FC]">{m.name}</h4>
+                      <p className="text-[11px] font-bold text-[#374BFF] dark:text-[#CFFF04] uppercase tracking-wider">{m.role}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#14141A]/50 dark:text-[#F5F6FC]/50">Skills</span>
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {m.skills.slice(0, 4).map((s) => (
                           <span
                             key={s}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#14141A]/10 dark:border-white/10 bg-[#F5F6FC] dark:bg-[#14141A]"
+                            className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-[#14141A]/5 dark:bg-white/5 border border-[#14141A]/10 dark:border-white/10"
                           >
                             {s}
                           </span>
@@ -947,11 +1071,18 @@ export default function AdminDashboardPage() {
 
                   <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between text-xs text-[#14141A]/60 dark:text-[#F5F6FC]/60 font-medium">
                     <span>Order: #{m.order}</span>
-                    {m.githubUrl && (
-                      <a href={m.githubUrl} target="_blank" rel="noreferrer" className="text-[#374BFF] font-bold">
-                        GitHub
-                      </a>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {m.githubUrl && (
+                        <a href={m.githubUrl} target="_blank" rel="noreferrer" className="text-[#374BFF] font-bold hover:underline">
+                          GitHub
+                        </a>
+                      )}
+                      {m.linkedinUrl && (
+                        <a href={m.linkedinUrl} target="_blank" rel="noreferrer" className="text-[#374BFF] dark:text-[#CFFF04] font-bold hover:underline">
+                          LinkedIn
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -974,15 +1105,15 @@ export default function AdminDashboardPage() {
                   key={srv.id}
                   className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/40 bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04]">
                         {srv.badge}
                       </span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => openServiceModal(srv)}
-                          className="p-1.5 rounded-lg text-[#374BFF] hover:bg-[#374BFF]/15 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-[#374BFF] dark:text-[#CFFF04] hover:bg-[#374BFF]/10 transition-colors cursor-pointer"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -994,13 +1125,15 @@ export default function AdminDashboardPage() {
                         </button>
                       </div>
                     </div>
-                    <h3 className="font-heading text-lg font-bold text-[#14141A] dark:text-[#F5F6FC]">
-                      {srv.title}
-                    </h3>
-                    <p className="text-xs text-[#14141A]/75 dark:text-[#F5F6FC]/75 leading-relaxed font-medium">
-                      {srv.desc}
-                    </p>
-                    <div className="space-y-1 pt-2">
+                    <div>
+                      <h3 className="font-heading text-lg font-bold text-[#14141A] dark:text-[#F5F6FC]">
+                        {srv.title}
+                      </h3>
+                      <p className="text-xs text-[#14141A]/75 dark:text-[#F5F6FC]/75 leading-relaxed mt-1">
+                        {srv.desc}
+                      </p>
+                    </div>
+                    <div className="space-y-1 pt-1">
                       {srv.features.map((f) => (
                         <p key={f} className="text-xs text-[#14141A] dark:text-[#F5F6FC] font-semibold flex items-center gap-1.5">
                           <Check className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" />
@@ -1012,7 +1145,7 @@ export default function AdminDashboardPage() {
 
                   <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between text-xs text-[#14141A]/60 dark:text-[#F5F6FC]/60 font-mono">
                     <span>Order: #{srv.order}</span>
-                    <span>{srv.iconName}</span>
+                    <span>Icon: {srv.iconName || "Globe"}</span>
                   </div>
                 </div>
               ))
@@ -1035,15 +1168,15 @@ export default function AdminDashboardPage() {
                   key={plan.id}
                   className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-[#374BFF]/40 bg-[#374BFF]/15 text-[#374BFF] dark:text-[#CFFF04]">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#14141A]/5 dark:bg-white/5 border border-[#14141A]/10 dark:border-white/10">
                         {plan.category}
                       </span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           onClick={() => openPricingModal(plan)}
-                          className="p-1.5 rounded-lg text-[#374BFF] hover:bg-[#374BFF]/15 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg text-[#374BFF] dark:text-[#CFFF04] hover:bg-[#374BFF]/10 transition-colors cursor-pointer"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -1065,7 +1198,7 @@ export default function AdminDashboardPage() {
                       {plan.desc}
                     </p>
                     <div className="space-y-1 pt-2">
-                      {plan.features.map((f) => (
+                      {(plan.features || []).map((f) => (
                         <p key={f} className="text-xs text-[#14141A] dark:text-[#F5F6FC] font-semibold flex items-center gap-1.5">
                           <Check className="h-3.5 w-3.5 text-[#374BFF] dark:text-[#CFFF04]" />
                           <span>{f}</span>
@@ -1081,6 +1214,78 @@ export default function AdminDashboardPage() {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {activeTab === "stats" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {loading ? (
+                [1, 2, 3, 4].map((k) => (
+                  <div key={k} className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 space-y-4 animate-pulse">
+                    <Skeleton className="h-8 w-24 rounded-lg" />
+                    <Skeleton className="h-4 w-full rounded-md" />
+                  </div>
+                ))
+              ) : stats.length === 0 ? (
+                <div className="col-span-full glass-card rounded-3xl p-12 text-center border border-[#14141A]/10 dark:border-white/10 space-y-3">
+                  <BarChart3 className="mx-auto h-10 w-10 text-[#374BFF]" />
+                  <h3 className="font-heading text-lg font-bold">No Stats Configured</h3>
+                  <p className="text-xs text-[#14141A]/60 dark:text-[#F5F6FC]/60 max-w-sm mx-auto">
+                    Click "+ Add Stat" to configure site statistics and counters.
+                  </p>
+                </div>
+              ) : (
+                stats.map((st) => (
+                  <div
+                    key={st.id}
+                    className="glass-card rounded-2xl p-6 border border-[#14141A]/12 dark:border-white/10 flex flex-col justify-between space-y-4 shadow-sm hover:border-[#374BFF] transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#374BFF]/10 text-[#374BFF] dark:text-[#CFFF04] border border-[#374BFF]/20">
+                          {st.section}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openStatModal(st)}
+                            className="p-1.5 rounded-lg text-[#374BFF] dark:text-[#CFFF04] hover:bg-[#374BFF]/10 transition-colors cursor-pointer"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStat(st.id)}
+                            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-mono text-[#14141A]/50 dark:text-[#F5F6FC]/50">{st.key}</p>
+                        <p className="mt-1 text-3xl font-black font-heading text-[#374BFF] dark:text-[#CFFF04] tracking-tight">
+                          {st.value}
+                        </p>
+                        <h4 className="mt-1 font-heading text-sm font-bold text-[#14141A] dark:text-[#F5F6FC]">
+                          {st.label}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#14141A]/10 dark:border-white/10 flex items-center justify-between text-xs text-[#14141A]/60 dark:text-[#F5F6FC]/60 font-mono">
+                      <span>Order: #{st.order}</span>
+                      <button
+                        onClick={() => openStatModal(st)}
+                        className="text-xs font-bold text-[#374BFF] hover:underline cursor-pointer"
+                      >
+                        Edit Stat
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </main>
@@ -1120,7 +1325,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-1">
                 <label className="font-bold uppercase tracking-wider">Image URL</label>
                 <input
-                  type="text"
+                  type="url"
                   required
                   value={projectForm.imageUrl}
                   onChange={(e) => setProjectForm({ ...projectForm, imageUrl: e.target.value })}
@@ -1130,7 +1335,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-1">
                 <label className="font-bold uppercase tracking-wider">Live URL (optional)</label>
                 <input
-                  type="text"
+                  type="url"
                   value={projectForm.liveUrl}
                   onChange={(e) => setProjectForm({ ...projectForm, liveUrl: e.target.value })}
                   className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
@@ -1154,9 +1359,9 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value })}
                     className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
                   >
-                    <option value="Completed">Completed</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Coming Soon">Coming Soon</option>
+                    <option value="Completed" className="bg-[#14141A] text-white">Completed</option>
+                    <option value="Active" className="bg-[#14141A] text-white">Active</option>
+                    <option value="In Progress" className="bg-[#14141A] text-white">In Progress</option>
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -1195,7 +1400,7 @@ export default function AdminDashboardPage() {
           <div className="glass-card rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h3 className="font-heading text-xl font-bold">
-                {editingMember ? "Edit Member" : "Add Team Member"}
+                {editingMember ? "Edit Team Member" : "Add Team Member"}
               </h3>
               <button onClick={() => setTeamModalOpen(false)} className="p-1 rounded-lg hover:bg-white/10 cursor-pointer">
                 <X className="h-5 w-5" />
@@ -1213,7 +1418,7 @@ export default function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold uppercase tracking-wider">Role / Title</label>
+                <label className="font-bold uppercase tracking-wider">Role Title</label>
                 <input
                   type="text"
                   required
@@ -1225,7 +1430,7 @@ export default function AdminDashboardPage() {
               <div className="space-y-1">
                 <label className="font-bold uppercase tracking-wider">Avatar Image URL</label>
                 <input
-                  type="text"
+                  type="url"
                   required
                   value={teamForm.avatarUrl}
                   onChange={(e) => setTeamForm({ ...teamForm, avatarUrl: e.target.value })}
@@ -1251,7 +1456,7 @@ export default function AdminDashboardPage() {
                   className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="font-bold uppercase tracking-wider">GitHub URL</label>
                   <input
@@ -1259,17 +1464,28 @@ export default function AdminDashboardPage() {
                     value={teamForm.githubUrl}
                     onChange={(e) => setTeamForm({ ...teamForm, githubUrl: e.target.value })}
                     className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                    placeholder="https://github.com/..."
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Display Order</label>
+                  <label className="font-bold uppercase tracking-wider">LinkedIn URL</label>
                   <input
-                    type="number"
-                    value={teamForm.order}
-                    onChange={(e) => setTeamForm({ ...teamForm, order: Number(e.target.value) })}
+                    type="text"
+                    value={teamForm.linkedinUrl}
+                    onChange={(e) => setTeamForm({ ...teamForm, linkedinUrl: e.target.value })}
                     className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                    placeholder="https://www.linkedin.com/in/..."
                   />
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="font-bold uppercase tracking-wider">Display Order</label>
+                <input
+                  type="number"
+                  value={teamForm.order}
+                  onChange={(e) => setTeamForm({ ...teamForm, order: Number(e.target.value) })}
+                  className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                />
               </div>
               <div className="pt-3 flex justify-end gap-2">
                 <button
@@ -1297,7 +1513,7 @@ export default function AdminDashboardPage() {
           <div className="glass-card rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h3 className="font-heading text-xl font-bold">
-                {editingService ? "Edit Service" : "Add New Service"}
+                {editingService ? "Edit Service" : "Add Service"}
               </h3>
               <button onClick={() => setServiceModalOpen(false)} className="p-1 rounded-lg hover:bg-white/10 cursor-pointer">
                 <X className="h-5 w-5" />
@@ -1315,6 +1531,16 @@ export default function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-1">
+                <label className="font-bold uppercase tracking-wider">Badge Tag</label>
+                <input
+                  type="text"
+                  required
+                  value={serviceForm.badge}
+                  onChange={(e) => setServiceForm({ ...serviceForm, badge: e.target.value })}
+                  className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
                 <label className="font-bold uppercase tracking-wider">Description</label>
                 <textarea
                   required
@@ -1324,30 +1550,8 @@ export default function AdminDashboardPage() {
                   className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Badge (e.g. Popular)</label>
-                  <input
-                    type="text"
-                    required
-                    value={serviceForm.badge}
-                    onChange={(e) => setServiceForm({ ...serviceForm, badge: e.target.value })}
-                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Icon (Globe/QrCode/CreditCard)</label>
-                  <input
-                    type="text"
-                    required
-                    value={serviceForm.iconName}
-                    onChange={(e) => setServiceForm({ ...serviceForm, iconName: e.target.value })}
-                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
-                  />
-                </div>
-              </div>
               <div className="space-y-1">
-                <label className="font-bold uppercase tracking-wider">Key Features (comma separated)</label>
+                <label className="font-bold uppercase tracking-wider">Features (comma separated)</label>
                 <input
                   type="text"
                   required
@@ -1358,16 +1562,13 @@ export default function AdminDashboardPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Grid Width</label>
-                  <select
-                    value={serviceForm.colSpan}
-                    onChange={(e) => setServiceForm({ ...serviceForm, colSpan: e.target.value })}
+                  <label className="font-bold uppercase tracking-wider">Icon Name</label>
+                  <input
+                    type="text"
+                    value={serviceForm.iconName}
+                    onChange={(e) => setServiceForm({ ...serviceForm, iconName: e.target.value })}
                     className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
-                  >
-                    <option value="lg:col-span-1">1 Column</option>
-                    <option value="lg:col-span-2">2 Columns</option>
-                    <option value="lg:col-span-3">Full Width (3 Cols)</option>
-                  </select>
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="font-bold uppercase tracking-wider">Display Order</label>
@@ -1412,19 +1613,19 @@ export default function AdminDashboardPage() {
               </button>
             </div>
             <form onSubmit={handleSavePricing} className="space-y-3.5 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold uppercase tracking-wider">Plan Name</label>
-                <input
-                  type="text"
-                  required
-                  value={pricingForm.name}
-                  onChange={(e) => setPricingForm({ ...pricingForm, name: e.target.value })}
-                  className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
-                />
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Price (e.g. ₹1,999)</label>
+                  <label className="font-bold uppercase tracking-wider">Plan Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={pricingForm.name}
+                    onChange={(e) => setPricingForm({ ...pricingForm, name: e.target.value })}
+                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-wider">Price (e.g. ₹999)</label>
                   <input
                     type="text"
                     required
@@ -1433,22 +1634,19 @@ export default function AdminDashboardPage() {
                     className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="font-bold uppercase tracking-wider">Category</label>
-                  <select
-                    value={pricingForm.category}
-                    onChange={(e) => setPricingForm({ ...pricingForm, category: e.target.value })}
-                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
-                  >
-                    <option value="websites">Websites</option>
-                    <option value="local">Local Business</option>
-                    <option value="ecommerce">E-Commerce</option>
-                    <option value="combos">Combos</option>
-                    <option value="apps">Web Apps / SaaS</option>
-                    <option value="design-seo">Design & SEO</option>
-                    <option value="maintenance">Maintenance</option>
-                  </select>
-                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="font-bold uppercase tracking-wider">Category</label>
+                <select
+                  value={pricingForm.category}
+                  onChange={(e) => setPricingForm({ ...pricingForm, category: e.target.value })}
+                  className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                >
+                  <option value="websites" className="bg-[#14141A] text-white">Websites</option>
+                  <option value="local" className="bg-[#14141A] text-white">Local Business</option>
+                  <option value="ecommerce" className="bg-[#14141A] text-white">E-Commerce</option>
+                  <option value="maintenance" className="bg-[#14141A] text-white">Maintenance</option>
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="font-bold uppercase tracking-wider">Description</label>
@@ -1461,7 +1659,7 @@ export default function AdminDashboardPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold uppercase tracking-wider">Features Included (comma separated)</label>
+                <label className="font-bold uppercase tracking-wider">Features (comma separated)</label>
                 <input
                   type="text"
                   required
@@ -1524,6 +1722,98 @@ export default function AdminDashboardPage() {
                   className="px-5 py-2 rounded-xl bg-[#374BFF] text-white font-bold hover:bg-[#14141A] dark:hover:bg-[#CFFF04] dark:hover:text-[#14141A] transition-all cursor-pointer"
                 >
                   {submitting ? "Saving..." : "Save Plan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {statModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="font-heading text-xl font-bold">
+                {editingStat ? "Edit Site Stat" : "Add New Stat"}
+              </h3>
+              <button onClick={() => setStatModalOpen(false)} className="p-1 rounded-lg hover:bg-white/10 cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSaveStat} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-wider">Stat Key (unique id)</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={Boolean(editingStat)}
+                    value={statForm.key}
+                    onChange={(e) => setStatForm({ ...statForm, key: e.target.value })}
+                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm disabled:opacity-50"
+                    placeholder="e.g. hero_innovators"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-wider">Section</label>
+                  <select
+                    value={statForm.section}
+                    onChange={(e) => setStatForm({ ...statForm, section: e.target.value })}
+                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                  >
+                    <option value="hero" className="bg-[#14141A] text-white">Hero Section</option>
+                    <option value="why_us" className="bg-[#14141A] text-white">Why TrioCore Section</option>
+                    <option value="general" className="bg-[#14141A] text-white">General / Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-wider">Stat Value (e.g. 100%, 24/7, 15+)</label>
+                  <input
+                    type="text"
+                    required
+                    value={statForm.value}
+                    onChange={(e) => setStatForm({ ...statForm, value: e.target.value })}
+                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm font-mono font-bold"
+                    placeholder="e.g. 24/7"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold uppercase tracking-wider">Display Order</label>
+                  <input
+                    type="number"
+                    value={statForm.order}
+                    onChange={(e) => setStatForm({ ...statForm, order: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="font-bold uppercase tracking-wider">Label / Subtitle</label>
+                <input
+                  type="text"
+                  required
+                  value={statForm.label}
+                  onChange={(e) => setStatForm({ ...statForm, label: e.target.value })}
+                  className="w-full rounded-xl border border-white/20 bg-white/5 dark:bg-black/20 p-2.5 text-sm"
+                  placeholder="e.g. Direct Developer Access"
+                />
+              </div>
+              <div className="pt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStatModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-white/20 hover:bg-white/10 cursor-pointer font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl bg-[#374BFF] text-white font-bold hover:bg-[#14141A] dark:hover:bg-[#CFFF04] dark:hover:text-[#14141A] transition-all cursor-pointer"
+                >
+                  {submitting ? "Saving..." : "Save Stat"}
                 </button>
               </div>
             </form>

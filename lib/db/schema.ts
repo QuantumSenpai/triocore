@@ -67,6 +67,17 @@ export const pricingPlans = pgTable("pricing_plans", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const siteStats = pgTable("site_stats", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  section: text("section").notNull().default("hero"),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  label: text("label").notNull(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

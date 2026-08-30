@@ -5,26 +5,28 @@ import { useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CounterProps {
-  value: number;
+  value?: number;
   suffix?: string;
   prefix?: string;
   duration?: number;
   className?: string;
+  staticText?: string;
 }
 
 export function Counter({
-  value,
+  value = 0,
   suffix = "",
   prefix = "",
   duration = 2,
   className,
+  staticText,
 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-40px" });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || staticText) return;
 
     let start = 0;
     const end = value;
@@ -46,13 +48,34 @@ export function Counter({
     }, 1000 / 60);
 
     return () => clearInterval(counter);
-  }, [isInView, value, duration]);
+  }, [isInView, value, duration, staticText]);
+
+  if (staticText) {
+    return (
+      <span ref={ref} className={cn("tabular-nums", className)}>
+        {staticText}
+      </span>
+    );
+  }
+
+  const renderSuffix = () => {
+    if (!suffix) return null;
+    if (suffix.startsWith("/")) {
+      return (
+        <span className="inline-flex items-center">
+          <span className="mx-1 font-light opacity-80 select-none">/</span>
+          <span>{suffix.slice(1)}</span>
+        </span>
+      );
+    }
+    return suffix;
+  };
 
   return (
     <span ref={ref} className={cn("tabular-nums", className)}>
       {prefix}
       {count}
-      {suffix}
+      {renderSuffix()}
     </span>
   );
 }

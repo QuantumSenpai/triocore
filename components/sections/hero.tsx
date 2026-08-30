@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Code2, Cpu, Rocket, CheckCircle2 } from "lucide-react";
@@ -8,7 +9,69 @@ import { Counter } from "@/components/motion/counter";
 import { Reveal } from "@/components/motion/reveal";
 import { AnimatedGridBg } from "@/components/shared/animated-grid-bg";
 
+interface StatRecord {
+  id: string;
+  key: string;
+  value: string;
+  label: string;
+  section: string;
+  order: number;
+}
+
+const defaultHeroStats = [
+  { key: "hero_innovators", value: "3", label: "Core Innovators", icon: Code2 },
+  { key: "hero_services", value: "6", label: "Service Capabilities", icon: Cpu },
+  { key: "hero_projects", value: "15+", label: "Projects Engineered", icon: Rocket },
+];
+
 export function HeroSection() {
+  const [statsData, setStatsData] = useState(defaultHeroStats);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.stats && Array.isArray(data.stats)) {
+          const heroStatsFromDb = (data.stats as StatRecord[]).filter(
+            (s) => s.section === "hero" || s.key.startsWith("hero_")
+          );
+          if (heroStatsFromDb.length >= 3) {
+            setStatsData([
+              {
+                key: "hero_innovators",
+                value: heroStatsFromDb.find((s) => s.key === "hero_innovators")?.value || "3",
+                label: heroStatsFromDb.find((s) => s.key === "hero_innovators")?.label || "Core Innovators",
+                icon: Code2,
+              },
+              {
+                key: "hero_services",
+                value: heroStatsFromDb.find((s) => s.key === "hero_services")?.value || "6",
+                label: heroStatsFromDb.find((s) => s.key === "hero_services")?.label || "Service Capabilities",
+                icon: Cpu,
+              },
+              {
+                key: "hero_projects",
+                value: heroStatsFromDb.find((s) => s.key === "hero_projects")?.value || "15+",
+                label: heroStatsFromDb.find((s) => s.key === "hero_projects")?.label || "Projects Engineered",
+                icon: Rocket,
+              },
+            ]);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const renderStatValue = (valStr: string) => {
+    const trimmed = (valStr || "").trim();
+    const parsedNum = parseInt(trimmed, 10);
+    if (!isNaN(parsedNum) && !trimmed.includes("/")) {
+      const suffix = trimmed.replace(String(parsedNum), "");
+      return <Counter value={parsedNum} suffix={suffix} />;
+    }
+    return <span className="tabular-nums">{trimmed}</span>;
+  };
+
   return (
     <section className="relative min-h-[94vh] flex items-center justify-center pt-36 sm:pt-40 pb-24 sm:pb-28 px-5 sm:px-6 lg:px-8 overflow-hidden">
       <AnimatedGridBg showGrid={true} showOrbs={true} />
@@ -78,41 +141,25 @@ export function HeroSection() {
 
         <Reveal direction="up" delay={0.45} duration={0.6}>
           <div className="mt-16 sm:mt-20 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            <div className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/15 dark:border-[#374BFF]/25 hover:-translate-y-1.5 transition-transform duration-300">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Code2 className="h-5 w-5 text-[#374BFF]" />
-                <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] dark:text-[#F5F6FC] tracking-tight">
-                  <Counter value={3} />
-                </span>
-              </div>
-              <p className="text-xs uppercase tracking-widest font-bold text-[#14141A] dark:text-[#F5F6FC]/90">
-                Core Innovators
-              </p>
-            </div>
-
-            <div className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/15 dark:border-[#374BFF]/25 hover:-translate-y-1.5 transition-transform duration-300">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Cpu className="h-5 w-5 text-[#374BFF]" />
-                <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] dark:text-[#F5F6FC] tracking-tight">
-                  <Counter value={6} />
-                </span>
-              </div>
-              <p className="text-xs uppercase tracking-widest font-bold text-[#14141A] dark:text-[#F5F6FC]/90">
-                Service Capabilities
-              </p>
-            </div>
-
-            <div className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/15 dark:border-[#374BFF]/25 hover:-translate-y-1.5 transition-transform duration-300">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Rocket className="h-5 w-5 text-[#374BFF]" />
-                <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] dark:text-[#F5F6FC] tracking-tight">
-                  <Counter value={15} suffix="+" />
-                </span>
-              </div>
-              <p className="text-xs uppercase tracking-widest font-bold text-[#14141A] dark:text-[#F5F6FC]/90">
-                Projects Engineered
-              </p>
-            </div>
+            {statsData.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.key}
+                  className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/15 dark:border-[#374BFF]/25 hover:-translate-y-1.5 transition-transform duration-300"
+                >
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Icon className="h-5 w-5 text-[#374BFF]" />
+                    <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] dark:text-[#F5F6FC] tracking-tight">
+                      {renderStatValue(stat.value)}
+                    </span>
+                  </div>
+                  <p className="text-xs uppercase tracking-widest font-bold text-[#14141A] dark:text-[#F5F6FC]/90">
+                    {stat.label}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </Reveal>
 

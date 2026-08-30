@@ -7,16 +7,16 @@ import { verifyAdminSession } from "@/lib/auth-guard";
 export async function GET(req: NextRequest) {
   try {
     if (!db) {
-      return NextResponse.json({ team: mockTeamMembers });
+      return NextResponse.json({ team: mockTeamMembers, members: mockTeamMembers });
     }
 
     const data = await db.select().from(teamMembers).orderBy(asc(teamMembers.order));
     if (data.length === 0) {
-      return NextResponse.json({ team: mockTeamMembers });
+      return NextResponse.json({ team: mockTeamMembers, members: mockTeamMembers });
     }
-    return NextResponse.json({ team: data });
+    return NextResponse.json({ team: data, members: data });
   } catch (error) {
-    return NextResponse.json({ team: mockTeamMembers, error: (error as Error).message });
+    return NextResponse.json({ team: mockTeamMembers, members: mockTeamMembers, error: (error as Error).message });
   }
 }
 
