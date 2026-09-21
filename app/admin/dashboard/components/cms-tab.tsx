@@ -14,7 +14,11 @@ import {
   EyeOff,
   Save,
   Globe,
-  X
+  X,
+  Layers,
+  Image as ImageIcon,
+  CircleUser,
+  Link2
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -79,8 +83,10 @@ export function CmsTab({
   // Modals
   const [serviceModal, setServiceModal] = useState<AdminService | Partial<AdminService> | null>(null);
   const [pricingModal, setPricingModal] = useState<AdminPricingPlan | Partial<AdminPricingPlan> | null>(null);
+  const [pricingCategoryFilter, setPricingCategoryFilter] = useState<string>("all");
   const [statModal, setStatModal] = useState<AdminStat | Partial<AdminStat> | null>(null);
   const [projectModal, setProjectModal] = useState<AdminShowcaseProject | Partial<AdminShowcaseProject> | null>(null);
+  const [teamModal, setTeamModal] = useState<AdminTeamMember | Partial<AdminTeamMember> | null>(null);
   const [employeeModal, setEmployeeModal] = useState<AdminEmployee | Partial<AdminEmployee> | null>(null);
   const [faqModal, setFaqModal] = useState<AdminFaq | Partial<AdminFaq> | null>(null);
   const [categoryModal, setCategoryModal] = useState<AdminFaqCategory | Partial<AdminFaqCategory> | null>(null);
@@ -149,17 +155,54 @@ export function CmsTab({
     }
   };
 
-  // 4. Pricing Save
+  // 4. Pricing Save, Delete & Reorder
   const handleSavePricing = async (planData: Partial<AdminPricingPlan>) => {
     try {
       const method = planData.id ? "PUT" : "POST";
+      const featuresArray = Array.isArray(planData.features)
+        ? planData.features
+        : typeof planData.features === "string"
+        ? (planData.features as string).split("\n").map((f) => f.trim()).filter(Boolean)
+        : [];
+
       const res = await fetch("/api/admin/pricing", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(planData),
+        body: JSON.stringify({ ...planData, features: featuresArray }),
       });
-      if (!res.ok) throw new Error("Failed to save plan");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save plan");
+      }
       setPricingModal(null);
+      showSavedLive("/#pricing", "Pricing Section");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleDeletePricing = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this pricing plan?")) return;
+    try {
+      const res = await fetch(`/api/admin/pricing?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete pricing plan");
+      setPricingModal(null);
+      showSavedLive("/#pricing", "Pricing Section");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleReorderPricing = async (plan: AdminPricingPlan, delta: number) => {
+    try {
+      const newOrder = Math.max(0, (plan.order || 0) + delta);
+      await fetch("/api/admin/pricing", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...plan, order: newOrder }),
+      });
       showSavedLive("/#pricing", "Pricing Section");
       await onRefresh();
     } catch (err) {
@@ -185,7 +228,46 @@ export function CmsTab({
     }
   };
 
-  // 6. Project Reorder / Status
+  // 6. Project Save, Delete & Reorder
+  const handleSaveProject = async (projData: Partial<AdminShowcaseProject>) => {
+    try {
+      const method = projData.id ? "PUT" : "POST";
+      const techArray = Array.isArray(projData.tech)
+        ? projData.tech
+        : typeof projData.tech === "string"
+        ? (projData.tech as string).split(",").map((t) => t.trim()).filter(Boolean)
+        : [];
+
+      const res = await fetch("/api/admin/projects", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...projData, tech: techArray }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save project");
+      }
+      setProjectModal(null);
+      showSavedLive("/#showcase", "Showcase Projects");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this showcase project?")) return;
+    try {
+      const res = await fetch(`/api/admin/projects?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete project");
+      setProjectModal(null);
+      showSavedLive("/#showcase", "Showcase Projects");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
   const handleUpdateProjectStatus = async (proj: AdminShowcaseProject, newStatus: string) => {
     try {
       await fetch("/api/admin/projects", {
@@ -209,6 +291,61 @@ export function CmsTab({
         body: JSON.stringify({ ...proj, order: newOrder }),
       });
       showSavedLive("/#showcase", "Showcase Projects");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  // 7. Team Member Save, Delete & Reorder
+  const handleSaveTeamMember = async (memberData: Partial<AdminTeamMember>) => {
+    try {
+      const method = memberData.id ? "PUT" : "POST";
+      const skillsArray = Array.isArray(memberData.skills)
+        ? memberData.skills
+        : typeof memberData.skills === "string"
+        ? (memberData.skills as string).split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+
+      const res = await fetch("/api/admin/team", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...memberData, skills: skillsArray }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save team member");
+      }
+      setTeamModal(null);
+      showSavedLive("/#team", "Team Section");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleDeleteTeamMember = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this team member?")) return;
+    try {
+      const res = await fetch(`/api/admin/team?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete team member");
+      setTeamModal(null);
+      showSavedLive("/#team", "Team Section");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleReorderTeamMember = async (member: AdminTeamMember, delta: number) => {
+    try {
+      const newOrder = Math.max(0, (member.order || 0) + delta);
+      await fetch("/api/admin/team", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...member, order: newOrder }),
+      });
+      showSavedLive("/#team", "Team Section");
       await onRefresh();
     } catch (err) {
       toast.error((err as Error).message);
@@ -452,38 +589,157 @@ export function CmsTab({
 
       {/* SECTION: PRICING */}
       {activeSection === "pricing" && (
-        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-heading text-lg font-bold text-[#14141A]">Pricing Plans</h3>
+        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                Pricing Plans ({pricing.length})
+              </h3>
+              <p className="text-xs text-[#2B2B38]">
+                Add, edit, reorder sequence, and manage pricing tiers
+              </p>
+            </div>
             <button
-              onClick={() => setPricingModal({ name: "", price: "₹4,999", desc: "", category: "websites" })}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+              onClick={() => setPricingModal({ 
+                name: "", 
+                price: "₹9,999", 
+                originalPrice: "₹19,999",
+                savings: "50% OFF",
+                period: "one-time",
+                badge: "",
+                desc: "", 
+                category: "websites",
+                features: ["Responsive Design", "Fast Turnaround", "SSL & Domain Setup"],
+                order: pricing.length,
+                isPopular: false,
+                isBestValue: false
+              })}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs"
             >
               <Plus className="h-4 w-4" /> Add Plan
             </button>
           </div>
 
+          {/* Category Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#F5F6FC] border border-black/5">
+            {["all", "websites", "local", "ecommerce", "combos", "apps", "design-seo", "maintenance"].map((cat) => {
+              const count = cat === "all" ? pricing.length : pricing.filter(p => (p.category || "websites") === cat).length;
+              if (count === 0 && cat !== "all") return null;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setPricingCategoryFilter(cat)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    pricingCategoryFilter === cat
+                      ? "bg-white text-[#374BFF] shadow-xs"
+                      : "text-[#2B2B38] hover:text-[#14141A]"
+                  }`}
+                >
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)} ({count})
+                </button>
+              );
+            })}
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {pricing.map((p) => (
-              <div key={p.id} className="p-5 rounded-2xl bg-[#F5F6FC] border border-black/10 flex flex-col justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-[#374BFF] uppercase">{p.category}</span>
-                  <div className="flex justify-between items-baseline mt-1">
-                    <h4 className="font-heading text-sm font-bold text-[#14141A]">{p.name}</h4>
-                    <span className="font-mono font-bold text-[#14141A]">{p.price}</span>
+            {pricing
+              .filter((p) => pricingCategoryFilter === "all" || (p.category || "websites") === pricingCategoryFilter)
+              .map((p, idx) => (
+                <div key={p.id} className="p-5 rounded-2xl bg-[#F5F6FC] border border-black/10 flex flex-col justify-between hover:border-[#374BFF]/30 transition-all">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-bold text-[#374BFF] uppercase tracking-wider bg-white px-2 py-0.5 rounded-md border border-black/5">
+                          {p.category || "websites"}
+                        </span>
+                        {p.badge && (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
+                            {p.badge}
+                          </span>
+                        )}
+                        {p.isPopular && (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                            Popular
+                          </span>
+                        )}
+                        {p.isBestValue && (
+                          <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                            Best Value
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleReorderPricing(p, -1)}
+                          className="p-1 rounded-md border border-black/10 hover:bg-white text-[#14141A]"
+                          title="Move up"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => handleReorderPricing(p, 1)}
+                          className="p-1 rounded-md border border-black/10 hover:bg-white text-[#14141A]"
+                          title="Move down"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-1">
+                      <h4 className="font-heading text-base font-bold text-[#14141A]">{p.name}</h4>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="font-mono text-lg font-bold text-[#14141A]">{p.price}</span>
+                        {p.period && <span className="text-xs text-[#2B2B38]">{p.period}</span>}
+                        {p.originalPrice && (
+                          <span className="text-xs text-[#2B2B38]/60 line-through font-mono">
+                            {p.originalPrice}
+                          </span>
+                        )}
+                        {p.savings && (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            {p.savings}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[#2B2B38] mt-2.5 line-clamp-2">{p.desc}</p>
+
+                    {Array.isArray(p.features) && p.features.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-black/5 space-y-1">
+                        {p.features.slice(0, 3).map((f, i) => (
+                          <div key={i} className="flex items-center gap-1.5 text-[11px] text-[#2B2B38]">
+                            <Check className="h-3 w-3 text-emerald-600 flex-shrink-0" />
+                            <span className="truncate">{f}</span>
+                          </div>
+                        ))}
+                        {p.features.length > 3 && (
+                          <span className="text-[10px] text-[#374BFF] font-medium block pt-0.5">
+                            +{p.features.length - 3} more features
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-[#2B2B38] mt-2 line-clamp-2">{p.desc}</p>
+
+                  <div className="pt-3 border-t border-black/5 mt-4 flex items-center justify-between">
+                    <button
+                      onClick={() => handleDeletePricing(p.id)}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
+                      title="Delete Plan"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setPricingModal(p)}
+                      className="px-3 py-1.5 rounded-xl bg-white border border-black/10 hover:border-[#374BFF] text-[#374BFF] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit Plan
+                    </button>
+                  </div>
                 </div>
-                <div className="pt-3 border-t border-black/5 mt-3 flex justify-end">
-                  <button
-                    onClick={() => setPricingModal(p)}
-                    className="p-1.5 rounded-lg text-[#374BFF] hover:bg-white text-xs font-bold flex items-center gap-1"
-                  >
-                    <Pencil className="h-3.5 w-3.5" /> Edit
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
@@ -517,53 +773,132 @@ export function CmsTab({
 
       {/* SECTION: SHOWCASE PROJECTS */}
       {activeSection === "projects" && (
-        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Showcase Projects</h3>
-              <p className="text-xs text-[#2B2B38]">Reorder sequence • Publish/Unpublish toggle</p>
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                Showcase Projects ({projects.length})
+              </h3>
+              <p className="text-xs text-[#2B2B38]">
+                Add portfolio case studies, live demos, images, tech stack, and reorder sequence
+              </p>
             </div>
+            <button
+              onClick={() => setProjectModal({
+                title: "",
+                description: "",
+                imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800",
+                liveUrl: "https://triocore.vercel.app",
+                category: "Web",
+                status: "Completed",
+                tech: ["Next.js", "TypeScript", "Tailwind CSS"],
+                isPublished: true,
+                order: projects.length,
+              })}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs"
+            >
+              <Plus className="h-4 w-4" /> Add Project
+            </button>
           </div>
 
           <div className="space-y-3">
             {projects.map((p, idx) => (
-              <div key={p.id} className="p-4 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs font-bold text-[#2B2B38] w-6">
+              <div key={p.id} className="p-4 rounded-2xl bg-[#F5F6FC] border border-black/10 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#374BFF]/30 transition-all">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => handleReorderProject(p, -1)}
+                      className="p-1 rounded-lg border border-black/10 hover:bg-white text-[#14141A]"
+                      title="Move up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleReorderProject(p, 1)}
+                      className="p-1 rounded-lg border border-black/10 hover:bg-white text-[#14141A]"
+                      title="Move down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <span className="font-mono text-xs font-bold text-[#2B2B38] w-6 flex-shrink-0">
                     #{p.order !== undefined ? p.order : idx}
                   </span>
-                  <div>
-                    <h4 className="font-heading text-sm font-bold text-[#14141A]">{p.title}</h4>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      p.status === "Completed" ? "bg-emerald-100 text-emerald-700" : p.status === "Coming Soon" ? "bg-amber-100 text-amber-800" : "bg-zinc-200 text-zinc-700"
-                    }`}>
-                      {p.status}
-                    </span>
+
+                  {/* Thumbnail */}
+                  <div className="h-12 w-16 rounded-xl overflow-hidden bg-black/5 border border-black/10 flex-shrink-0 relative">
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt={p.title}
+                        className="h-full w-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-zinc-400">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-heading text-sm font-bold text-[#14141A] truncate">{p.title}</h4>
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-[#374BFF] border border-black/5">
+                        {p.category || "Web"}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        p.status === "Completed" ? "bg-emerald-100 text-emerald-700" : p.status === "Coming Soon" ? "bg-amber-100 text-amber-800" : p.status === "In Progress" ? "bg-blue-100 text-blue-700" : "bg-zinc-200 text-zinc-700"
+                      }`}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#2B2B38] truncate max-w-md mt-0.5">{p.description}</p>
+                    {Array.isArray(p.tech) && p.tech.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                        {p.tech.map((t, i) => (
+                          <span key={i} className="text-[9px] bg-white px-1.5 py-0.5 rounded text-[#2B2B38] border border-black/5">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleReorderProject(p, -1)}
-                    className="p-1 rounded-lg border border-black/10 hover:bg-white text-[#14141A]"
-                    title="Move up"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleReorderProject(p, 1)}
-                    className="p-1 rounded-lg border border-black/10 hover:bg-white text-[#14141A]"
-                    title="Move down"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </button>
+                <div className="flex items-center gap-2 self-end md:self-center flex-shrink-0">
+                  {p.liveUrl && (
+                    <a
+                      href={p.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1.5 rounded-xl border border-black/10 bg-white hover:bg-[#F5F6FC] text-[#2B2B38]"
+                      title="View live demo"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                   <button
                     onClick={() => handleUpdateProjectStatus(p, p.status === "Archived" ? "Completed" : "Archived")}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                      p.status === "Archived" ? "bg-emerald-600 text-white" : "border border-black/15 text-[#2B2B38] hover:bg-white"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      p.status === "Archived" ? "bg-emerald-600 text-white" : "border border-black/15 bg-white text-[#2B2B38] hover:bg-[#F5F6FC]"
                     }`}
                   >
                     {p.status === "Archived" ? "Publish" : "Unpublish"}
+                  </button>
+                  <button
+                    onClick={() => setProjectModal(p)}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-black/10 hover:border-[#374BFF] text-[#374BFF] text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProject(p.id)}
+                    className="p-1.5 rounded-xl text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                    title="Delete Project"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -574,44 +909,175 @@ export function CmsTab({
 
       {/* SECTION: TEAM & EMPLOYEES */}
       {activeSection === "team-emp" && (
-        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Employees Management</h3>
-              <p className="text-xs text-[#2B2B38]">
-                Hidden while empty • Appears after adding one • Hides again after delete
-              </p>
+        <div className="space-y-8">
+          {/* 1. Core Team Members */}
+          <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                  Core Team Members ({team.length})
+                </h3>
+                <p className="text-xs text-[#2B2B38]">
+                  Full control over founders, leadership, photos, roles, display order, and specialties
+                </p>
+              </div>
+              <button
+                onClick={() => setTeamModal({
+                  name: "",
+                  role: "Co-Founder & Engineering Lead",
+                  avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=new-lead",
+                  skills: ["Next.js", "TypeScript", "System Design"],
+                  order: team.length,
+                })}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="h-4 w-4" /> Add Team Member
+              </button>
             </div>
-            <button
-              onClick={() => setEmployeeModal({ name: "", role: "Engineering Associate", skills: "React, Node.js" })}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
-            >
-              <Plus className="h-4 w-4" /> Add Employee
-            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {team.map((member, idx) => (
+                <div key={member.id} className="p-5 rounded-2xl bg-[#F5F6FC] border border-black/10 flex flex-col justify-between hover:border-[#374BFF]/30 transition-all">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <span className="font-mono text-xs font-bold text-[#374BFF] bg-white px-2 py-0.5 rounded-md border border-black/5">
+                        #{member.order !== undefined ? member.order : idx}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleReorderTeamMember(member, -1)}
+                          className="p-1 rounded-md border border-black/10 hover:bg-white text-[#14141A]"
+                          title="Move up"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => handleReorderTeamMember(member, 1)}
+                          className="p-1 rounded-md border border-black/10 hover:bg-white text-[#14141A]"
+                          title="Move down"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-14 rounded-full overflow-hidden bg-white border-2 border-white shadow-xs flex-shrink-0 flex items-center justify-center">
+                        {member.avatarUrl ? (
+                          <img
+                            src={member.avatarUrl}
+                            alt={member.name}
+                            className="h-full w-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <CircleUser className="h-8 w-8 text-[#2B2B38]/40" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-heading text-sm font-bold text-[#14141A] truncate">{member.name}</h4>
+                        <p className="text-xs text-[#374BFF] font-semibold truncate">{member.role}</p>
+                      </div>
+                    </div>
+
+                    {/* Skills pills */}
+                    {Array.isArray(member.skills) && member.skills.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-black/5">
+                        {member.skills.map((s, i) => (
+                          <span key={i} className="text-[10px] bg-white px-2 py-0.5 rounded-md text-[#2B2B38] border border-black/5">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Social links */}
+                    {(member.githubUrl || member.linkedinUrl) && (
+                      <div className="flex items-center gap-2 mt-2.5">
+                        {member.githubUrl && (
+                          <a
+                            href={member.githubUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-[#2B2B38] hover:text-[#374BFF] flex items-center gap-1"
+                          >
+                            <Link2 className="h-3 w-3" /> GitHub
+                          </a>
+                        )}
+                        {member.linkedinUrl && (
+                          <a
+                            href={member.linkedinUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-[#2B2B38] hover:text-[#374BFF] flex items-center gap-1"
+                          >
+                            <Link2 className="h-3 w-3" /> LinkedIn
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-black/5 mt-4 flex items-center justify-between">
+                    <button
+                      onClick={() => handleDeleteTeamMember(member.id)}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
+                      title="Delete Member"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setTeamModal(member)}
+                      className="px-3 py-1.5 rounded-xl bg-white border border-black/10 hover:border-[#374BFF] text-[#374BFF] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit Member
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {employees.length > 0 ? (
-              employees.map((emp) => (
-                <div key={emp.id} className="p-4 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between">
-                  <div>
-                    <h4 className="font-heading text-sm font-bold text-[#14141A]">{emp.name}</h4>
-                    <p className="text-xs text-[#374BFF] font-semibold">{emp.role}</p>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteEmployee(emp.id)}
-                    className="p-1.5 rounded-lg text-red-500 hover:bg-white"
-                    title="Delete employee"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6 text-xs text-[#2B2B38] bg-[#F5F6FC] rounded-2xl p-4 border border-black/5">
-                No employees registered. The public Employees section on the website is currently <strong>hidden</strong>.
+          {/* 2. Employees Management */}
+          <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-[#14141A]">Employees & Associates ({employees.length})</h3>
+                <p className="text-xs text-[#2B2B38]">
+                  Hidden while empty • Appears on public site after adding members • Hides again after delete
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => setEmployeeModal({ name: "", role: "Engineering Associate", skills: "React, Node.js" })}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="h-4 w-4" /> Add Employee
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {employees.length > 0 ? (
+                employees.map((emp) => (
+                  <div key={emp.id} className="p-4 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-heading text-sm font-bold text-[#14141A]">{emp.name}</h4>
+                      <p className="text-xs text-[#374BFF] font-semibold">{emp.role}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteEmployee(emp.id)}
+                      className="p-1.5 rounded-lg text-red-500 hover:bg-white cursor-pointer"
+                      title="Delete employee"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-xs text-[#2B2B38] bg-[#F5F6FC] rounded-2xl p-4 border border-black/5">
+                  No employees registered. The public Employees section on the website is currently <strong>hidden</strong>.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -997,6 +1463,488 @@ export function CmsTab({
             <div className="flex gap-2 justify-end pt-2">
               <button onClick={() => setEmployeeModal(null)} className="px-3 py-1.5 rounded-xl border text-xs">Cancel</button>
               <button onClick={() => handleSaveEmployee(employeeModal)} className="px-3 py-1.5 rounded-xl bg-[#374BFF] text-white font-bold text-xs">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT PRICING PLAN */}
+      {pricingModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-black/10 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+              <h4 className="font-heading text-lg font-bold text-[#14141A]">
+                {pricingModal.id ? "Edit Pricing Plan" : "Add New Pricing Plan"}
+              </h4>
+              <button onClick={() => setPricingModal(null)} className="p-1 rounded-lg text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Plan Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Starter Launchpad"
+                  value={pricingModal.name || ""}
+                  onChange={(e) => setPricingModal({ ...pricingModal, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Category</label>
+                  <select
+                    value={pricingModal.category || "websites"}
+                    onChange={(e) => setPricingModal({ ...pricingModal, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                  >
+                    <option value="websites">Websites</option>
+                    <option value="local">Local Business</option>
+                    <option value="ecommerce">E-Commerce</option>
+                    <option value="combos">Combo Packages</option>
+                    <option value="apps">Web Apps & Custom</option>
+                    <option value="design-seo">Design & SEO</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Display Order</label>
+                  <input
+                    type="number"
+                    value={pricingModal.order ?? 0}
+                    onChange={(e) => setPricingModal({ ...pricingModal, order: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Price *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ₹4,999"
+                    value={pricingModal.price || ""}
+                    onChange={(e) => setPricingModal({ ...pricingModal, price: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono font-bold text-[#14141A]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Billing Period</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. one-time, /month"
+                    value={pricingModal.period || ""}
+                    onChange={(e) => setPricingModal({ ...pricingModal, period: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Original Price (Strikethrough)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. ₹9,999"
+                    value={pricingModal.originalPrice || ""}
+                    onChange={(e) => setPricingModal({ ...pricingModal, originalPrice: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Savings Tag</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 50% OFF"
+                    value={pricingModal.savings || ""}
+                    onChange={(e) => setPricingModal({ ...pricingModal, savings: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Badge</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Most Popular, Best Value, Limited Offer"
+                  value={pricingModal.badge || ""}
+                  onChange={(e) => setPricingModal({ ...pricingModal, badge: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Description *</label>
+                <textarea
+                  rows={2}
+                  placeholder="Short plan summary"
+                  value={pricingModal.desc || ""}
+                  onChange={(e) => setPricingModal({ ...pricingModal, desc: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Features (One per line)</label>
+                <textarea
+                  rows={4}
+                  placeholder="Responsive Mobile Design&#10;SSL Certificate Included&#10;SEO Foundation"
+                  value={Array.isArray(pricingModal.features) ? pricingModal.features.join("\n") : (pricingModal.features || "")}
+                  onChange={(e) => setPricingModal({ ...pricingModal, features: e.target.value.split("\n") })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                />
+              </div>
+
+              <div className="flex gap-4 pt-1">
+                <label className="flex items-center gap-2 text-xs font-medium text-[#14141A] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(pricingModal.isPopular)}
+                    onChange={(e) => setPricingModal({ ...pricingModal, isPopular: e.target.checked })}
+                    className="rounded text-[#374BFF]"
+                  />
+                  Mark as Most Popular
+                </label>
+                <label className="flex items-center gap-2 text-xs font-medium text-[#14141A] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(pricingModal.isBestValue)}
+                    onChange={(e) => setPricingModal({ ...pricingModal, isBestValue: e.target.checked })}
+                    className="rounded text-[#374BFF]"
+                  />
+                  Mark as Best Value
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-black/5">
+              {pricingModal.id ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeletePricing(pricingModal.id!)}
+                  className="px-3 py-1.5 rounded-xl text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPricingModal(null)}
+                  className="px-4 py-2 rounded-xl border border-black/15 bg-white text-xs font-bold text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSavePricing(pricingModal)}
+                  disabled={!pricingModal.name || !pricingModal.price || !pricingModal.desc}
+                  className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  Save Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT SHOWCASE PROJECT */}
+      {projectModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-black/10 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+              <h4 className="font-heading text-lg font-bold text-[#14141A]">
+                {projectModal.id ? "Edit Showcase Project" : "Add Showcase Project"}
+              </h4>
+              <button onClick={() => setProjectModal(null)} className="p-1 rounded-lg text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Project Title *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. RoboTrack Vision Platform"
+                  value={projectModal.title || ""}
+                  onChange={(e) => setProjectModal({ ...projectModal, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Category</label>
+                  <select
+                    value={projectModal.category || "Web"}
+                    onChange={(e) => setProjectModal({ ...projectModal, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                  >
+                    <option value="Web">Web</option>
+                    <option value="Apps">Apps</option>
+                    <option value="NFC">NFC</option>
+                    <option value="QR menu">QR menu</option>
+                    <option value="ML">ML</option>
+                    <option value="Robotics">Robotics</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Status</label>
+                  <select
+                    value={projectModal.status || "Completed"}
+                    onChange={(e) => setProjectModal({ ...projectModal, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                  >
+                    <option value="Completed">Completed</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Coming Soon">Coming Soon</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Live URL (Demo)</label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={projectModal.liveUrl || ""}
+                    onChange={(e) => setProjectModal({ ...projectModal, liveUrl: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Display Order</label>
+                  <input
+                    type="number"
+                    value={projectModal.order ?? 0}
+                    onChange={(e) => setProjectModal({ ...projectModal, order: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Image URL *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="https://images.unsplash.com/..."
+                    value={projectModal.imageUrl || ""}
+                    onChange={(e) => setProjectModal({ ...projectModal, imageUrl: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                  {projectModal.imageUrl && (
+                    <div className="h-10 w-14 rounded-lg overflow-hidden border border-black/10 bg-black/5 flex-shrink-0">
+                      <img
+                        src={projectModal.imageUrl}
+                        alt="Preview"
+                        className="h-full w-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Description *</label>
+                <textarea
+                  rows={3}
+                  placeholder="Brief project background, problem solved, impact"
+                  value={projectModal.description || ""}
+                  onChange={(e) => setProjectModal({ ...projectModal, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Tech Stack (Comma-separated)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Next.js, TypeScript, PostgreSQL, Tailwind"
+                  value={Array.isArray(projectModal.tech) ? projectModal.tech.join(", ") : (projectModal.tech || "")}
+                  onChange={(e) => setProjectModal({ ...projectModal, tech: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-black/5">
+              {projectModal.id ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteProject(projectModal.id!)}
+                  className="px-3 py-1.5 rounded-xl text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setProjectModal(null)}
+                  className="px-4 py-2 rounded-xl border border-black/15 bg-white text-xs font-bold text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveProject(projectModal)}
+                  disabled={!projectModal.title || !projectModal.description || !projectModal.imageUrl}
+                  className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  Save Project
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT TEAM MEMBER */}
+      {teamModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-black/10 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+              <h4 className="font-heading text-lg font-bold text-[#14141A]">
+                {teamModal.id ? "Edit Team Member" : "Add Team Member"}
+              </h4>
+              <button onClick={() => setTeamModal(null)} className="p-1 rounded-lg text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Krishnendu Adak"
+                  value={teamModal.name || ""}
+                  onChange={(e) => setTeamModal({ ...teamModal, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Role / Designation *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Co-Founder & Tech Lead"
+                    value={teamModal.role || ""}
+                    onChange={(e) => setTeamModal({ ...teamModal, role: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Display Order</label>
+                  <input
+                    type="number"
+                    value={teamModal.order ?? 0}
+                    onChange={(e) => setTeamModal({ ...teamModal, order: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Avatar Picture URL</label>
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full overflow-hidden border border-black/10 bg-[#F5F6FC] flex items-center justify-center flex-shrink-0">
+                    {teamModal.avatarUrl ? (
+                      <img
+                        src={teamModal.avatarUrl}
+                        alt={teamModal.name || "Avatar"}
+                        className="h-full w-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <CircleUser className="h-6 w-6 text-[#2B2B38]/50" />
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="https://api.dicebear.com/... or direct image link"
+                    value={teamModal.avatarUrl || ""}
+                    onChange={(e) => setTeamModal({ ...teamModal, avatarUrl: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Specialties & Skills (Comma-separated)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Next.js, Cloud Architectures, PostgreSQL, AI Systems"
+                  value={Array.isArray(teamModal.skills) ? teamModal.skills.join(", ") : (teamModal.skills || "")}
+                  onChange={(e) => setTeamModal({ ...teamModal, skills: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">GitHub Profile URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://github.com/..."
+                    value={teamModal.githubUrl || ""}
+                    onChange={(e) => setTeamModal({ ...teamModal, githubUrl: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">LinkedIn Profile URL</label>
+                  <input
+                    type="text"
+                    placeholder="https://linkedin.com/in/..."
+                    value={teamModal.linkedinUrl || ""}
+                    onChange={(e) => setTeamModal({ ...teamModal, linkedinUrl: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-black/5">
+              {teamModal.id ? (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTeamMember(teamModal.id!)}
+                  className="px-3 py-1.5 rounded-xl text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTeamModal(null)}
+                  className="px-4 py-2 rounded-xl border border-black/15 bg-white text-xs font-bold text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveTeamMember(teamModal)}
+                  disabled={!teamModal.name || !teamModal.role}
+                  className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  Save Member
+                </button>
+              </div>
             </div>
           </div>
         </div>
