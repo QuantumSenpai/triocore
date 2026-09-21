@@ -41,6 +41,7 @@ import type {
   AdminPricingPlan,
   AdminShowcaseProject,
   AdminFaq,
+  AdminFaqCategory,
   AdminLegalDoc,
   AdminNote,
   AdminFeedbackReport,
@@ -70,6 +71,7 @@ export default function AdminDashboardPage() {
   const [pricing, setPricing] = useState<AdminPricingPlan[]>([]);
   const [showcaseProjects, setShowcaseProjects] = useState<AdminShowcaseProject[]>([]);
   const [faqs, setFaqs] = useState<AdminFaq[]>([]);
+  const [faqCategories, setFaqCategories] = useState<AdminFaqCategory[]>([]);
   const [legalDocs, setLegalDocs] = useState<AdminLegalDoc[]>([]);
   const [notes, setNotes] = useState<AdminNote[]>([]);
   const [feedbackReports, setFeedbackReports] = useState<AdminFeedbackReport[]>([]);
@@ -171,9 +173,12 @@ export default function AdminDashboardPage() {
       const showRes = await fetch("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] }));
       setShowcaseProjects(showRes.projects || []);
 
-      // FAQs
+      // FAQs & Categories
       const faqRes = await fetch("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] }));
       setFaqs(faqRes.faqs || []);
+
+      const faqCatRes = await fetch("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] }));
+      setFaqCategories(faqCatRes.categories || []);
 
       // Legal
       const legalRes = await fetch("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] }));
@@ -393,6 +398,7 @@ export default function AdminDashboardPage() {
                 team={teamMembers}
                 employees={employees}
                 faqs={faqs}
+                faqCategories={faqCategories}
                 legalDocs={legalDocs}
                 onRefresh={loadAllData}
               />

@@ -184,11 +184,19 @@ export interface AdminShowcaseProject {
   order?: number;
 }
 
+export interface AdminFaqCategory {
+  id: string;
+  name: string;
+  slug: string;
+  order?: number;
+}
+
 export interface AdminFaq {
   id: string;
   question: string;
   answer: string;
   category?: string;
+  categoryId?: string | null;
   isHome?: boolean;
   order?: number;
 }

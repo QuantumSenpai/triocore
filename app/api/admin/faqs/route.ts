@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { question, answer, category, isHome, order } = body;
+    const { question, answer, category, categoryId, isHome, order } = body;
 
     if (!question || !answer) {
       return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       question,
       answer,
       category: category || "General",
+      categoryId: categoryId || null,
       isHome: isHome !== undefined ? Boolean(isHome) : true,
       order: Number(order) || 0,
     }).returning();
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
         action: "CREATE_FAQ",
         entityType: "faqs",
         entityId: newFaq[0].id,
-        details: { question, category },
+        details: { question, category, categoryId },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
@@ -73,7 +74,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, question, answer, category, isHome, order } = body;
+    const { id, question, answer, category, categoryId, isHome, order } = body;
 
     if (!id || !question || !answer) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -85,6 +86,7 @@ export async function PUT(req: NextRequest) {
       question,
       answer,
       category: category || "General",
+      categoryId: categoryId !== undefined ? categoryId : null,
       isHome: isHome !== undefined ? Boolean(isHome) : true,
       order: Number(order) || 0,
     }).where(eq(faqs.id, id)).returning();

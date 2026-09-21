@@ -20,6 +20,7 @@ import {
   getPricingContent,
   getFaqContent,
   getWhyUsStats,
+  getFaqCategories,
 } from "@/lib/dal/content";
 
 export const revalidate = 0;
@@ -34,6 +35,7 @@ export default async function MarketingPage() {
     pricing,
     faqs,
     whyUsStats,
+    faqCategories,
   ] = await Promise.all([
     getHeroContent(),
     getServicesContent(),
@@ -43,6 +45,7 @@ export default async function MarketingPage() {
     getPricingContent(),
     getFaqContent(),
     getWhyUsStats(),
+    getFaqCategories(),
   ]);
 
   return (
@@ -55,7 +58,7 @@ export default async function MarketingPage() {
       <InnovationLabSection />
       <ShowcaseGridSection initialProjects={showcase} />
       <WhyUsSection initialStats={whyUsStats} />
-      <FAQSection initialFaqs={faqs} />
+      <FAQSection initialFaqs={faqs} initialCategories={faqCategories} />
       <RoadmapSection />
       <TechMarqueeSection />
       <ContactFormSection />

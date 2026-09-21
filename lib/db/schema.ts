@@ -204,11 +204,20 @@ export const employees = pgTable("employees", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const faqCategories = pgTable("faq_categories", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const faqs = pgTable("faqs", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   question: text("question").notNull(),
   answer: text("answer").notNull(),
   category: text("category").notNull().default("general"),
+  categoryId: text("category_id").references(() => faqCategories.id, { onDelete: "set null" }),
   isHome: boolean("is_home").notNull().default(true),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

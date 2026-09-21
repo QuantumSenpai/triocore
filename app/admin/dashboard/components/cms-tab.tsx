@@ -26,6 +26,7 @@ import type {
   AdminTeamMember,
   AdminEmployee,
   AdminFaq,
+  AdminFaqCategory,
   AdminLegalDoc,
 } from "@/types/admin";
 
@@ -40,6 +41,7 @@ interface CmsTabProps {
   team: AdminTeamMember[];
   employees: AdminEmployee[];
   faqs: AdminFaq[];
+  faqCategories: AdminFaqCategory[];
   legalDocs: AdminLegalDoc[];
   onRefresh: () => Promise<void>;
 }
@@ -53,6 +55,7 @@ export function CmsTab({
   team,
   employees,
   faqs,
+  faqCategories = [],
   legalDocs,
   onRefresh,
 }: CmsTabProps) {
@@ -80,6 +83,7 @@ export function CmsTab({
   const [projectModal, setProjectModal] = useState<AdminShowcaseProject | Partial<AdminShowcaseProject> | null>(null);
   const [employeeModal, setEmployeeModal] = useState<AdminEmployee | Partial<AdminEmployee> | null>(null);
   const [faqModal, setFaqModal] = useState<AdminFaq | Partial<AdminFaq> | null>(null);
+  const [categoryModal, setCategoryModal] = useState<AdminFaqCategory | Partial<AdminFaqCategory> | null>(null);
   const [legalModal, setLegalModal] = useState<AdminLegalDoc | Partial<AdminLegalDoc> | null>(null);
 
   const showSavedLive = (liveUrl: string, label: string) => {
@@ -261,6 +265,44 @@ export function CmsTab({
     try {
       await fetch(`/api/admin/faqs?id=${id}`, { method: "DELETE" });
       showSavedLive("/#faq", "FAQ Section");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  // 8b. FAQ Category Save / Delete
+  const handleSaveCategory = async (catData: Partial<AdminFaqCategory>) => {
+    try {
+      const method = catData.id ? "PUT" : "POST";
+      const res = await fetch("/api/admin/faq-categories", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(catData),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save category");
+      }
+      setCategoryModal(null);
+      toast.success("FAQ category saved");
+      showSavedLive("/faq", "FAQ Categories");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this category? FAQs using it will revert to general.")) return;
+    try {
+      const res = await fetch(`/api/admin/faq-categories?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete category");
+      }
+      toast.success("FAQ category deleted");
+      showSavedLive("/faq", "FAQ Categories");
       await onRefresh();
     } catch (err) {
       toast.error((err as Error).message);
@@ -580,14 +622,57 @@ export function CmsTab({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-heading text-lg font-bold text-[#14141A]">Frequently Asked Questions</h3>
-              <p className="text-xs text-[#2B2B38]">Exactly 5 default essentials • Add / Edit / Reorder / Delete</p>
+              <p className="text-xs text-[#2B2B38]">Categorized essentials • Add / Edit / Reorder / Delete</p>
             </div>
-            <button
-              onClick={() => setFaqModal({ question: "", answer: "", category: "General", isHome: true })}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
-            >
-              <Plus className="h-4 w-4" /> Add FAQ
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCategoryModal({ name: "", slug: "", order: faqCategories.length + 1 })}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-black/15 bg-white text-[#14141A] text-xs font-bold hover:bg-[#F5F6FC] transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Category
+              </button>
+              <button
+                onClick={() => setFaqModal({ question: "", answer: "", category: faqCategories[0]?.name || "General", categoryId: faqCategories[0]?.id || null, isHome: true })}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> Add FAQ
+              </button>
+            </div>
+          </div>
+
+          {/* FAQ Categories Management */}
+          <div className="p-4 rounded-2xl bg-[#F5F6FC] border border-black/10 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#14141A]">Categories ({faqCategories.length})</span>
+              <span className="text-[11px] text-[#2B2B38]">Click edit or delete to manage tabs</span>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {faqCategories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-black/10 text-xs font-medium text-[#14141A]"
+                >
+                  <span>{cat.name}</span>
+                  <button
+                    onClick={() => setCategoryModal(cat)}
+                    className="p-0.5 hover:text-[#374BFF] cursor-pointer"
+                    title="Edit category"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(cat.id)}
+                    className="p-0.5 hover:text-red-500 cursor-pointer"
+                    title="Delete category"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {faqCategories.length === 0 && (
+                <span className="text-xs text-[#2B2B38] italic">No categories created yet.</span>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -778,24 +863,113 @@ export function CmsTab({
       {faqModal && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full border border-black/10 space-y-3">
-            <h4 className="font-heading text-base font-bold">FAQ Item</h4>
-            <input
-              type="text"
-              placeholder="Question"
-              value={faqModal.question}
-              onChange={(e) => setFaqModal({ ...faqModal, question: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold"
-            />
-            <textarea
-              rows={4}
-              placeholder="Answer"
-              value={faqModal.answer}
-              onChange={(e) => setFaqModal({ ...faqModal, answer: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
-            />
+            <h4 className="font-heading text-base font-bold text-[#14141A]">FAQ Item</h4>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Category</label>
+              <select
+                value={faqModal.categoryId || (faqCategories.find(c => c.name.toLowerCase() === faqModal.category?.toLowerCase())?.id || "")}
+                onChange={(e) => {
+                  const catId = e.target.value;
+                  const cat = faqCategories.find(c => c.id === catId);
+                  setFaqModal({
+                    ...faqModal,
+                    categoryId: catId || null,
+                    category: cat ? cat.name : (faqModal.category || "General"),
+                  });
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+              >
+                <option value="">-- Choose Category --</option>
+                {faqCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Question</label>
+              <input
+                type="text"
+                placeholder="Question"
+                value={faqModal.question || ""}
+                onChange={(e) => setFaqModal({ ...faqModal, question: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Answer</label>
+              <textarea
+                rows={4}
+                placeholder="Answer"
+                value={faqModal.answer || ""}
+                onChange={(e) => setFaqModal({ ...faqModal, answer: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+              />
+            </div>
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setFaqModal(null)} className="px-3 py-1.5 rounded-xl border text-xs">Cancel</button>
-              <button onClick={() => handleSaveFaq(faqModal)} className="px-3 py-1.5 rounded-xl bg-[#374BFF] text-white font-bold text-xs">Save</button>
+              <button onClick={() => setFaqModal(null)} className="px-3 py-1.5 rounded-xl border text-xs cursor-pointer">Cancel</button>
+              <button onClick={() => handleSaveFaq(faqModal)} className="px-3 py-1.5 rounded-xl bg-[#374BFF] text-white font-bold text-xs cursor-pointer">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT FAQ CATEGORY */}
+      {categoryModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-black/10 space-y-3">
+            <h4 className="font-heading text-base font-bold text-[#14141A]">
+              {categoryModal.id ? "Edit Category" : "New FAQ Category"}
+            </h4>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Category Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Hosting & Support"
+                value={categoryModal.name || ""}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+                  setCategoryModal({
+                    ...categoryModal,
+                    name,
+                    slug: categoryModal.slug || autoSlug,
+                  });
+                }}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Slug</label>
+              <input
+                type="text"
+                placeholder="e.g. hosting-support"
+                value={categoryModal.slug || ""}
+                onChange={(e) => setCategoryModal({ ...categoryModal, slug: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Display Order</label>
+              <input
+                type="number"
+                value={categoryModal.order ?? 0}
+                onChange={(e) => setCategoryModal({ ...categoryModal, order: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs"
+              />
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <button onClick={() => setCategoryModal(null)} className="px-3 py-1.5 rounded-xl border text-xs cursor-pointer">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSaveCategory(categoryModal)}
+                disabled={!categoryModal.name?.trim()}
+                className="px-3 py-1.5 rounded-xl bg-[#374BFF] text-white font-bold text-xs disabled:opacity-50 cursor-pointer"
+              >
+                Save Category
+              </button>
             </div>
           </div>
         </div>

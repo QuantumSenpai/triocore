@@ -1,4 +1,4 @@
-import { getFaqContent } from "@/lib/dal/content";
+import { getFaqContent, getFaqCategories } from "@/lib/dal/content";
 import { FAQSection } from "@/components/sections/faq";
 import type { Metadata } from "next";
 
@@ -11,11 +11,14 @@ export const metadata: Metadata = {
 };
 
 export default async function FAQPage() {
-  const dbFaqs = await getFaqContent();
+  const [dbFaqs, dbCategories] = await Promise.all([
+    getFaqContent(),
+    getFaqCategories(),
+  ]);
 
   return (
     <div className="py-16 sm:py-24">
-      <FAQSection initialFaqs={dbFaqs} />
+      <FAQSection initialFaqs={dbFaqs} initialCategories={dbCategories} />
     </div>
   );
 }

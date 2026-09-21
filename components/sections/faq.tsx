@@ -4,11 +4,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, HelpCircle, ShieldCheck, Search } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
-import { faqItems } from "@/lib/data/site-content";
 import { cn } from "@/lib/utils";
 
 export interface FAQSectionProps {
-  initialFaqs?: { id: string; question: string; answer: string; category: string; order?: number }[];
+  initialFaqs?: { id: string; question: string; answer: string; category: string; categoryId?: string | null; order?: number }[];
+  initialCategories?: { id: string; name: string; slug: string; order?: number }[];
 }
 
 const defaultEssentialFaqs = [
@@ -44,25 +44,29 @@ const defaultEssentialFaqs = [
   },
 ];
 
-export function FAQSection({ initialFaqs }: FAQSectionProps) {
+export function FAQSection({ initialFaqs, initialCategories }: FAQSectionProps) {
   const faqs = (initialFaqs && initialFaqs.length > 0) ? initialFaqs : defaultEssentialFaqs;
   const [openId, setOpenId] = useState<string | null>(faqs[0]?.id || null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  const categories = ["All", "About TrioCore", "Process", "Pricing", "Technical", "Trust", "Support", "Legal"];
+  const categories = initialCategories && initialCategories.length > 0
+    ? ["All", ...initialCategories.map((c) => c.name)]
+    : ["All", "Pricing", "Timeline", "Code Ownership", "Revisions", "Hosting & Support"];
 
   const filteredFaqs = faqs.filter((item) => {
-    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "All" ||
+      item.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch = 
       item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.answer.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
- const toggleFAQ = (id: string) => {
- setOpenId((prev) => (prev === id ? null : id));
- };
+  const toggleFAQ = (id: string) => {
+    setOpenId((prev) => (prev === id ? null : id));
+  };
 
  return (
  <section id="faq" className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">

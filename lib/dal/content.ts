@@ -7,6 +7,7 @@ import {
   teamMembers,
   employees,
   faqs,
+  faqCategories,
   siteStats,
   legalDocuments,
   contentRevisions,
@@ -257,17 +258,43 @@ export async function getFaqContent(): Promise<FaqItem[]> {
       .where(eq(faqs.isHome, true))
       .orderBy(asc(faqs.order));
 
-    if (rows.length === 0) return fallback;
     return rows.map((r) => ({
       id: r.id,
       question: r.question,
       answer: r.answer,
       category: r.category,
+      categoryId: r.categoryId,
       order: r.order,
     }));
   } catch (error) {
     console.warn("DAL fallback: getFaqContent returned defaults:", (error as Error).message);
     return fallback;
+  }
+}
+
+export async function getFaqCategories() {
+  const fallbackCategories = [
+    { id: "faq-cat-pricing", name: "Pricing", slug: "pricing", order: 1 },
+    { id: "faq-cat-timeline", name: "Timeline", slug: "timeline", order: 2 },
+    { id: "faq-cat-code-ownership", name: "Code Ownership", slug: "code-ownership", order: 3 },
+    { id: "faq-cat-revisions", name: "Revisions", slug: "revisions", order: 4 },
+    { id: "faq-cat-hosting-support", name: "Hosting & Support", slug: "hosting-support", order: 5 },
+  ];
+
+  if (!db) return fallbackCategories;
+
+  try {
+    const rows = await db.select().from(faqCategories).orderBy(asc(faqCategories.order));
+    if (rows.length === 0) return fallbackCategories;
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      order: r.order,
+    }));
+  } catch (err) {
+    console.warn("DAL fallback: getFaqCategories returned defaults:", (err as Error).message);
+    return fallbackCategories;
   }
 }
 
