@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, mockPricingPlans } from "@/lib/db";
-import { pricingPlans } from "@/lib/db/schema";
+import { pricingPlans, auditLogs, contentRevisions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req: NextRequest) {
+  const authCheck = await verifyAdminSession(req);
+  if (!authCheck.authorized) return authCheck.response!;
+
   try {
     if (!db) {
       return NextResponse.json({ plans: mockPricingPlans, pricing: mockPricingPlans });
@@ -71,6 +75,27 @@ export async function POST(req: NextRequest) {
       order: Number(order) || 0,
     }).returning();
 
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "CREATE_PRICING_PLAN",
+        entityType: "pricing_plans",
+        entityId: newPlan[0].id,
+        details: { name, price },
+        createdAt: now,
+      });
+      await db.insert(contentRevisions).values({
+        section: "pricing",
+        data: newPlan[0],
+        createdBy: authCheck.user?.email || "admin",
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true, plan: newPlan[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -114,6 +139,27 @@ export async function PUT(req: NextRequest) {
       order: Number(order) || 0,
     }).where(eq(pricingPlans.id, id)).returning();
 
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "UPDATE_PRICING_PLAN",
+        entityType: "pricing_plans",
+        entityId: id,
+        details: { name, price },
+        createdAt: now,
+      });
+      await db.insert(contentRevisions).values({
+        section: "pricing",
+        data: updated[0],
+        createdBy: authCheck.user?.email || "admin",
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true, plan: updated[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -137,6 +183,22 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.delete(pricingPlans).where(eq(pricingPlans.id, id));
+
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "DELETE_PRICING_PLAN",
+        entityType: "pricing_plans",
+        entityId: id,
+        details: { id },
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

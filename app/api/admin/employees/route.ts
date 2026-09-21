@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, mockTeamMembers } from "@/lib/db";
-import { teamMembers, auditLogs, contentRevisions } from "@/lib/db/schema";
+import { db } from "@/lib/db";
+import { employees, auditLogs, contentRevisions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
@@ -10,17 +10,11 @@ export async function GET(req: NextRequest) {
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
-    if (!db) {
-      return NextResponse.json({ members: mockTeamMembers, team: mockTeamMembers });
-    }
-
-    const data = await db.select().from(teamMembers).orderBy(asc(teamMembers.order));
-    if (data.length === 0) {
-      return NextResponse.json({ members: mockTeamMembers, team: mockTeamMembers });
-    }
-    return NextResponse.json({ members: data, team: data });
+    if (!db) return NextResponse.json({ employees: [] });
+    const data = await db.select().from(employees).orderBy(asc(employees.order));
+    return NextResponse.json({ employees: data });
   } catch (error) {
-    return NextResponse.json({ members: mockTeamMembers, team: mockTeamMembers, error: (error as Error).message });
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
@@ -30,15 +24,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, role, avatarUrl, skills, projects, githubUrl, linkedinUrl, isPlaceholder, order } = body;
+    const { name, role, email, phone, avatarUrl, skills, order } = body;
 
     if (!name || !role) {
       return NextResponse.json({ error: "Name and role are required" }, { status: 400 });
     }
 
-    if (!db) {
-      return NextResponse.json({ success: true, message: "Database not connected" });
-    }
+    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
     const skillsArray = Array.isArray(skills)
       ? skills
@@ -46,14 +38,12 @@ export async function POST(req: NextRequest) {
       ? skills.split(",").map((s: string) => s.trim()).filter(Boolean)
       : [];
 
-    const newMember = await db.insert(teamMembers).values({
+    const newEmp = await db.insert(employees).values({
       name,
       role,
       avatarUrl: avatarUrl || "",
       skills: skillsArray,
-      projects: projects || [],
-      githubUrl: githubUrl || null,
-      linkedinUrl: linkedinUrl || null,
+      projects: [],
       order: Number(order) || 0,
     }).returning();
 
@@ -61,15 +51,15 @@ export async function POST(req: NextRequest) {
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "CREATE_TEAM_MEMBER",
-        entityType: "team_members",
-        entityId: newMember[0].id,
+        action: "CREATE_EMPLOYEE",
+        entityType: "employees",
+        entityId: newEmp[0].id,
         details: { name, role },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
-        section: "team",
-        data: newMember[0],
+        section: "employees",
+        data: newEmp[0],
         createdBy: authCheck.user?.email || "admin",
         createdAt: now,
       });
@@ -78,7 +68,7 @@ export async function POST(req: NextRequest) {
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
 
-    return NextResponse.json({ success: true, member: newMember[0] });
+    return NextResponse.json({ success: true, employee: newEmp[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
@@ -90,15 +80,13 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, name, role, avatarUrl, skills, projects, githubUrl, linkedinUrl, isPlaceholder, order } = body;
+    const { id, name, role, avatarUrl, skills, order } = body;
 
     if (!id || !name || !role) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!db) {
-      return NextResponse.json({ success: true, message: "Database not connected" });
-    }
+    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
     const skillsArray = Array.isArray(skills)
       ? skills
@@ -106,29 +94,26 @@ export async function PUT(req: NextRequest) {
       ? skills.split(",").map((s: string) => s.trim()).filter(Boolean)
       : [];
 
-    const updated = await db.update(teamMembers).set({
+    const updated = await db.update(employees).set({
       name,
       role,
       avatarUrl: avatarUrl || "",
       skills: skillsArray,
-      projects: projects || [],
-      githubUrl: githubUrl || null,
-      linkedinUrl: linkedinUrl || null,
       order: Number(order) || 0,
-    }).where(eq(teamMembers.id, id)).returning();
+    }).where(eq(employees.id, id)).returning();
 
     const now = new Date();
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "UPDATE_TEAM_MEMBER",
-        entityType: "team_members",
+        action: "UPDATE_EMPLOYEE",
+        entityType: "employees",
         entityId: id,
         details: { name, role, order },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
-        section: "team",
+        section: "employees",
         data: updated[0],
         createdBy: authCheck.user?.email || "admin",
         createdAt: now,
@@ -138,7 +123,7 @@ export async function PUT(req: NextRequest) {
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
 
-    return NextResponse.json({ success: true, member: updated[0] });
+    return NextResponse.json({ success: true, employee: updated[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
@@ -152,22 +137,17 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing member ID" }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: "Missing employee ID" }, { status: 400 });
+    if (!db) return NextResponse.json({ success: true });
 
-    if (!db) {
-      return NextResponse.json({ success: true });
-    }
-
-    await db.delete(teamMembers).where(eq(teamMembers.id, id));
+    await db.delete(employees).where(eq(employees.id, id));
 
     const now = new Date();
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "DELETE_TEAM_MEMBER",
-        entityType: "team_members",
+        action: "DELETE_EMPLOYEE",
+        entityType: "employees",
         entityId: id,
         details: { id },
         createdAt: now,

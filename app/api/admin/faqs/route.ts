@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, mockSiteStats } from "@/lib/db";
-import { siteStats, auditLogs, contentRevisions } from "@/lib/db/schema";
+import { db } from "@/lib/db";
+import { faqs, auditLogs, contentRevisions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
@@ -10,17 +10,11 @@ export async function GET(req: NextRequest) {
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
-    if (!db) {
-      return NextResponse.json({ stats: mockSiteStats });
-    }
-
-    const data = await db.select().from(siteStats).orderBy(asc(siteStats.order));
-    if (data.length === 0) {
-      return NextResponse.json({ stats: mockSiteStats });
-    }
-    return NextResponse.json({ stats: data });
+    if (!db) return NextResponse.json({ faqs: [] });
+    const data = await db.select().from(faqs).orderBy(asc(faqs.order));
+    return NextResponse.json({ faqs: data });
   } catch (error) {
-    return NextResponse.json({ stats: mockSiteStats, error: (error as Error).message });
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
@@ -30,42 +24,35 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { key, value, label, section = "hero", order = 0 } = body;
+    const { question, answer, category, isHome, order } = body;
 
-    if (!key || !value || !label) {
-      return NextResponse.json({ error: "Key, value, and label are required" }, { status: 400 });
+    if (!question || !answer) {
+      return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
     }
 
-    if (!db) {
-      return NextResponse.json({ success: true, message: "Database not connected" });
-    }
+    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
-    const id = `stat-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    const newStat = await db
-      .insert(siteStats)
-      .values({
-        id,
-        key,
-        value,
-        label,
-        section,
-        order: Number(order) || 0,
-      })
-      .returning();
+    const newFaq = await db.insert(faqs).values({
+      question,
+      answer,
+      category: category || "General",
+      isHome: isHome !== undefined ? Boolean(isHome) : true,
+      order: Number(order) || 0,
+    }).returning();
 
     const now = new Date();
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "CREATE_STAT",
-        entityType: "site_stats",
-        entityId: newStat[0].id,
-        details: { key, value, label },
+        action: "CREATE_FAQ",
+        entityType: "faqs",
+        entityId: newFaq[0].id,
+        details: { question, category },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
-        section: "stats",
-        data: newStat[0],
+        section: "faqs",
+        data: newFaq[0],
         createdBy: authCheck.user?.email || "admin",
         createdAt: now,
       });
@@ -74,7 +61,7 @@ export async function POST(req: NextRequest) {
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
 
-    return NextResponse.json({ success: true, stat: newStat[0] });
+    return NextResponse.json({ success: true, faq: newFaq[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
@@ -86,40 +73,34 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, key, value, label, section = "hero", order = 0 } = body;
+    const { id, question, answer, category, isHome, order } = body;
 
-    if (!id || !value || !label) {
+    if (!id || !question || !answer) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (!db) {
-      return NextResponse.json({ success: true, message: "Database not connected" });
-    }
+    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
-    const updated = await db
-      .update(siteStats)
-      .set({
-        value,
-        label,
-        section,
-        order: Number(order) || 0,
-        updatedAt: new Date(),
-      })
-      .where(eq(siteStats.id, id))
-      .returning();
+    const updated = await db.update(faqs).set({
+      question,
+      answer,
+      category: category || "General",
+      isHome: isHome !== undefined ? Boolean(isHome) : true,
+      order: Number(order) || 0,
+    }).where(eq(faqs.id, id)).returning();
 
     const now = new Date();
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "UPDATE_STAT",
-        entityType: "site_stats",
+        action: "UPDATE_FAQ",
+        entityType: "faqs",
         entityId: id,
-        details: { key, value, label },
+        details: { question, category, order },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
-        section: "stats",
+        section: "faqs",
         data: updated[0],
         createdBy: authCheck.user?.email || "admin",
         createdAt: now,
@@ -129,7 +110,7 @@ export async function PUT(req: NextRequest) {
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
 
-    return NextResponse.json({ success: true, stat: updated[0] });
+    return NextResponse.json({ success: true, faq: updated[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
@@ -143,22 +124,17 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing stat ID" }, { status: 400 });
-    }
+    if (!id) return NextResponse.json({ error: "Missing FAQ ID" }, { status: 400 });
+    if (!db) return NextResponse.json({ success: true });
 
-    if (!db) {
-      return NextResponse.json({ success: true });
-    }
-
-    await db.delete(siteStats).where(eq(siteStats.id, id));
+    await db.delete(faqs).where(eq(faqs.id, id));
 
     const now = new Date();
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
-        action: "DELETE_STAT",
-        entityType: "site_stats",
+        action: "DELETE_FAQ",
+        entityType: "faqs",
         entityId: id,
         details: { id },
         createdAt: now,

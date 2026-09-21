@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, mockShowcaseProjects } from "@/lib/db";
-import { showcaseProjects } from "@/lib/db/schema";
+import { showcaseProjects, auditLogs, contentRevisions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req: NextRequest) {
+  const authCheck = await verifyAdminSession(req);
+  if (!authCheck.authorized) return authCheck.response!;
+
   try {
     if (!db) {
       return NextResponse.json({ projects: mockShowcaseProjects });
@@ -52,6 +56,27 @@ export async function POST(req: NextRequest) {
       order: Number(order) || 0,
     }).returning();
 
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "CREATE_SHOWCASE_PROJECT",
+        entityType: "showcase_projects",
+        entityId: newProject[0].id,
+        details: { title, status },
+        createdAt: now,
+      });
+      await db.insert(contentRevisions).values({
+        section: "showcase_projects",
+        data: newProject[0],
+        createdBy: authCheck.user?.email || "admin",
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true, project: newProject[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -90,6 +115,27 @@ export async function PUT(req: NextRequest) {
       order: Number(order) || 0,
     }).where(eq(showcaseProjects.id, id)).returning();
 
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "UPDATE_SHOWCASE_PROJECT",
+        entityType: "showcase_projects",
+        entityId: id,
+        details: { title, status, order },
+        createdAt: now,
+      });
+      await db.insert(contentRevisions).values({
+        section: "showcase_projects",
+        data: updated[0],
+        createdBy: authCheck.user?.email || "admin",
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true, project: updated[0] });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -113,6 +159,22 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.delete(showcaseProjects).where(eq(showcaseProjects.id, id));
+
+    const now = new Date();
+    try {
+      await db.insert(auditLogs).values({
+        userId: authCheck.user?.id || null,
+        action: "DELETE_SHOWCASE_PROJECT",
+        entityType: "showcase_projects",
+        entityId: id,
+        details: { id },
+        createdAt: now,
+      });
+    } catch {}
+
+    revalidatePath("/", "layout");
+    revalidatePath("/(marketing)", "layout");
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

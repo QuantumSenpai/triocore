@@ -57,7 +57,7 @@ export async function POST(req: Request) {
           email: data.email,
           phone: data.phone || null,
           service: data.service,
-          budget: null,
+          budget: data.budget || null,
           message: data.message,
         });
       } catch (dbErr) {
