@@ -1,18 +1,29 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import {
   hashWithRateLimitSecret,
   checkLockout,
   recordFailedAttempt,
   resetLockout,
 } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
+import { authLockouts } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
 describe("Rate Limiter & Lockout System", () => {
   const testIp = "192.168.1.100";
-  const testEmail = "intruder@example.com";
+  const testEmail = "intruder@example.test";
 
   beforeEach(async () => {
     // Reset state for test user before each test
     await resetLockout(testIp, testEmail);
+  });
+
+  afterAll(async () => {
+    // Clean up test rows completely from auth_lockouts
+    const ipHash = hashWithRateLimitSecret(testIp);
+    const emailHash = hashWithRateLimitSecret(testEmail.toLowerCase().trim());
+    const key = `${ipHash}:${emailHash}`;
+    await db.delete(authLockouts).where(eq(authLockouts.key, key));
   });
 
   it("hashes IP and email deterministically with HMAC(RATE_LIMIT_SECRET)", () => {

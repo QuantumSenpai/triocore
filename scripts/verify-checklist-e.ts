@@ -14,7 +14,6 @@ import {
   auditLogs,
 } from "@/lib/db/schema";
 import { eq, like } from "drizzle-orm";
-import { hashPassword } from "better-auth/crypto";
 import fs from "fs";
 import { execSync } from "child_process";
 

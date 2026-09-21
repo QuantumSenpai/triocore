@@ -19,7 +19,6 @@ import {
   auditLogs,
 } from "@/lib/db/schema";
 import { eq, like } from "drizzle-orm";
-import { hashPassword } from "better-auth/crypto";
 
 const DB_URL = process.env.DATABASE_URL || "";
 const HOST = new URL(DB_URL).hostname;
@@ -49,12 +48,11 @@ async function runPart6() {
   const testEmail = `TEST-user-${randId}@example.test`.toLowerCase();
   const testPassword = `K8#vL9$pQ2!mZ${randId}@X`;
 
-  let createdClientId = "";
-  let createdProjectId = "";
-  let createdPaymentId = "";
-  let createdInviteToken = "";
+  let createdClientId: string | undefined;
+  let createdProjectId: string | undefined;
+  let createdPaymentId: string | undefined;
   let createdUserId = "";
-  let mockServerPayloads: any[] = [];
+  let mockServerPayloads: unknown[] = [];
   let mockServerStatusCode = 200;
 
   try {
@@ -182,7 +180,6 @@ async function runPart6() {
     // -------------------------------------------------------------
     console.log("\n▶ 3. Testing Single-Use Invite Token Enforcement...");
     const rawInviteToken = `tok_${crypto.randomBytes(16).toString("hex")}`;
-    createdInviteToken = rawInviteToken;
     const tokenHash = crypto.createHash("sha256").update(rawInviteToken).digest("hex");
     const inviteExpires = new Date(Date.now() + 48 * 3600 * 1000); // 48h
 
