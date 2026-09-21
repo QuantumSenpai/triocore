@@ -93,10 +93,10 @@ function LoginForm() {
               <input
                 type="email"
                 required
-                placeholder="admin@triocore.dev"
+                placeholder="itxkisu@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-[#14141A] bg-[#F5F6FC] pl-10 pr-4 py-3 text-sm text-[#14141A] placeholder-[#14141A] focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium"
+                className="w-full rounded-xl border border-[#14141A] bg-[#F5F6FC] pl-10 pr-4 py-3 text-sm text-[#14141A] placeholder-[#2B2B38]/40 focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium"
               />
               <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-[#14141A]" />
             </div>
@@ -113,7 +113,7 @@ function LoginForm() {
                 placeholder="••••••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-[#14141A] bg-[#F5F6FC] pl-10 pr-11 py-3 text-sm text-[#14141A] placeholder-[#14141A] focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium"
+                className="w-full rounded-xl border border-[#14141A] bg-[#F5F6FC] pl-10 pr-11 py-3 text-sm text-[#14141A] placeholder-[#2B2B38]/40 focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium"
               />
               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-[#14141A]" />
               <button
