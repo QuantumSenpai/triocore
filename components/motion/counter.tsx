@@ -28,7 +28,7 @@ export function Counter({
   useEffect(() => {
     if (!isInView || staticText) return;
 
-    let start = 0;
+    const start = 0;
     const end = value;
     const totalFrames = Math.round(duration * 60);
     let frame = 0;

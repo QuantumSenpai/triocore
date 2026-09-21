@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/admin/dashboard")) {
+  if (pathname.startsWith("/admin/dashboard") || pathname.startsWith("/admin/protected")) {
     const sessionCookie = 
       request.cookies.get("better-auth.session_token") || 
       request.cookies.get("__Secure-better-auth.session_token");
@@ -19,5 +19,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/dashboard/:path*"],
+  matcher: ["/admin/dashboard/:path*", "/admin/protected/:path*"],
 };

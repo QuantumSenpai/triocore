@@ -30,7 +30,7 @@ export function BackToTop({ className }: { className?: string }) {
           exit={{ opacity: 0, scale: 0.8, y: 20 }}
           onClick={scrollToTop}
           className={cn(
-            "fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[#14141A]/15 dark:border-[#374BFF]/35 bg-white dark:bg-[#1C1C26] text-[#14141A] dark:text-[#F5F6FC] shadow-lg shadow-black/10 hover:border-[#374BFF] hover:bg-[#374BFF] hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF]",
+            "fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-[#14141A] bg-white text-[#14141A] shadow-lg shadow-black/10 hover:border-[#374BFF] hover:bg-[#374BFF] hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF]",
             className
           )}
           aria-label="Back to top of page"

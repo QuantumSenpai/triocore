@@ -40,21 +40,21 @@ export function Logo({ className, showText = true, size = "md", iconOnly = false
     <Link
       href="/"
       className={cn(
-        "group inline-flex items-center gap-3.5 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded-xl transition-transform active:scale-95",
+        "group inline-flex items-center gap-3.5 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded-xl transition-transform ",
         className
       )}
       aria-label="TrioCore Home"
     >
-      <div className="flex items-center justify-center text-[#14141A] dark:text-[#FFFFFF] transition-transform duration-300 group-hover:scale-105">
+      <div className="flex items-center justify-center text-[#14141A] transition-transform duration-300 group-interactive-lift">
         <TrioCoreMark className={sizeMap[size].icon} />
       </div>
 
       {showText && !iconOnly && (
         <div className="flex flex-col">
-          <span className={cn("font-heading font-black tracking-[0.18em] leading-none text-[#14141A] dark:text-[#F5F6FC] transition-colors", sizeMap[size].text)}>
+          <span className={cn("font-heading font-black tracking-[0.18em] leading-none text-[#14141A] transition-colors", sizeMap[size].text)}>
             TRIOCORE
           </span>
-          <span className={cn("font-sans font-bold tracking-[0.24em] uppercase text-[#14141A] dark:text-[#F5F6FC]/70 mt-1 leading-none", sizeMap[size].tag)}>
+          <span className={cn("font-sans font-bold tracking-[0.24em] uppercase text-[#14141A] mt-1 leading-none", sizeMap[size].tag)}>
             BUILDING DIGITAL ESSENCE
           </span>
         </div>

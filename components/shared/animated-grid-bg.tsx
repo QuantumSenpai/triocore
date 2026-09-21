@@ -16,14 +16,10 @@ export function AnimatedGridBg({
   const rafId = useRef<number | null>(null);
 
   useEffect(() => {
-    const isTouch =
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      window.matchMedia("(pointer: coarse)").matches;
-
+    const isPointerFine = window.matchMedia("(pointer: fine)").matches;
     const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (isTouch || shouldReduceMotion || !containerRef.current) return;
+    if (!isPointerFine || shouldReduceMotion || !containerRef.current) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (rafId.current !== null) return;
@@ -68,18 +64,18 @@ export function AnimatedGridBg({
               left: "20%",
               width: "48vw",
               height: "48vw",
-              opacity: 0.16,
+              opacity: 0.12,
               animationDuration: "24s",
             }}
           />
           <div
-            className="aurora-blob bg-[#374BFF] dark:bg-[#CFFF04]"
+            className="aurora-blob bg-[#374BFF]"
             style={{
               top: "22%",
               right: "15%",
               width: "36vw",
               height: "36vw",
-              opacity: 0.1,
+              opacity: 0.08,
               animationDuration: "20s",
               animationDelay: "-6s",
             }}
@@ -90,7 +86,7 @@ export function AnimatedGridBg({
       {showGrid && (
         <>
           <div
-            className="absolute inset-0 opacity-[0.06] dark:opacity-[0.10] animate-grid-drift"
+            className="absolute inset-0 opacity-[0.05] animate-grid-drift text-[#14141A]"
             style={{
               backgroundImage: `
                 linear-gradient(to right, currentColor 1px, transparent 1px),
@@ -101,20 +97,18 @@ export function AnimatedGridBg({
               WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, #000 50%, transparent 100%)",
             }}
           />
+
+          {/* Faint spotlight on pointer:fine devices only */}
           <div
-            className="absolute inset-0 opacity-0 md:opacity-100 transition-opacity duration-300 pointer-events-none"
+            className="hidden sm:block absolute inset-0 opacity-[0.05] pointer-events-none text-[#374BFF]"
             style={{
-              background: `radial-gradient(400px circle at var(--mouse-x) var(--mouse-y), rgba(55, 75, 255, 0.35), rgba(207, 255, 4, 0.1) 45%, transparent 75%)`,
-              maskImage: `
+              backgroundImage: `
                 linear-gradient(to right, currentColor 1px, transparent 1px),
                 linear-gradient(to bottom, currentColor 1px, transparent 1px)
               `,
-              WebkitMaskImage: `
-                linear-gradient(to right, currentColor 1px, transparent 1px),
-                linear-gradient(to bottom, currentColor 1px, transparent 1px)
-              `,
-              maskSize: "3.5rem 3.5rem",
-              WebkitMaskSize: "3.5rem 3.5rem",
+              backgroundSize: "3.5rem 3.5rem",
+              maskImage: "radial-gradient(380px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), black 0%, transparent 80%)",
+              WebkitMaskImage: "radial-gradient(380px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), black 0%, transparent 80%)",
             }}
           />
         </>

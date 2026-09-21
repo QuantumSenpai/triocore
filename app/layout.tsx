@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, Syne } from "next/font/google";
-import { ThemeProvider } from "@/components/shared/theme-provider";
+import { Space_Grotesk, Inter } from "next/font/google";
 import { ScrollProgress } from "@/components/shared/scroll-progress";
 import { BackToTop } from "@/components/shared/back-to-top";
 import { Toaster } from "sonner";
@@ -19,17 +18,9 @@ const inter = Inter({
   display: "swap",
 });
 
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  display: "swap",
-});
-
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F6FC" },
-    { media: "(prefers-color-scheme: dark)", color: "#14141A" },
-  ],
+  themeColor: "#F5F6FC",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -101,28 +92,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${spaceGrotesk.variable} ${inter.variable} ${syne.variable}`}>
-      <body className="font-sans antialiased selection:bg-[#374BFF] selection:text-white">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange={false}
-        >
-          <ScrollProgress />
-          {children}
-          <BackToTop />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: "#1C1C26",
-                color: "#F5F6FC",
-                border: "1px solid rgba(55, 75, 255, 0.3)",
-              },
-            }}
-          />
-        </ThemeProvider>
+    <html
+      lang="en"
+      className={`light scroll-smooth ${spaceGrotesk.variable} ${inter.variable}`}
+      style={{ colorScheme: "light" }}
+    >
+      <body className="font-sans antialiased bg-[#F5F6FC] text-[#14141A] selection:bg-[#374BFF] selection:text-white min-h-screen">
+        <ScrollProgress />
+        {children}
+        <BackToTop />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "#FFFFFF",
+              color: "#14141A",
+              border: "1px solid rgba(20, 20, 26, 0.14)",
+              boxShadow: "0 8px 30px -4px rgba(20, 20, 26, 0.08)",
+            },
+          }}
+        />
       </body>
     </html>
   );
