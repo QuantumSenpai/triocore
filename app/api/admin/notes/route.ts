@@ -12,7 +12,9 @@ function sanitizeMarkdown(input: string): string {
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
     .replace(/<script[^>]*>/gi, "")
-    .replace(/javascript:/gi, "");
+    .replace(/javascript:/gi, "")
+    .replace(/\s*on\w+\s*=\s*(['"]).*?\1/gi, "")
+    .replace(/\s*on\w+\s*=\s*[^>\s]+/gi, "");
 }
 
 export async function GET(req: NextRequest) {

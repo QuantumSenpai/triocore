@@ -17,6 +17,7 @@ import {
   session,
   feedbackReports,
   auditLogs,
+  authLockouts,
 } from "@/lib/db/schema";
 import { eq, like } from "drizzle-orm";
 
@@ -357,11 +358,13 @@ async function runPart6() {
     // Case A: Formspree returns 200 OK
     mockServerStatusCode = 200;
     mockServerPayloads = [];
+    const testIp = `192.0.2.${Math.floor(Math.random() * 200) + 1}`;
 
     const feedbackRes1 = await fetch("http://localhost:3000/api/feedback", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-forwarded-for": testIp,
         "x-mock-endpoint": `http://127.0.0.1:${mockPort}/formspree-mock`,
       },
       body: JSON.stringify({
@@ -391,6 +394,7 @@ async function runPart6() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-forwarded-for": testIp,
         "x-mock-endpoint": `http://127.0.0.1:${mockPort}/formspree-mock`,
       },
       body: JSON.stringify({
@@ -455,8 +459,9 @@ async function runPart6() {
     await db.delete(projects).where(like(projects.title, `TEST-%`));
     await db.delete(clients).where(like(clients.name, `TEST-%`));
     await db.delete(feedbackReports).where(like(feedbackReports.message, `TEST-%`));
+    await db.delete(authLockouts).where(like(authLockouts.key, "feedback:%"));
 
-    console.log("   - Cleaned test user, account, session, admin_member, invite, payment, project, client, feedback.");
+    console.log("   - Cleaned test user, account, session, admin_member, invite, payment, project, client, feedback, and lockouts.");
 
     const sql = neon(DB_URL);
     const tables = [

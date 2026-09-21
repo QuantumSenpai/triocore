@@ -11,6 +11,7 @@ async function main() {
     console.error("CRITICAL: Prohibited database host!");
     process.exit(1);
   }
+  if (!db) throw new Error("DB not connected");
   console.log("Applying migration 0003 to DEV DB Host:", host);
 
   const sqlContent = fs.readFileSync("drizzle/0003_schema_hygiene.sql", "utf-8");

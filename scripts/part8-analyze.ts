@@ -9,6 +9,7 @@ function maskEmail(email: string | null | undefined): string {
 }
 
 async function main() {
+  if (!db) throw new Error("DB not connected");
   console.log("=== STEP 1.a: ROWS CLASSIFICATION (TEST vs PROD) ===");
   // Check users
   const usersRes = await db.execute<{ id: string; name: string | null; email: string; created_at: any }>(sql`

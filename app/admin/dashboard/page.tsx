@@ -24,6 +24,7 @@ import {
 import { Logo } from "@/components/shared/logo";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
+import { validatePassword } from "@/lib/password-rules";
 import { OverviewTab } from "./components/overview-tab";
 import { CrmTab } from "./components/crm-tab";
 import { OperationsTab } from "./components/operations-tab";
@@ -96,6 +97,11 @@ export default function AdminDashboardPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      toast.error(pwCheck.error || "Password does not meet security requirements.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast.error("New passwords do not match.");
       return;

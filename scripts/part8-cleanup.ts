@@ -10,6 +10,7 @@ async function main() {
     console.error("FATAL: Attempted execution against prohibited database host!");
     process.exit(1);
   }
+  if (!db) throw new Error("DB not connected");
   console.log("DB Host:", host);
 
   console.log("\n=== STEP 2: DEV DATA CLEAN-UP ===");

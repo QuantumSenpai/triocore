@@ -10,6 +10,7 @@ async function main() {
     console.error("CRITICAL ERROR: Connected to prohibited host!");
     process.exit(1);
   }
+  if (!db) throw new Error("DB not connected");
   
   console.log("DB Host:", host);
 

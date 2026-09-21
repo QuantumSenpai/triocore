@@ -12,6 +12,7 @@ async function getCounts() {
     "faqs",
     "faq_categories",
   ];
+  if (!db) throw new Error("DB not connected");
   const counts: Record<string, number> = {};
   for (const t of tables) {
     const res = await db.execute(sql.raw(`SELECT count(*)::int as cnt FROM "${t}"`));

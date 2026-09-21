@@ -12,6 +12,7 @@ async function main() {
     console.error("FATAL: Attempted execution on prohibited host!");
     process.exit(1);
   }
+  if (!db) throw new Error("DB not connected");
   console.log("Testing migration replay on DEV DB Host:", host);
 
   const scratchSchema = "scratch_migration_test";
