@@ -6,6 +6,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db";
 import * as schema from "./db/schema";
+import { eq } from "drizzle-orm";
 import { isAdminEmail } from "./auth-whitelist";
 
 
@@ -54,6 +55,22 @@ export const auth = betterAuth({
         before: async (user) => {
           if (!isAdminEmail(user.email)) {
             return false;
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          if (db && session.userId) {
+            const member = await db
+              .select()
+              .from(schema.adminMembers)
+              .where(eq(schema.adminMembers.userId, session.userId))
+              .limit(1);
+            if (member.length > 0 && member[0].status === "disabled") {
+              return false;
+            }
           }
         },
       },

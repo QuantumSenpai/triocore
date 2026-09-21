@@ -303,61 +303,189 @@ export function OverviewTab({
             </div>
           </div>
 
-          <div className="space-y-3 pt-2 max-h-[340px] overflow-y-auto pr-1">
-            {projects.length > 0 ? (
-              projects.map((proj) => {
-                const deadlineStr = proj.deadline
-                  ? new Date(proj.deadline).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })
-                  : "No deadline specified";
+          {calendarView === "month" ? (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between text-xs font-bold text-[#14141A] px-1">
+                <span>{new Date().toLocaleString("en-IN", { month: "long", year: "numeric" })}</span>
+                <span className="text-[11px] text-[#2B2B38] font-normal">
+                  {projects.filter((p) => p.deadline).length} Deadline(s) scheduled
+                </span>
+              </div>
 
-                return (
-                  <div
-                    key={proj.id}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      proj.isOverdue
-                        ? "bg-red-50/60 border-red-200"
-                        : "bg-[#F5F6FC] border-black/10"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-heading text-sm font-bold text-[#14141A]">
-                            {proj.name}
-                          </h4>
-                          {proj.isOverdue && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700">
-                              <AlertCircle className="h-3 w-3" /> Overdue
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[#2B2B38] mt-0.5">
-                          Client: {proj.clientName} • Category: {proj.category}
-                        </p>
+              {/* 7-column Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                  <div key={d} className="text-[10px] font-black text-[#2B2B38] py-1">
+                    {d}
+                  </div>
+                ))}
+                {(() => {
+                  const now = new Date();
+                  const year = now.getFullYear();
+                  const month = now.getMonth();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  const startDayOfWeek = new Date(year, month, 1).getDay();
+                  const cells = [];
+
+                  // Empty offset cells
+                  for (let i = 0; i < startDayOfWeek; i++) {
+                    cells.push(
+                      <div key={`empty-${i}`} className="h-9 sm:h-10 rounded-xl bg-transparent" />
+                    );
+                  }
+
+                  // Day cells
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const dayProjects = projects.filter((p) => {
+                      if (!p.deadline) return false;
+                      const d = new Date(p.deadline);
+                      return (
+                        d.getFullYear() === year &&
+                        d.getMonth() === month &&
+                        d.getDate() === day
+                      );
+                    });
+
+                    const isToday =
+                      now.getDate() === day &&
+                      now.getMonth() === month &&
+                      now.getFullYear() === year;
+
+                    const hasDeadlines = dayProjects.length > 0;
+                    const hasOverdue = dayProjects.some((p) => p.isOverdue);
+
+                    cells.push(
+                      <div
+                        key={`day-${day}`}
+                        title={
+                          hasDeadlines
+                            ? dayProjects.map((p) => `${p.name} (${p.clientName})`).join(", ")
+                            : undefined
+                        }
+                        className={`h-9 sm:h-10 p-1 rounded-xl text-xs font-bold flex flex-col items-center justify-between border transition-all ${
+                          hasOverdue
+                            ? "bg-red-50 border-red-300 text-red-700"
+                            : hasDeadlines
+                            ? "bg-[#374BFF]/10 border-[#374BFF] text-[#374BFF] shadow-xs"
+                            : isToday
+                            ? "bg-[#F5F6FC] border-black/20 text-[#14141A]"
+                            : "bg-[#F5F6FC]/60 border-black/5 text-[#2B2B38] hover:bg-[#F5F6FC]"
+                        }`}
+                      >
+                        <span className="text-[10px] leading-none">{day}</span>
+                        {hasDeadlines && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              hasOverdue ? "bg-red-600" : "bg-[#374BFF]"
+                            }`}
+                          />
+                        )}
                       </div>
+                    );
+                  }
 
-                      <div className="text-right">
-                        <span className="font-mono text-xs font-bold text-[#14141A]">
-                          {deadlineStr}
-                        </span>
-                        <div className="text-[10px] font-semibold text-[#374BFF]">
-                          {proj.milestoneProgressPercent}% Milestones Completed
+                  return cells;
+                })()}
+              </div>
+
+              {/* Deadline Summary List */}
+              <div className="pt-2 border-t border-black/10 space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                <div className="text-[10px] uppercase font-black text-[#2B2B38] tracking-wider">
+                  Upcoming Deadlines This Month
+                </div>
+                {projects.filter((p) => p.deadline).length > 0 ? (
+                  projects
+                    .filter((p) => p.deadline)
+                    .map((proj) => {
+                      const dStr = new Date(proj.deadline!).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                      });
+                      return (
+                        <div
+                          key={proj.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-[#F5F6FC] border border-black/10 text-xs"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                proj.isOverdue ? "bg-red-500" : "bg-[#374BFF]"
+                              }`}
+                            />
+                            <span className="font-bold text-[#14141A] truncate">{proj.name}</span>
+                            <span className="text-[11px] text-[#2B2B38]">({proj.clientName})</span>
+                          </div>
+                          <span className="font-mono text-[11px] font-bold text-[#14141A] shrink-0">
+                            {dStr}
+                          </span>
+                        </div>
+                      );
+                    })
+                ) : (
+                  <div className="text-center py-2 text-xs text-[#2B2B38]">
+                    No deadlines scheduled for this month.
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Mobile Agenda View */
+            <div className="space-y-3 pt-2 max-h-[340px] overflow-y-auto pr-1">
+              {projects.length > 0 ? (
+                projects.map((proj) => {
+                  const deadlineStr = proj.deadline
+                    ? new Date(proj.deadline).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "No deadline specified";
+
+                  return (
+                    <div
+                      key={proj.id}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        proj.isOverdue
+                          ? "bg-red-50/60 border-red-200"
+                          : "bg-[#F5F6FC] border-black/10"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-heading text-sm font-bold text-[#14141A]">
+                              {proj.name}
+                            </h4>
+                            {proj.isOverdue && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700">
+                                <AlertCircle className="h-3 w-3" /> Overdue
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#2B2B38] mt-0.5">
+                            Client: {proj.clientName} • Category: {proj.category}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-mono text-xs font-bold text-[#14141A]">
+                            {deadlineStr}
+                          </span>
+                          <div className="text-[10px] font-semibold text-[#374BFF]">
+                            {proj.milestoneProgressPercent}% Milestones Completed
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-xs text-[#2B2B38]">
-                No project deadlines scheduled.
-              </div>
-            )}
-          </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-xs text-[#2B2B38]">
+                  No project deadlines scheduled.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

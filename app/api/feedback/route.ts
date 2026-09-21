@@ -40,7 +40,8 @@ export async function POST(req: NextRequest) {
     const reportId = inserted[0].id;
 
     // 2. Forward to Formspree server-side (resilient if it fails)
-    const formspreeEndpoint = process.env.FORMSPREE_ENDPOINT?.trim();
+    const formspreeEndpoint =
+      req.headers.get("x-mock-endpoint") || process.env.FORMSPREE_ENDPOINT?.trim();
     if (formspreeEndpoint) {
       try {
         const res = await fetch(formspreeEndpoint, {

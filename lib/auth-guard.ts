@@ -19,6 +19,28 @@ export async function verifyAdminSession(req: NextRequest) {
       };
     }
 
+    // Check member active status
+    const { db } = await import("@/lib/db");
+    const { adminMembers } = await import("@/lib/db/schema");
+    const { eq } = await import("drizzle-orm");
+    if (db) {
+      const member = await db
+        .select()
+        .from(adminMembers)
+        .where(eq(adminMembers.userId, session.user.id))
+        .limit(1);
+      if (member.length > 0 && member[0].status === "disabled") {
+        return {
+          authorized: false,
+          user: null,
+          response: NextResponse.json(
+            { error: "Account disabled by administrator." },
+            { status: 403 }
+          ),
+        };
+      }
+    }
+
     return {
       authorized: true,
       user: session.user,

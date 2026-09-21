@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { adminMembers, user, auditLogs } from "@/lib/db/schema";
+import { adminMembers, user, auditLogs, session } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdminRole } from "@/lib/dal/auth";
 
@@ -51,6 +51,10 @@ export async function PUT(req: NextRequest) {
       status: status !== undefined ? status : undefined,
       updatedAt: new Date(),
     }).where(eq(adminMembers.userId, userId)).returning();
+
+    if (status === "disabled") {
+      await db.delete(session).where(eq(session.userId, userId));
+    }
 
     try {
       await db.insert(auditLogs).values({
