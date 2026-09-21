@@ -38,8 +38,8 @@ export const mockSiteStats = [
   { id: "stat-1", key: "hero_innovators", value: "3", label: "Core Innovators", section: "hero", order: 1 },
   { id: "stat-2", key: "hero_services", value: "6", label: "Service Capabilities", section: "hero", order: 2 },
   { id: "stat-3", key: "hero_projects", value: "15+", label: "Projects Engineered", section: "hero", order: 3 },
-  { id: "stat-4", key: "why_code", value: "100%", label: "Custom Tailored Code", section: "why_us", order: 1 },
-  { id: "stat-5", key: "why_speed", value: "3x", label: "Faster Turnaround Rate", section: "why_us", order: 2 },
-  { id: "stat-6", key: "why_access", value: "24/7", label: "Direct Developer Access", section: "why_us", order: 3 },
+  { id: "stat-4", key: "why_code", value: "100%", label: "Client Code Ownership", section: "why_us", order: 1 },
+  { id: "stat-5", key: "why_speed", value: "Direct", label: "Developer Communication", section: "why_us", order: 2 },
+  { id: "stat-6", key: "why_access", value: "Fixed", label: "Milestone Pricing", section: "why_us", order: 3 },
   { id: "stat-7", key: "why_builds", value: "15+", label: "Total Builds Delivered", section: "why_us", order: 4 },
 ];

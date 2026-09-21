@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "Digital Solutions India",
     "Web Development India",
     "Affordable Website Development",
-    "Next.js 15",
+    "Next.js",
     "NFC Business Cards",
     "Restaurant QR Menu System",
     "Machine Learning",

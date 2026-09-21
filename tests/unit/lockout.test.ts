@@ -23,7 +23,9 @@ describe("Rate Limiter & Lockout System", () => {
     const ipHash = hashWithRateLimitSecret(testIp);
     const emailHash = hashWithRateLimitSecret(testEmail.toLowerCase().trim());
     const key = `${ipHash}:${emailHash}`;
-    await db.delete(authLockouts).where(eq(authLockouts.key, key));
+    if (db) {
+      await db.delete(authLockouts).where(eq(authLockouts.key, key));
+    }
   });
 
   it("hashes IP and email deterministically with HMAC(RATE_LIMIT_SECRET)", () => {

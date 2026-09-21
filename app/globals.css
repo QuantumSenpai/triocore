@@ -7,9 +7,12 @@
     --text-primary: #14141A;
     --text-secondary: #2B2B38;
     --text-muted: #4A4A5A;
+    --shadow-xs: 0 1px 2px rgba(20, 20, 26, 0.06);
+    --shadow-sm: 0 1px 3px rgba(20, 20, 26, 0.08);
+    --shadow-md: 0 4px 12px rgba(20, 20, 26, 0.08);
     --card-surface: #FFFFFF;
-    --card-border: rgba(20, 20, 26, 0.12);
-    --card-shadow: 0 8px 30px -4px rgba(20, 20, 26, 0.06);
+    --card-border: rgba(20, 20, 26, 0.10);
+    --card-shadow: var(--shadow-xs);
 
     --primary-blue: #374BFF;
     --accent-lime: #CFFF04;
@@ -48,30 +51,34 @@
   --color-ice-white: #F5F6FC;
   --color-lime: #CFFF04;
 
+  --shadow-xs: 0 1px 2px rgba(20, 20, 26, 0.06);
+  --shadow-sm: 0 1px 3px rgba(20, 20, 26, 0.08);
+  --shadow-md: 0 4px 12px rgba(20, 20, 26, 0.08);
+
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-heading: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
 }
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(20, 20, 26, 0.12);
-  box-shadow: 0 4px 20px -2px rgba(20, 20, 26, 0.05);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(20, 20, 26, 0.10);
+  box-shadow: var(--shadow-sm);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 .glass-card {
   background: #FFFFFF;
-  border: 1px solid rgba(20, 20, 26, 0.12);
-  box-shadow: 0 8px 30px -4px rgba(20, 20, 26, 0.06);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(20, 20, 26, 0.10);
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .glass-card:hover {
     border-color: #374BFF;
-    box-shadow: 0 16px 40px -8px rgba(55, 75, 255, 0.16);
+    box-shadow: var(--shadow-sm);
   }
 }
 
@@ -176,18 +183,24 @@
 
 /* Button & interactive hover transform without layout shift */
 .interactive-lift {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
-  will-change: transform;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .interactive-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
   }
 }
 
 .interactive-lift:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+}
+
+@media (hover: none) {
+  .interactive-lift:hover {
+    transform: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

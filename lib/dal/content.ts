@@ -317,10 +317,10 @@ export async function getSiteSettings(key: string) {
 
 export async function getWhyUsStats() {
   const fallback = [
-    { value: 100, suffix: "%", label: "Transparent Execution" },
-    { staticDisplay: "24/7", label: "Founder-Level Support" },
-    { value: 48, suffix: "h", label: "First Prototype Turnaround" },
-    { value: 99, suffix: ".9%", label: "Architecture Uptime SLA" },
+    { value: 100, suffix: "%", label: "Client Code Ownership" },
+    { staticDisplay: "Direct", label: "Developer Communication" },
+    { staticDisplay: "Fixed", label: "Milestone Pricing" },
+    { value: 15, suffix: "+", label: "Total Builds Delivered" },
   ];
 
   if (!db) return fallback;

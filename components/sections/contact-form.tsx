@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { Reveal } from "@/components/motion/reveal";
-import { MagneticButton } from "@/components/motion/magnetic-button";
+import { Button } from "@/components/ui/button";
 import { contactSchema, type ContactFormData } from "@/lib/validations/contact";
 
 const needCategories = [
@@ -157,14 +157,14 @@ export function ContactFormSection() {
  </a>
  </div>
 
- <div className="pt-4 border-t border-[#14141A] space-y-3">
+ <div className="pt-4 border-t border-[#14141A]/10 space-y-3">
  <p className="text-xs font-bold uppercase tracking-wider text-[#14141A]">
  Our Commitments to You
  </p>
 
  <div className="flex items-center gap-2.5 sm:gap-3 text-xs text-[#14141A] font-semibold">
  <ShieldCheck className="h-4 w-4 text-[#374BFF] shrink-0" />
- <span>100% Strict Non-Disclosure & Full Code Ownership</span>
+ <span>Strict Non-Disclosure & Full Code Ownership</span>
  </div>
  <div className="flex items-center gap-2.5 sm:gap-3 text-xs text-[#14141A] font-semibold">
  <BadgeCheck className="h-4 w-4 text-[#374BFF] shrink-0" />
@@ -184,7 +184,7 @@ export function ContactFormSection() {
  <div className="glass-card rounded-3xl p-6 sm:p-10 relative overflow-hidden">
  {submitted ? (
  <div className="text-center py-10 sm:py-12 space-y-6">
- <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[#374BFF] text-[#374BFF]">
+ <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-[#374BFF] text-white">
  <CheckCircle2 className="h-7 w-7 sm:h-8 sm:w-8" />
  </div>
  <div className="space-y-2">
@@ -208,7 +208,7 @@ export function ContactFormSection() {
  companyHp: "",
  });
  }}
- className="inline-flex items-center gap-2 rounded-xl bg-[#374BFF] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#374BFF] hover:bg-[#14141A] interactive-lift transition-all"
+ className="inline-flex items-center gap-2 rounded-xl bg-[#374BFF] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#14141A] interactive-lift transition-all cursor-pointer"
  >
  <span>Send Another Inquiry</span>
  </button>
@@ -281,15 +281,17 @@ export function ContactFormSection() {
  </div>
 
  <div className="space-y-1.5">
- <label className="text-xs font-bold uppercase tracking-wider text-[#14141A] ">
+ <label htmlFor="service-select" className="text-xs font-bold uppercase tracking-wider text-[#14141A]">
  What do you need? <span className="text-[#374BFF]">*</span>
  </label>
  <select
+ id="service-select"
  name="service"
+ aria-label="What do you need?"
  disabled={loading}
  value={formData.service}
  onChange={handleChange}
- className={`w-full rounded-xl border border-[#14141A] bg-[#F5F6FC] px-4 py-3 text-sm text-[#14141A] focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium ${loading ? "opacity-60 animate-pulse cursor-not-allowed" : ""}`}
+ className={`w-full rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] px-4 py-3 text-sm text-[#14141A] focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none transition-all font-medium ${loading ? "opacity-60 animate-pulse cursor-not-allowed" : ""}`}
  >
  {needCategories.map((cat) => (
  <option key={cat} value={cat} className="bg-white text-[#14141A]">
@@ -334,29 +336,16 @@ export function ContactFormSection() {
  </div>
 
  <div className="pt-2">
- <MagneticButton strength={0.2} className="w-full">
- <button
+ <Button
  type="submit"
- disabled={loading}
- className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3.5 sm:py-4 text-sm sm:text-base font-black transition-all cursor-pointer ${
- loading 
- ? "bg-[#374BFF] text-white/80 animate-pulse cursor-wait" 
- : "bg-[#374BFF] text-white shadow-xl shadow-[#374BFF] hover:bg-[#14141A] hover:shadow-2xl hover:shadow-[#374BFF] interactive-lift "
- }`}
+ variant="primary"
+ size="lg"
+ loading={loading}
+ className="w-full"
+ icon={<Send className="h-4 w-4" />}
  >
- {loading ? (
- <span className="flex items-center gap-2">
- <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
- <span>Submitting Inquiry...</span>
- </span>
- ) : (
- <>
- <span>Send Project Inquiry</span>
- <Send className="h-4 w-4" />
- </>
- )}
- </button>
- </MagneticButton>
+ {loading ? "Submitting Inquiry..." : "Send Project Inquiry"}
+ </Button>
  </div>
  </form>
  )}

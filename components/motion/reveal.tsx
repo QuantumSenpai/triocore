@@ -18,7 +18,7 @@ export function Reveal({
   className,
   delay = 0,
   direction = "up",
-  duration = 0.45,
+  duration = 0.25,
   once = true,
 }: RevealProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -27,13 +27,13 @@ export function Reveal({
     if (shouldReduceMotion) return { opacity: 1, x: 0, y: 0 };
     switch (direction) {
       case "up":
-        return { opacity: 0, y: 16, x: 0 };
+        return { opacity: 0, y: 8, x: 0 };
       case "down":
-        return { opacity: 0, y: -16, x: 0 };
+        return { opacity: 0, y: -8, x: 0 };
       case "left":
-        return { opacity: 0, x: 16, y: 0 };
+        return { opacity: 0, x: 8, y: 0 };
       case "right":
-        return { opacity: 0, x: -16, y: 0 };
+        return { opacity: 0, x: -8, y: 0 };
       case "none":
       default:
         return { opacity: 0, x: 0, y: 0 };
@@ -46,9 +46,9 @@ export function Reveal({
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once, amount: "some" }}
       transition={{
-        duration: shouldReduceMotion ? 0.05 : duration,
-        delay,
-        ease: [0.21, 0.47, 0.32, 0.98],
+        duration: shouldReduceMotion ? 0.01 : 0.25,
+        delay: Math.min(delay, 0.04),
+        ease: "easeOut",
       }}
       className={cn("w-full opacity-100", className)}
     >

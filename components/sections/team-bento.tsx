@@ -72,18 +72,7 @@ export function TeamBentoSection({
             return (
               <Reveal key={member.id} direction="up" delay={index * 0.08}>
                 <div
-                  className="group relative h-[490px] sm:h-[510px] w-full select-none [perspective:1200px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded-3xl"
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Flip profile card for ${member.name}`}
-                  onClick={() => !isPlaceholder && toggleFlip(member.id)}
-                  onKeyDown={(e) => {
-                    if (isPlaceholder) return;
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      toggleFlip(member.id);
-                    }
-                  }}
+                  className="group relative h-[490px] sm:h-[510px] w-full select-none [perspective:1200px] rounded-3xl"
                 >
                   <div
                     className={cn(
@@ -181,9 +170,14 @@ export function TeamBentoSection({
                             )}
                           </div>
                           {!isPlaceholder && (
-                            <span className="text-[11px] text-[#374BFF] font-bold flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => toggleFlip(member.id)}
+                              className="text-[11px] text-[#374BFF] font-bold flex items-center gap-1 hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded-md px-1.5 py-0.5"
+                              aria-label={`View details and deployments for ${member.name}`}
+                            >
                               Details <ArrowUpRight className="h-3 w-3" />
-                            </span>
+                            </button>
                           )}
                         </div>
                       </div>

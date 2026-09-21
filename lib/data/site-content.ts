@@ -185,7 +185,7 @@ export const services: ServiceItem[] = [
  {
  id: "web-dev",
  title: "Full-Stack Web Development",
- desc: "Custom, scalable Next.js 15 web applications engineered with clean component architectures, dynamic database integrations, and ultra-fast page speeds.",
+ desc: "Custom, scalable Next.js web applications engineered with clean component architectures, dynamic database integrations, and ultra-fast page speeds.",
  iconName: "Globe",
  badge: "Most Popular",
  colSpan: "lg:col-span-2",
@@ -239,7 +239,7 @@ export const services: ServiceItem[] = [
  iconName: "Wrench",
  badge: "Reliability",
  colSpan: "lg:col-span-3",
- features: ["24/7 Health Monitoring", "Automated Daily Cloud Backups", "Continuous Speed Optimization"],
+ features: ["Automated Daily Cloud Backups", "Performance Optimization", "Direct Developer Support"],
  accent: "from-[#14141A] via-[#1C1C26] to-[#374BFF]",
  },
 ];
@@ -250,7 +250,7 @@ export const innovationProjects: InnovationProject[] = [
  title: "SafeMet Smart Helmet",
  category: "IoT / Safety Hardware",
  status: "Completed",
- statusColor: "text-[#14141A] border-[#14141A] bg-[#14141A] ",
+ statusColor: "text-emerald-700 border-emerald-300 bg-emerald-50",
  desc: "Intelligent headgear integrated with accelerometer sensors, impact thresholds, and automated GPS emergency beacon broadcast to prevent delay in medical assistance.",
  tech: ["Arduino", "GSM/GPS Module", "Piezo Sensors", "C++", "Emergency Telemetry"],
  iconName: "ShieldAlert",
@@ -263,7 +263,7 @@ export const innovationProjects: InnovationProject[] = [
  title: "Sentiment Analysis Engine",
  category: "NLP / Machine Learning",
  status: "Research",
- statusColor: "text-[#374BFF] border-[#374BFF] bg-[#374BFF]",
+ statusColor: "text-purple-700 border-purple-300 bg-purple-50",
  desc: "Multi-layered natural language processing pipeline evaluating emotional polarity and sentiment metrics across customer feedback datasets.",
  tech: ["Python", "Flask", "PyTorch", "Scikit-Learn", "NLTK"],
  iconName: "BrainCircuit",
@@ -276,7 +276,7 @@ export const innovationProjects: InnovationProject[] = [
  title: "VacuumX Smart Cleaner",
  category: "Autonomous Hardware",
  status: "Active",
- statusColor: "text-[#14141A] border-[#14141A] bg-[#14141A] ",
+ statusColor: "text-[#374BFF] border-[#374BFF]/30 bg-[#374BFF]/10",
  desc: "Self-navigating obstacle-avoidance cleaning rover utilizing ultrasonic sonar sweeps and adaptive motor controllers.",
  tech: ["Ultrasonic Sonar", "Motor Drivers", "Embedded C", "Chassis Design"],
  iconName: "Cpu",
@@ -289,7 +289,7 @@ export const innovationProjects: InnovationProject[] = [
  title: "Autonomous Fire Boat",
  category: "Marine Robotics / Safety",
  status: "Ongoing",
- statusColor: "text-amber-600 border-amber-500/40 bg-amber-500/15",
+ statusColor: "text-amber-700 border-amber-300 bg-amber-50",
  desc: "Unmanned amphibious craft engineered for rapid waterborne fire suppression, remote thermal sensing, and obstacle-free water navigation.",
  tech: ["Thermal Imaging", "Pump Actuators", "RF Long-Range", "Robotics"],
  iconName: "Flame",
@@ -302,7 +302,7 @@ export const innovationProjects: InnovationProject[] = [
  title: "Path Follower Rover",
  category: "Precision Robotics",
  status: "Completed",
- statusColor: "text-[#14141A] border-[#14141A] bg-[#14141A] ",
+ statusColor: "text-emerald-700 border-emerald-300 bg-emerald-50",
  desc: "High-speed industrial path-following autonomous vehicle leveraging IR sensor arrays and PID feedback loops for factory automation simulation.",
  tech: ["PID Controllers", "Infrared Arrays", "Microcontrollers", "Feedback Control"],
  iconName: "Navigation2",
@@ -349,7 +349,7 @@ export const showcaseProjects: ShowcaseProject[] = [
  description: "Contactless digital QR menu with instant category search, chef highlights, and multilingual translation support.",
  imageUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80",
  liveUrl: "#",
- tech: ["Next.js 15", "Tailwind CSS", "QR Engine"],
+ tech: ["Next.js", "Tailwind CSS", "QR Engine"],
  status: "Coming Soon",
  order: 4
  },
@@ -417,12 +417,12 @@ export const aboutTimeline: TimelineStep[] = [
 export const whyUsValues: WhyUsValue[] = [
  {
  iconName: "Zap",
- title: "3x Faster Turnaround",
- desc: "We write streamlined code using modern Next.js 15 stacks and lean architectures, delivering production builds in days rather than months.",
+ title: "Streamlined Milestone Delivery",
+ desc: "We write clean, modular code using modern Next.js stacks and lean architectures, delivering production builds with milestone reviews.",
  },
  {
  iconName: "Palette",
- title: "100% Modern Custom UI",
+ title: "Modern Custom UI",
  desc: "Zero generic cookie-cutter templates. Every component, micro-interaction, and layout is tailored to elevate your brand's unique identity.",
  },
  {
@@ -448,9 +448,9 @@ export const whyUsValues: WhyUsValue[] = [
 ];
 
 export const whyUsStats: StatItem[] = [
- { value: 100, suffix: "%", label: "Custom Tailored Code" },
- { value: 3, suffix: "x", label: "Faster Turnaround Rate" },
- { staticDisplay: "24 / 7", label: "Direct Developer Access" },
+ { value: 100, suffix: "%", label: "Client Code Ownership" },
+ { staticDisplay: "Direct", label: "Developer Communication" },
+ { staticDisplay: "Fixed", label: "Milestone Pricing" },
  { value: 15, suffix: "+", label: "Total Builds Delivered" },
 ];
 
@@ -461,13 +461,13 @@ export const roadmapData: RoadmapPhase[] = [
  title: "Foundations & Launch",
  status: "Active Execution",
  statusType: "active",
- badgeBg: "border-[#374BFF] bg-[#374BFF] text-[#374BFF]",
- nodeBorder: "border-[#374BFF] shadow-[0_0_24px_rgba(55,75,255,0.35)]",
+ badgeBg: "border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF]",
+ nodeBorder: "border-[#374BFF] shadow-sm",
  milestones: [
  { text: "Launch TrioCore studio brand & digital platform", status: "completed" },
  { text: "Deploy open-source prototypes & live showcase", status: "completed" },
  { text: "Onboard first client web applications & QR menus", status: "in-progress" },
- { text: "Standardize rapid 48-hour delivery pipelines", status: "in-progress" },
+ { text: "Standardize rapid milestone delivery pipelines", status: "in-progress" },
  ],
  },
  {
@@ -476,8 +476,8 @@ export const roadmapData: RoadmapPhase[] = [
  title: "Expansion & SaaS",
  status: "Upcoming Horizon",
  statusType: "upcoming",
- badgeBg: "border-[#14141A] bg-[#14141A] text-[#14141A]",
- nodeBorder: "border-2 border-dashed border-[#14141A] shadow-none",
+ badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
+ nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
  { text: "Launch proprietary micro-SaaS web products", status: "future" },
  { text: "Expand engineering collective & developer network", status: "future" },
@@ -491,8 +491,8 @@ export const roadmapData: RoadmapPhase[] = [
  title: "Intelligence & Scale",
  status: "Future Vision",
  statusType: "future",
- badgeBg: "border-[#14141A] bg-[#14141A] text-[#14141A]",
- nodeBorder: "border-2 border-dashed border-[#14141A] shadow-none",
+ badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
+ nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
  { text: "Enterprise custom AI agents & automated pipelines", status: "future" },
  { text: "Autonomous hardware & robotics commercial fleet", status: "future" },
@@ -504,7 +504,7 @@ export const roadmapData: RoadmapPhase[] = [
 
 export const techArsenal = {
  row1: [
- "Next.js 15",
+ "Next.js",
  "React 19",
  "TypeScript",
  "Tailwind CSS",
@@ -646,10 +646,10 @@ export const websiteDevelopmentPlans: PricingPlan[] = [
  desc: "High-performance React/Next.js build for established brands and startups.",
  features: [
  "Up to 6 Premium Custom Pages",
- "Next.js 15 Server-Side Architecture",
+ "Next.js Server-Side Architecture",
  "Advanced Lead Capture & Email Dispatch",
  "Search Engine Optimization (SEO)",
- "Performance & 95+ Speed Optimization",
+ "Performance & Speed Optimization",
  "Custom Micro-Animations & Bento Grids",
  "Social Media & Analytics Integration",
  "Production Deployment & Domain Link",
@@ -661,7 +661,7 @@ export const websiteDevelopmentPlans: PricingPlan[] = [
  price: "₹5,999+",
  desc: "Dynamic web solution with custom backend, authentication, and database.",
  features: [
- "Next.js 15 + PostgreSQL Database",
+ "Next.js + PostgreSQL Database",
  "User Authentication & Login Portal",
  "Admin Management Dashboard",
  "Dynamic Content & Database Queries",
@@ -857,7 +857,7 @@ export const maintenancePlans: PricingPlan[] = [
  period: "/month",
  desc: "Priority dedicated developer assistance for growing businesses.",
  features: [
- "Priority Developer Support (24h SLA)",
+ "Priority Developer Support",
  "Frequent Content & Feature Changes",
  "Weekly Performance & Speed Audits",
  "Daily Cloud Database Backups",
@@ -1000,7 +1000,7 @@ export const faqItems: FAQItem[] = [
  category: "Services",
  question: "Can you redesign or upgrade an existing outdated website?",
  answer:
- "Absolutely. We can take your existing content, brand assets, and domain, and rebuild the entire interface into a lightning-fast, modern Next.js 15 web application with contemporary aesthetics and improved search ranking.",
+ "Absolutely. We can take your existing content, brand assets, and domain, and rebuild the entire interface into a lightning-fast, modern Next.js web application with contemporary aesthetics and improved search ranking.",
  },
  {
  id: "faq-16",
@@ -1035,14 +1035,14 @@ export const faqItems: FAQItem[] = [
  category: "Technical",
  question: "Do you use generic pre-made WordPress templates or build custom code?",
  answer:
- "We write 100% clean, custom code using modern Next.js 15, React 19, and Tailwind CSS. We avoid bloated, slow WordPress templates that break with plugin updates. Our sites load in milliseconds, have top-tier security, and score 95+ on Google Lighthouse audits.",
+ "We write 100% clean, custom code using modern Next.js, React 19, and Tailwind CSS. We avoid bloated, slow WordPress templates that break with plugin updates. Our sites load in milliseconds, have top-tier security, and score 95+ on Google Lighthouse audits.",
  },
  {
  id: "faq-21",
  category: "Technical",
  question: "What technologies and coding frameworks do you use?",
  answer:
- "Our core frontend stack is Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, and Framer Motion. Our backend and database stack includes PostgreSQL with Drizzle ORM, Neon Serverless, Node.js, and Python/Flask for AI/ML pipelines. For hardware, we use C/C++, Arduino, and embedded firmware.",
+ "Our core frontend stack is Next.js (App Router), React 19, TypeScript, Tailwind CSS, and Framer Motion. Our backend and database stack includes PostgreSQL with Drizzle ORM, Neon Serverless, Node.js, and Python/Flask for AI/ML pipelines. For hardware, we use C/C++, Arduino, and embedded firmware.",
  },
  {
  id: "faq-22",

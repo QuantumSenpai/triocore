@@ -94,7 +94,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
 
  <Reveal direction="up" delay={0.16}>
  <p className="mt-4 text-sm sm:text-base md:text-lg text-[#2B2B38]  font-sans font-medium">
- Transparent, student-friendly rates with zero agency markups. From rapid ₹999 launch pages to scalable Next.js 15 enterprise web applications.
+ Transparent, student-friendly rates with zero agency markups. From rapid ₹999 launch pages to scalable Next.js enterprise web applications.
  </p>
  </Reveal>
  </div>
@@ -354,7 +354,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  <div className="glass-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between h-full relative group hover:border-[#374BFF]">
  <div className="space-y-3.5">
  <div className="flex items-center justify-between">
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#374BFF] text-[#374BFF]">
+ <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-[#374BFF]/20 bg-[#374BFF]/10 text-[#374BFF]">
  Combo Value
  </span>
  <span className="text-xs text-[#14141A] line-through">
@@ -518,7 +518,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  <h3 className="font-heading text-xl font-bold text-[#14141A]">
  {plan.name}
  </h3>
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#374BFF] text-[#374BFF]">
+ <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-[#374BFF]/20 bg-[#374BFF]/10 text-[#374BFF]">
  Monthly Care
  </span>
  </div>
@@ -571,7 +571,7 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  Plug-and-play extensions to add power and capability to any web build.
  </p>
  </div>
- <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#374BFF] text-[#374BFF] self-start sm:self-auto">
+ <span className="text-xs font-bold px-3 py-1 rounded-full border border-[#374BFF]/20 bg-[#374BFF]/10 text-[#374BFF] self-start sm:self-auto">
  Flat INR Add-On Rates
  </span>
  </div>
@@ -580,12 +580,12 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  {addOns.map((addon) => (
  <div
  key={addon.name}
- className="p-4 rounded-2xl border border-[#14141A] bg-white flex items-center justify-between gap-3 shadow-sm"
+ className="p-4 rounded-2xl border border-[#14141A]/10 bg-white flex items-center justify-between gap-3 shadow-xs"
  >
  <span className="text-xs font-bold text-[#14141A]">
  {addon.name}
  </span>
- <span className="font-heading text-xs font-black text-[#374BFF] shrink-0">
+ <span className="text-xs font-bold text-[#374BFF] bg-[#374BFF]/10 px-2 py-0.5 rounded-md">
  {addon.price}
  </span>
  </div>
@@ -598,10 +598,9 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  <div className="mt-12 text-center">
  <button
  onClick={() => setShowTerms(!showTerms)}
- className="inline-flex items-center gap-2 text-xs font-bold text-[#14141A] hover:text-[#374BFF] transition-colors cursor-pointer py-2 px-4 rounded-xl hover:bg-[#374BFF]"
+ className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[#2B2B38] hover:text-[#374BFF] transition-colors cursor-pointer"
  >
- <HelpCircle className="h-4 w-4" />
- <span>{showTerms ? "Hide Payment & Delivery Terms" : "View Payment & Delivery Terms"}</span>
+ <span>View All Commercial Terms & Service Guarantees</span>
  <ChevronDown className={cn("h-4 w-4 transition-transform", showTerms && "rotate-180")} />
  </button>
 
@@ -613,8 +612,8 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  </h4>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-[#2B2B38] font-medium leading-relaxed">
  {pricingTerms.map((term, i) => (
- <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-white/50  border border-[#14141A] ">
- <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#374BFF] text-[#374BFF] text-[10px] font-bold">
+ <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-white/50 border border-[#14141A]/10">
+ <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#374BFF] text-white text-[10px] font-bold">
  {i + 1}
  </span>
  <span>{term}</span>

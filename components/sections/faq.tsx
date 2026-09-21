@@ -137,10 +137,10 @@ export function FAQSection({ initialFaqs }: FAQSectionProps) {
  <Reveal key={item.id} direction="up" delay={Math.min(index * 0.03, 0.3)}>
  <div
  className={cn(
- "glass-card rounded-2xl sm:rounded-3xl border transition-all duration-200 overflow-hidden",
+ "glass-card rounded-2xl sm:rounded-3xl border transition-all duration-300 overflow-hidden",
  isOpen
- ? "border-[#374BFF] shadow-lg shadow-[#374BFF] "
- : "border-[#14141A] hover:border-[#374BFF]"
+ ? "border-[#374BFF] shadow-sm"
+ : "border-[#14141A]/10 hover:border-[#374BFF]/40 shadow-xs"
  )}
  >
  <button
@@ -154,7 +154,7 @@ export function FAQSection({ initialFaqs }: FAQSectionProps) {
  "flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl transition-colors duration-200",
  isOpen
  ? "bg-[#374BFF] text-white"
- : "bg-[#374BFF] text-[#374BFF]"
+ : "bg-[#374BFF]/10 text-[#374BFF]"
  )}
  >
  {item.category === "Legal" ? (

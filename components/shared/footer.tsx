@@ -126,7 +126,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2 text-xs text-[#374BFF] font-bold">
                 <ShieldCheck className="h-4 w-4" />
-                <span>100% Client Code Ownership</span>
+                <span>Client Code Ownership</span>
               </li>
             </ul>
           </div>

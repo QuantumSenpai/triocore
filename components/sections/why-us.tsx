@@ -60,7 +60,7 @@ export function WhyUsSection({ initialStats }: WhyUsSectionProps) {
  <Reveal key={v.title} direction="up" delay={index * 0.06}>
  <div className="glass-card rounded-3xl p-6 sm:p-8 h-full flex flex-col justify-between group hover:border-[#374BFF] transition-all">
  <div className="space-y-4">
- <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[#374BFF] text-[#374BFF] group-interactive-lift transition-transform">
+ <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[#374BFF]/10 text-[#374BFF] transition-colors group-hover:bg-[#374BFF] group-hover:text-white">
  <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
  </div>
  <h3 className="font-heading text-lg sm:text-xl font-bold text-[#14141A] group-hover:text-[#374BFF] transition-colors">
@@ -77,8 +77,8 @@ export function WhyUsSection({ initialStats }: WhyUsSectionProps) {
  </div>
 
  <Reveal direction="up" delay={0.25}>
- <div className="rounded-3xl bg-gradient-to-br from-[#14141A] via-[#1C1C26] to-[#14141A] p-6 sm:p-10 lg:p-12 text-white shadow-2xl relative overflow-hidden border border-[#374BFF]">
- <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#374BFF] via-transparent to-transparent pointer-events-none" />
+ <div className="rounded-3xl bg-gradient-to-br from-[#14141A] via-[#1C1C26] to-[#14141A] p-6 sm:p-10 lg:p-12 text-white shadow-md relative overflow-hidden border border-white/10">
+ <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#374BFF]/20 via-transparent to-transparent pointer-events-none" />
  
  <div className="relative z-10 flex flex-wrap items-stretch justify-center gap-3.5 sm:gap-5 lg:gap-6 text-center">
  {stats.map((stat, i) => (

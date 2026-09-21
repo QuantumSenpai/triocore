@@ -76,10 +76,10 @@ export function AboutSection() {
  <span
  className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border shadow-sm ${
  item.status === "Completed"
- ? "border-[#374BFF] bg-[#374BFF] text-[#374BFF]"
+ ? "border-emerald-300 bg-emerald-50 text-emerald-700"
  : item.status === "Active"
- ? "border-[#CFFF04] bg-[#CFFF04] text-[#14141A]"
- : "border-[#14141A] bg-[#F5F6FC] text-[#14141A] "
+ ? "border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF]"
+ : "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]"
  }`}
  >
  {item.status}
@@ -87,7 +87,7 @@ export function AboutSection() {
  </div>
 
  <div className="flex items-center gap-2.5">
- <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#374BFF] text-[#374BFF]">
+ <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#374BFF]/10 text-[#374BFF]">
  <Icon className="h-4 w-4" />
  </div>
  <h4 className="font-heading text-base sm:text-lg font-bold text-[#14141A]">
