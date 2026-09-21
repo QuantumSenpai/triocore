@@ -21,5 +21,8 @@ export function validatePassword(password: string | null | undefined): {
   if (lower.includes("admin")) {
     return { valid: false, error: "Password must not contain 'admin'." };
   }
+  if (lower.includes("password")) {
+    return { valid: false, error: "Password must not contain 'password'." };
+  }
   return { valid: true };
 }

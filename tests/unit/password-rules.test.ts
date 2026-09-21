@@ -20,6 +20,12 @@ describe("Password Rules Enforcement", () => {
     expect(validatePassword("my-admin-secret-2026").valid).toBe(false);
   });
 
+  it("rejects passwords containing 'password' case-insensitively", () => {
+    expect(validatePassword("MyPassword2026!").valid).toBe(false);
+    expect(validatePassword("SecurePASSWORD99").valid).toBe(false);
+    expect(validatePassword("any-password-here").valid).toBe(false);
+  });
+
   it("accepts valid passwords meeting all criteria", () => {
     expect(validatePassword("QuantumVault99!#").valid).toBe(true);
     expect(validatePassword("HyperSonicSecure2026!").valid).toBe(true);
