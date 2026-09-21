@@ -8,8 +8,6 @@ import { db } from "./db";
 import * as schema from "./db/schema";
 import { isAdminEmail } from "./auth-whitelist";
 
-const googleClientId = (process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || "").trim();
-const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || "").trim();
 
 const getBaseURL = () => {
   if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL.trim().replace(/\/$/, "");
@@ -46,12 +44,6 @@ export const auth = betterAuth({
   trustedOrigins,
   emailAndPassword: {
     enabled: true,
-  },
-  socialProviders: {
-    google: {
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
-    },
   },
   databaseHooks: {
     user: {
