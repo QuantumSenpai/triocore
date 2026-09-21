@@ -7,7 +7,10 @@ import { db } from "./index";
 import { user, account } from "./schema";
 import { eq, and } from "drizzle-orm";
 
-const initialPassword = process.env.ADMIN_INITIAL_PASSWORD || "Admin@TrioCore2026!";
+const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
+if (!initialPassword) {
+  throw new Error("ADMIN_INITIAL_PASSWORD environment variable is required to seed admins.");
+}
 
 const admins = [
   {

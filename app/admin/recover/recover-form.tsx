@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Eye, EyeOff, ShieldAlert, KeyRound, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/logo";
+import { validatePassword } from "@/lib/password-rules";
+import { useRouter } from "next/navigation";
 
 export function RecoverForm() {
+  const router = useRouter();
   const [setupKey, setSetupKey] = useState("");
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -14,9 +17,46 @@ export function RecoverForm() {
 
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    if (!setupKey.trim()) {
+      toast.error("ADMIN_SETUP_KEY is required.");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Owner email is required.");
+      return;
+    }
+
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      toast.error(pwCheck.error || "Password does not meet complexity requirements.");
+      return;
+    }
+
     setLoading(true);
     try {
-      toast.info("Recovery submitted. If valid, credentials updated.");
+      const res = await fetch("/api/admin/recover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          setupKey: setupKey.trim(),
+          email: email.trim().toLowerCase(),
+          newPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Recovery failed.");
+      }
+
+      toast.success("Password successfully reset! Redirecting to login...");
+      setTimeout(() => {
+        router.push("/admin/login");
+      }, 1200);
+    } catch (err) {
+      toast.error((err as Error).message || "Recovery failed.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +118,7 @@ export function RecoverForm() {
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 8 characters"
+                  placeholder="Minimum 12 characters (no 'triocore' or 'admin')"
                   className="block w-full pl-4 pr-10 py-2.5 sm:text-sm border border-black/15 rounded-xl bg-[#F5F6FC] text-[#14141A] focus:border-[#374BFF] focus:outline-none"
                 />
                 <button

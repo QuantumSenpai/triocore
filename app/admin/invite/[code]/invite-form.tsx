@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, UserPlus, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/logo";
+import { validatePassword } from "@/lib/password-rules";
 
 export function InviteForm({ email, token, role }: { email: string; token: string; role: string }) {
   const router = useRouter();
@@ -23,8 +24,9 @@ export function InviteForm({ email, token, role }: { email: string; token: strin
       toast.error("Please enter your name.");
       return;
     }
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long.");
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      toast.error(pwCheck.error || "Password does not meet complexity requirements.");
       return;
     }
     if (password !== confirmPassword) {
@@ -106,7 +108,7 @@ export function InviteForm({ email, token, role }: { email: string; token: strin
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimum 8 characters"
+                  placeholder="Minimum 12 characters (no 'triocore' or 'admin')"
                   className="block w-full pl-4 pr-10 py-2.5 sm:text-sm border border-black/15 rounded-xl bg-[#F5F6FC] text-[#14141A] focus:border-[#374BFF] focus:outline-none"
                 />
                 <button

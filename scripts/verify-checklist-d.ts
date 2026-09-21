@@ -48,16 +48,19 @@ async function runChecklistD() {
   }
   console.log("📊 Pre-test Baseline Row Counts:", initialCounts);
 
-  // 1. Authenticate / Setup Owner
+  // 1. Authenticate / Setup Owner with synthetic credentials
   const setupKey = process.env.ADMIN_SETUP_KEY?.trim() || "triocore-setup-master-key-2026";
+  const testOwnerEmail = `TEST-${crypto.randomBytes(6).toString("hex")}@example.test`;
+  const testOwnerPassword = `SecureX-${crypto.randomBytes(8).toString("hex")}-2026!`;
+
   const setupRes = await fetch("http://localhost:3000/api/admin/setup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       setupKey,
-      name: "Chandrima Chowdhury",
-      email: "crezymoon07@gmail.com",
-      password: "Admin@TrioCore2026!",
+      name: "TEST Studio Owner",
+      email: testOwnerEmail,
+      password: testOwnerPassword,
     }),
   });
   console.log("Owner setup status:", setupRes.status);
@@ -70,8 +73,8 @@ async function runChecklistD() {
       "Origin": "http://localhost:3000",
     },
     body: JSON.stringify({
-      email: "crezymoon07@gmail.com",
-      password: "Admin@TrioCore2026!",
+      email: testOwnerEmail,
+      password: testOwnerPassword,
     }),
   });
 
@@ -435,15 +438,25 @@ async function runChecklistD() {
 
     // 3. Test Finance Per-Member Toggle
     // Insert a temporary member in admin_members with can_view_finance: false
-    const otherUser = await client`SELECT id, email FROM "user" WHERE email != 'crezymoon07@gmail.com' LIMIT 1`;
-    const testMemberUserId = otherUser[0]?.id;
-    const testMemberEmail = otherUser[0]?.email;
+    const testMemberEmail = `TEST-${crypto.randomBytes(6).toString("hex")}@example.test`;
+    const testMemberPassword = `MemberX-${crypto.randomBytes(8).toString("hex")}-2026!`;
+    const testMemberUserId = crypto.randomUUID();
+    const { hashPassword } = await import("better-auth/crypto");
+    const testMemberHash = await hashPassword(testMemberPassword);
+
+    await client`
+      INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
+      VALUES (${testMemberUserId}, ${testMemberEmail}, 'TEST Member User', true, NOW(), NOW())
+    `;
+    await client`
+      INSERT INTO "account" (id, account_id, provider_id, user_id, password, created_at, updated_at)
+      VALUES (${crypto.randomUUID()}, ${testMemberUserId}, 'credential', ${testMemberUserId}, ${testMemberHash}, NOW(), NOW())
+    `;
 
     // Add member with can_view_finance = false
     await client`
       INSERT INTO admin_members (id, user_id, role, can_view_finance, status)
       VALUES (${crypto.randomUUID()}, ${testMemberUserId}, 'member', false, 'active')
-      ON CONFLICT (user_id) DO UPDATE SET can_view_finance = false, role = 'member'
     `;
 
     // Log in as this member
@@ -452,7 +465,7 @@ async function runChecklistD() {
       headers: { "Content-Type": "application/json", "Origin": "http://localhost:3000" },
       body: JSON.stringify({
         email: testMemberEmail,
-        password: "Admin@TrioCore2026!",
+        password: testMemberPassword,
       }),
     });
     const memberCookie = memberLoginRes.headers.get("set-cookie") || "";
@@ -516,6 +529,8 @@ async function runChecklistD() {
   await client`DELETE FROM "admin_members"`;
   await client`DELETE FROM "session"`;
   await client`DELETE FROM "auth_lockouts"`;
+  await client`DELETE FROM "account" WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE 'TEST-%@example.test')`;
+  await client`DELETE FROM "user" WHERE email LIKE 'TEST-%@example.test'`;
 
   const finalCounts: Record<string, number> = {};
   for (const t of tablesToTrack) {

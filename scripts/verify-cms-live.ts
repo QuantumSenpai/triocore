@@ -20,8 +20,31 @@ async function runCmsLiveVerification() {
   if (!dbUrl) throw new Error("No DATABASE_URL");
   const client = neon(dbUrl);
 
-  // 1. Admin Login
-  console.log("Logging in as owner admin...");
+  // 1. Create synthetic admin owner for testing
+  console.log("Setting up synthetic admin owner for test...");
+  const crypto = await import("crypto");
+  const testOwnerEmail = `TEST-${crypto.randomBytes(6).toString("hex")}@example.test`;
+  const testOwnerPassword = `SecureX-${crypto.randomBytes(8).toString("hex")}-2026!`;
+  const testOwnerUserId = crypto.randomUUID();
+  const { hashPassword } = await import("better-auth/crypto");
+  const testOwnerHash = await hashPassword(testOwnerPassword);
+
+  await client`
+    INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
+    VALUES (${testOwnerUserId}, ${testOwnerEmail}, 'TEST CMS Owner', true, NOW(), NOW())
+  `;
+  await client`
+    INSERT INTO "account" (id, account_id, provider_id, user_id, password, created_at, updated_at)
+    VALUES (${crypto.randomUUID()}, ${testOwnerUserId}, 'credential', ${testOwnerUserId}, ${testOwnerHash}, NOW(), NOW())
+  `;
+  await client`
+    INSERT INTO admin_members (id, user_id, role, can_view_finance, status)
+    VALUES (${crypto.randomUUID()}, ${testOwnerUserId}, 'owner', true, 'active')
+    ON CONFLICT (user_id) DO UPDATE SET role = 'owner', can_view_finance = true, status = 'active'
+  `;
+
+  // Login
+  console.log("Logging in as synthetic owner admin...");
   const loginRes = await fetch("http://localhost:3000/api/auth/sign-in/email", {
     method: "POST",
     headers: {
@@ -29,8 +52,8 @@ async function runCmsLiveVerification() {
       "Origin": "http://localhost:3000",
     },
     body: JSON.stringify({
-      email: "crezymoon07@gmail.com",
-      password: "Admin@TrioCore2026!",
+      email: testOwnerEmail,
+      password: testOwnerPassword,
     }),
   });
 
@@ -449,6 +472,12 @@ async function runCmsLiveVerification() {
       evidence: `${revisions[0].c} content revisions and ${audits[0].c} audit logs recorded in database.`,
     });
   }
+
+  // Cleanup synthetic test user
+  await client`DELETE FROM "account" WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE 'TEST-%@example.test')`;
+  await client`DELETE FROM "user" WHERE email LIKE 'TEST-%@example.test'`;
+  await client`DELETE FROM admin_members WHERE user_id = ${testOwnerUserId}`;
+  await client`DELETE FROM session WHERE user_id = ${testOwnerUserId}`;
 
   console.log("\n================ SUMMARY C ================");
   for (const r of reports) {

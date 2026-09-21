@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { adminInvites, adminMembers, auditLogs } from "@/lib/db/schema";
+import { adminInvites, adminMembers, auditLogs, user, account, session } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { hashPassword } from "better-auth/crypto";
+import { validatePassword } from "@/lib/password-rules";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -12,6 +14,11 @@ export async function POST(req: NextRequest) {
 
     if (!token || !password || !name) {
       return NextResponse.json({ error: "Token, name, and password are required" }, { status: 400 });
+    }
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return NextResponse.json({ error: pwCheck.error }, { status: 400 });
     }
 
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
@@ -32,28 +39,87 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This invitation link has expired (48h limit)." }, { status: 400 });
     }
 
-    // Create user via Better-Auth
-    const authRes = await auth.api.signUpEmail({
-      body: {
-        email: inv.email,
-        password,
-        name: name.trim(),
-      },
-    });
+    const normalizedEmail = inv.email.trim().toLowerCase();
+    let userId: string;
 
-    if (!authRes || !authRes.user) {
-      return NextResponse.json({ error: "Failed to create team member account" }, { status: 500 });
+    // Check if user already exists
+    const existingUser = await db.select().from(user).where(eq(user.email, normalizedEmail)).limit(1);
+    const passwordHash = await hashPassword(password);
+
+    if (existingUser.length > 0) {
+      userId = existingUser[0].id;
+      if (name.trim()) {
+        await db.update(user).set({ name: name.trim(), updatedAt: new Date() }).where(eq(user.id, userId));
+      }
+      const existingAccount = await db.select().from(account).where(eq(account.userId, userId)).limit(1);
+      if (existingAccount.length > 0) {
+        await db.update(account).set({ password: passwordHash, updatedAt: new Date() }).where(eq(account.id, existingAccount[0].id));
+      } else {
+        await db.insert(account).values({
+          id: crypto.randomUUID(),
+          accountId: userId,
+          providerId: "credential",
+          userId,
+          password: passwordHash,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+      await db.delete(session).where(eq(session.userId, userId));
+    } else {
+      try {
+        const authRes = await auth.api.signUpEmail({
+          body: {
+            email: normalizedEmail,
+            password,
+            name: name.trim(),
+          },
+        });
+        if (authRes && authRes.user) {
+          userId = authRes.user.id;
+        } else {
+          throw new Error("Failed to sign up");
+        }
+      } catch {
+        const newUserId = crypto.randomUUID();
+        await db.insert(user).values({
+          id: newUserId,
+          email: normalizedEmail,
+          name: name.trim(),
+          emailVerified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await db.insert(account).values({
+          id: crypto.randomUUID(),
+          accountId: newUserId,
+          providerId: "credential",
+          userId: newUserId,
+          password: passwordHash,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        userId = newUserId;
+      }
     }
 
-    const userId = authRes.user.id;
-
-    // Insert into admin_members
-    await db.insert(adminMembers).values({
-      userId,
-      role: inv.role || "member",
-      canViewFinance: false,
-      status: "active",
-    });
+    // Insert or update in admin_members
+    const existingMember = await db.select().from(adminMembers).where(eq(adminMembers.userId, userId)).limit(1);
+    if (existingMember.length > 0) {
+      await db.update(adminMembers).set({
+        role: inv.role || "member",
+        canViewFinance: inv.canViewFinance || false,
+        status: "active",
+        updatedAt: new Date(),
+      }).where(eq(adminMembers.userId, userId));
+    } else {
+      await db.insert(adminMembers).values({
+        userId,
+        role: inv.role || "member",
+        canViewFinance: inv.canViewFinance || false,
+        status: "active",
+      });
+    }
 
     // Mark invite as used (single-use guarantee)
     await db.update(adminInvites).set({ usedAt: new Date() }).where(eq(adminInvites.id, inv.id));
