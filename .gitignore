@@ -5,7 +5,6 @@ node_modules
 .env*.local
 .env.production
 .env.development
-drizzle
 out
 build
 dist

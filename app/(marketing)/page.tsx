@@ -10,22 +10,56 @@ import { FAQSection } from "@/components/sections/faq";
 import { RoadmapSection } from "@/components/sections/roadmap";
 import { TechMarqueeSection } from "@/components/sections/tech-marquee";
 import { ContactFormSection } from "@/components/sections/contact-form";
+import { FeedbackSection } from "@/components/sections/feedback-section";
+import {
+  getHeroContent,
+  getServicesContent,
+  getShowcaseContent,
+  getTeamContent,
+  getEmployeesContent,
+  getPricingContent,
+  getFaqContent,
+  getWhyUsStats,
+} from "@/lib/dal/content";
 
-export default function MarketingPage() {
+export const revalidate = 0;
+
+export default async function MarketingPage() {
+  const [
+    heroData,
+    services,
+    showcase,
+    team,
+    employees,
+    pricing,
+    faqs,
+    whyUsStats,
+  ] = await Promise.all([
+    getHeroContent(),
+    getServicesContent(),
+    getShowcaseContent(),
+    getTeamContent(),
+    getEmployeesContent(),
+    getPricingContent(),
+    getFaqContent(),
+    getWhyUsStats(),
+  ]);
+
   return (
     <div className="relative">
-      <HeroSection />
+      <HeroSection initialData={heroData} />
       <AboutSection />
-      <TeamBentoSection />
-      <ServicesBentoSection />
-      <PricingSection />
+      <TeamBentoSection initialTeam={team} initialEmployees={employees} />
+      <ServicesBentoSection initialServices={services} />
+      <PricingSection initialPlans={pricing} />
       <InnovationLabSection />
-      <ShowcaseGridSection />
-      <WhyUsSection />
-      <FAQSection />
+      <ShowcaseGridSection initialProjects={showcase} />
+      <WhyUsSection initialStats={whyUsStats} />
+      <FAQSection initialFaqs={faqs} />
       <RoadmapSection />
       <TechMarqueeSection />
       <ContactFormSection />
+      <FeedbackSection />
     </div>
   );
 }
