@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { feedbackReports } from "@/lib/db/schema";
+import { feedbackReports, authLockouts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -23,7 +23,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Saved to feedback_reports DB FIRST
+    // 1. DB Rate Limiting: 5 submissions per hour per IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+    const secret = process.env.RATE_LIMIT_SECRET || "feedback-rate-limit-secret";
+    const ipHash = crypto.createHmac("sha256", secret).update(ip).digest("hex");
+    const rateLimitKey = `feedback:${ipHash}`;
+
+    const now = new Date();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const existingLockout = await db
+      .select()
+      .from(authLockouts)
+      .where(eq(authLockouts.key, rateLimitKey))
+      .limit(1);
+
+    if (existingLockout.length > 0) {
+      const record = existingLockout[0];
+      if (record.lastAttemptAt > oneHourAgo) {
+        if (record.failedAttempts >= 5) {
+          return NextResponse.json(
+            { error: "Too many feedback submissions. Maximum 5 submissions per hour." },
+            { status: 429 }
+          );
+        }
+        await db
+          .update(authLockouts)
+          .set({
+            failedAttempts: record.failedAttempts + 1,
+            lastAttemptAt: now,
+          })
+          .where(eq(authLockouts.key, rateLimitKey));
+      } else {
+        await db
+          .update(authLockouts)
+          .set({
+            failedAttempts: 1,
+            lastAttemptAt: now,
+          })
+          .where(eq(authLockouts.key, rateLimitKey));
+      }
+    } else {
+      await db.insert(authLockouts).values({
+        key: rateLimitKey,
+        ipHash,
+        failedAttempts: 1,
+        lastAttemptAt: now,
+      });
+    }
+
+    // 2. Saved to feedback_reports DB FIRST
     const inserted = await db
       .insert(feedbackReports)
       .values({
@@ -39,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     const reportId = inserted[0].id;
 
-    // 2. Forward to Formspree server-side (resilient if it fails)
+    // 3. Forward to Formspree server-side (resilient if it fails)
     const formspreeEndpoint =
       req.headers.get("x-mock-endpoint") || process.env.FORMSPREE_ENDPOINT?.trim();
     if (formspreeEndpoint) {

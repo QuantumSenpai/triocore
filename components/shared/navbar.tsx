@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X, ArrowUpRight, MessageSquarePlus } from "lucide-react";
 import { Logo } from "./logo";
 import { buttonVariants } from "@/components/ui/button";
+import { FeedbackModal } from "./feedback-modal";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -21,6 +22,7 @@ const navLinks = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
@@ -89,7 +91,18 @@ export function Navbar() {
               })}
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Feedback Button: Desktop */}
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-full border border-[#14141A]/10 bg-white text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF]"
+                aria-label="Send Feedback or Report Bug"
+                title="Send Feedback or Report Bug"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+              </button>
+
               <div className="hidden sm:block">
                 <Link
                   href="#contact"
@@ -139,6 +152,19 @@ export function Navbar() {
                   {link.name}
                 </Link>
               ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setFeedbackOpen(true);
+                }}
+                className="flex items-center gap-2 min-h-[44px] px-4 rounded-xl text-sm font-bold text-[#14141A] hover:bg-[#374BFF]/10 hover:text-[#374BFF] transition-colors w-full text-left cursor-pointer"
+              >
+                <MessageSquarePlus className="h-4 w-4 text-[#374BFF]" />
+                <span>Feedback & Bug Report</span>
+              </button>
+
               <div className="pt-3 border-t border-[#14141A]/10 mt-1">
                 <Link
                   href="#contact"
@@ -157,6 +183,11 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+      />
     </>
   );
 }

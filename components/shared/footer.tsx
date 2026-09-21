@@ -8,9 +8,9 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative border-t border-[#14141A] bg-white py-12 sm:py-16 overflow-hidden">
+    <footer className="relative border-t border-[#14141A]/10 bg-white py-12 sm:py-16 overflow-hidden">
       <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 pb-10 sm:pb-12 border-b border-[#14141A]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10 pb-10 sm:pb-12 border-b border-[#14141A]/10">
           <div className="lg:col-span-2 space-y-4">
             <Logo size="md" />
             <p className="text-sm sm:text-base text-[#14141A] max-w-sm font-sans font-medium">
@@ -21,14 +21,14 @@ export function Footer() {
                 href={siteConfig.github}
                 target="_blank"
                 rel="noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#14141A] bg-[#F5F6FC] text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
                 aria-label="TrioCore GitHub"
               >
                 <GithubIcon className="h-4 w-4" />
               </a>
               <a
                 href={`mailto:${siteConfig.email}`}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#14141A] bg-[#F5F6FC] text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
                 aria-label="Email TrioCore"
               >
                 <Mail className="h-4 w-4" />
@@ -92,6 +92,11 @@ export function Footer() {
               <li>
                 <Link href="/cookie-policy" className="text-[#14141A] hover:text-[#374BFF] transition-colors">
                   Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="#feedback" className="text-[#14141A] hover:text-[#374BFF] transition-colors">
+                  Feedback & Bug Reports
                 </Link>
               </li>
               <li className="pt-2">
