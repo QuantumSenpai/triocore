@@ -58,7 +58,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="#pricing" className="text-[#14141A] hover:text-[#374BFF] transition-colors">
-                  INR Pricing
+                  Pricing
                 </Link>
               </li>
               <li>

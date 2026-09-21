@@ -77,11 +77,11 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  <section id="pricing" className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">
  <div className="mx-auto max-w-7xl">
  <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
- <Reveal direction="down">
- <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#374BFF] bg-[#374BFF] text-xs font-bold uppercase tracking-widest text-[#374BFF] font-heading mb-3">
- <Tag className="h-3.5 w-3.5" /> Direct INR Pricing • India 🇮🇳
- </span>
- </Reveal>
+        <Reveal direction="down">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#374BFF] text-xs font-bold uppercase tracking-widest text-white font-heading mb-3 shadow-sm shadow-[#374BFF]/20">
+            <Tag className="h-3.5 w-3.5 text-white" /> Pricing
+          </span>
+        </Reveal>
 
  <Reveal direction="up" delay={0.08}>
  <h2 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[#14141A]">

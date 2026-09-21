@@ -427,8 +427,8 @@ export const whyUsValues: WhyUsValue[] = [
  },
  {
  iconName: "BadgePercent",
- title: "Transparent INR Pricing",
- desc: "Fair startup and student-friendly rates in Indian Rupees with zero surprise charges or hidden maintenance fees.",
+ title: "Transparent Pricing",
+ desc: "Fair startup and student-friendly rates with zero surprise charges or hidden maintenance fees.",
  },
  {
  iconName: "GraduationCap",
