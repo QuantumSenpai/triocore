@@ -100,22 +100,29 @@ export function TeamBentoSection({
                               {!isAvatarLoaded && !failedAvatars[member.id] && (
                                 <Skeleton className="h-full w-full rounded-xl" />
                               )}
-                              <Image
-                                src={
-                                  failedAvatars[member.id] || !member.avatarUrl
-                                    ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.name)}`
-                                    : member.avatarUrl
-                                }
-                                alt={member.name}
-                                fill
-                                sizes="176px"
-                                onLoad={() => handleAvatarLoaded(member.id)}
-                                onError={() => setFailedAvatars((prev) => ({ ...prev, [member.id]: true }))}
-                                className={cn(
-                                  "rounded-xl object-cover transition-opacity duration-300",
-                                  isAvatarLoaded ? "opacity-100" : "opacity-0"
-                                )}
-                              />
+                              {(() => {
+                                const isDeadIbb = Boolean(member.avatarUrl && member.avatarUrl.includes("ibb.co/") && !member.avatarUrl.includes("i.ibb.co/"));
+                                const avatarSrc = failedAvatars[member.id] || !member.avatarUrl || isDeadIbb
+                                  ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(member.name)}`
+                                  : member.avatarUrl;
+                                const isSvg = avatarSrc.includes(".svg") || avatarSrc.includes("dicebear.com");
+
+                                return (
+                                  <Image
+                                    src={avatarSrc}
+                                    alt={member.name}
+                                    fill
+                                    unoptimized={isSvg}
+                                    sizes="176px"
+                                    onLoad={() => handleAvatarLoaded(member.id)}
+                                    onError={() => setFailedAvatars((prev) => ({ ...prev, [member.id]: true }))}
+                                    className={cn(
+                                      "rounded-xl object-cover transition-opacity duration-300",
+                                      isAvatarLoaded ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                );
+                              })()}
                             </>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center rounded-xl bg-[#374BFF]/5 text-[#374BFF]">
@@ -267,15 +274,23 @@ export function TeamBentoSection({
                 <Reveal key={emp.id} direction="up" delay={index * 0.08}>
                   <div className="rounded-2xl glass-card border border-black/10 p-6 flex items-center gap-4 hover:border-[#374BFF] transition-all">
                     <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-black/5 border border-[#374BFF]/20">
-                      <Image
-                        src={
-                          emp.avatarUrl ||
-                          `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`
-                        }
-                        alt={emp.name}
-                        fill
-                        className="object-cover"
-                      />
+                      {(() => {
+                        const isDeadEmpIbb = Boolean(emp.avatarUrl && emp.avatarUrl.includes("ibb.co/") && !emp.avatarUrl.includes("i.ibb.co/"));
+                        const empAvatar = !emp.avatarUrl || isDeadEmpIbb
+                          ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(emp.name)}`
+                          : emp.avatarUrl;
+                        const isSvgEmp = empAvatar.includes(".svg") || empAvatar.includes("dicebear.com");
+
+                        return (
+                          <Image
+                            src={empAvatar}
+                            alt={emp.name}
+                            fill
+                            unoptimized={isSvgEmp}
+                            className="object-cover"
+                          />
+                        );
+                      })()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="font-heading text-base font-bold text-[#14141A] truncate">
