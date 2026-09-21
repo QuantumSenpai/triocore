@@ -40,7 +40,11 @@ export function HeroSection({ initialData }: HeroSectionProps) {
     icon: s.key.includes("innovator") ? Code2 : s.key.includes("service") ? Cpu : Rocket,
   }));
 
-  const statsData = (statsFromProp && statsFromProp.length >= 2) ? statsFromProp : defaultHeroStats;
+  // Guarantee all 3 canonical hero tiles always render, incorporating dynamic DB/CMS overrides
+  const statsData = defaultHeroStats.map((defaultStat) => {
+    const fromProp = statsFromProp?.find((s) => s.key === defaultStat.key);
+    return fromProp || defaultStat;
+  });
   const headline = initialData?.headline || "Think. Build. Scale.";
   const subtext = initialData?.subtext || "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India.";
   const headlineParts = headline.split(" ");

@@ -56,8 +56,8 @@ function LoginForm() {
     <div className="w-full max-w-md">
       <div className="rounded-3xl glass-card border border-[#14141A] p-8 sm:p-10 shadow-2xl bg-white">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#374BFF] bg-[#374BFF] text-xs font-bold text-[#374BFF] mb-4">
-            <ShieldCheck className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#374BFF] text-xs font-bold text-white mb-4 shadow-sm shadow-[#374BFF]/20">
+            <ShieldCheck className="h-3.5 w-3.5 text-white" />
             <span>TrioCore OS Portal</span>
           </div>
           <h1 className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] tracking-tight">

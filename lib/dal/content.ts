@@ -22,7 +22,7 @@ import {
   ShowcaseProject,
   TeamMember,
 } from "@/lib/data/site-content";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, or } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "./auth";
 
@@ -43,7 +43,7 @@ export async function getHeroContent(): Promise<HeroData> {
       "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India.",
     stats: [
       { key: "hero_innovators", value: "3", label: "Core Innovators" },
-      { key: "hero_services", value: "7", label: "Service Capabilities" },
+      { key: "hero_services", value: "6", label: "Service Capabilities" },
       { key: "hero_projects", value: "15+", label: "Projects Engineered" },
     ],
   };
@@ -62,10 +62,20 @@ export async function getHeroContent(): Promise<HeroData> {
     const statsRows = await db
       .select()
       .from(siteStats)
-      .where(eq(siteStats.section, "hero"))
+      .where(
+        or(
+          eq(siteStats.section, "hero"),
+          eq(siteStats.key, "hero_innovators"),
+          eq(siteStats.key, "hero_services"),
+          eq(siteStats.key, "hero_projects")
+        )
+      )
       .orderBy(asc(siteStats.order));
 
-    const stats = statsRows.length > 0 ? statsRows : fallback.stats;
+    const stats = fallback.stats.map((fbStat) => {
+      const found = statsRows.find((r) => r.key === fbStat.key);
+      return found ? { key: found.key, value: found.value, label: found.label } : fbStat;
+    });
 
     return { headline, subtext, stats };
   } catch (error) {
