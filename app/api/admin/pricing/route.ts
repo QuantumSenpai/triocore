@@ -110,33 +110,40 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { id, name, price, originalPrice, savings, period, badge, isPopular, isBestValue, desc, features, category, order } = body;
 
-    if (!id || !name || !price || !desc) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "Missing plan ID" }, { status: 400 });
     }
 
     if (!db) {
       return NextResponse.json({ success: true, message: "Database not connected" });
     }
 
-    const featuresArray = Array.isArray(features)
-      ? features
-      : typeof features === "string"
-      ? features.split(",").map((f: string) => f.trim()).filter(Boolean)
-      : [];
+    const existing = await db.select().from(pricingPlans).where(eq(pricingPlans.id, id)).limit(1);
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
+    }
+
+    const featuresArray = features !== undefined
+      ? (Array.isArray(features)
+        ? features
+        : typeof features === "string"
+        ? features.split(",").map((f: string) => f.trim()).filter(Boolean)
+        : [])
+      : existing[0].features;
 
     const updated = await db.update(pricingPlans).set({
-      name,
-      price,
-      originalPrice: originalPrice || "",
-      savings: savings || "",
-      period: period || "",
-      badge: badge || "",
-      isPopular: Boolean(isPopular),
-      isBestValue: Boolean(isBestValue),
-      desc,
+      name: name !== undefined ? name : existing[0].name,
+      price: price !== undefined ? price : existing[0].price,
+      originalPrice: originalPrice !== undefined ? originalPrice : existing[0].originalPrice,
+      savings: savings !== undefined ? savings : existing[0].savings,
+      period: period !== undefined ? period : existing[0].period,
+      badge: badge !== undefined ? badge : existing[0].badge,
+      isPopular: isPopular !== undefined ? Boolean(isPopular) : existing[0].isPopular,
+      isBestValue: isBestValue !== undefined ? Boolean(isBestValue) : existing[0].isBestValue,
+      desc: desc !== undefined ? desc : existing[0].desc,
       features: featuresArray,
-      category: category || "websites",
-      order: Number(order) || 0,
+      category: category !== undefined ? category : existing[0].category,
+      order: order !== undefined ? Number(order) : existing[0].order,
     }).where(eq(pricingPlans.id, id)).returning();
 
     const now = new Date();

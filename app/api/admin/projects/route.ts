@@ -89,30 +89,39 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, title, description, imageUrl, liveUrl, tech, status, order } = body;
+    const { id, title, description, imageUrl, liveUrl, tech, status, order, isPublished, category } = body;
 
-    if (!id || !title || !description || !imageUrl) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "Missing project ID" }, { status: 400 });
     }
 
     if (!db) {
       return NextResponse.json({ success: true, message: "Database not connected" });
     }
 
-    const techArray = Array.isArray(tech)
-      ? tech
-      : typeof tech === "string"
-      ? tech.split(",").map((t: string) => t.trim()).filter(Boolean)
-      : [];
+    const existing = await db.select().from(showcaseProjects).where(eq(showcaseProjects.id, id)).limit(1);
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const techArray = tech !== undefined
+      ? (Array.isArray(tech)
+        ? tech
+        : typeof tech === "string"
+        ? tech.split(",").map((t: string) => t.trim()).filter(Boolean)
+        : [])
+      : existing[0].tech;
 
     const updated = await db.update(showcaseProjects).set({
-      title,
-      description,
-      imageUrl,
-      liveUrl: liveUrl || "",
+      title: title !== undefined ? title : existing[0].title,
+      description: description !== undefined ? description : existing[0].description,
+      imageUrl: imageUrl !== undefined ? imageUrl : existing[0].imageUrl,
+      liveUrl: liveUrl !== undefined ? liveUrl : existing[0].liveUrl,
       tech: techArray,
-      status: status || "Completed",
-      order: Number(order) || 0,
+      status: status !== undefined ? status : existing[0].status,
+      order: order !== undefined ? Number(order) : existing[0].order,
+      isPublished: isPublished !== undefined ? Boolean(isPublished) : existing[0].isPublished,
+      category: category !== undefined ? category : existing[0].category,
     }).where(eq(showcaseProjects.id, id)).returning();
 
     const now = new Date();
