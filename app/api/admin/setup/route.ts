@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
           providerId: "credential",
           userId,
           password: passwordHash,
+          issuer: "local:credential",
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest) {
           providerId: "credential",
           userId: newUserId,
           password: passwordHash,
+          issuer: "local:credential",
           createdAt: new Date(),
           updatedAt: new Date(),
         });
