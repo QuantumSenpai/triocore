@@ -1,5 +1,6 @@
 const defaultAdmins = [
   "krishnenduadak1582005@gmail.com",
+  "itxkisu@gmail.com",
   "crezymoon07@gmail.com",
   "ninjanio296@gmail.com",
   "mddanishraza904@gmail.com",
