@@ -42,6 +42,9 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || "triocore-dev-secret-super-safe-key-12345",
   baseURL: getBaseURL(),
   trustedOrigins,
+  rateLimit: {
+    enabled: false,
+  },
   emailAndPassword: {
     enabled: true,
   },

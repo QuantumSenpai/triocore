@@ -8,18 +8,20 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSetupPage() {
   if (db) {
+    let hasAdmin = false;
     try {
-      const owners = await db
+      const admins = await db
         .select()
         .from(adminMembers)
-        .where(eq(adminMembers.role, "owner"))
         .limit(1);
 
-      if (owners.length > 0) {
-        notFound();
-      }
+      hasAdmin = admins.length > 0;
     } catch {
-      // If table missing or error, proceed or notFound
+      // If table missing or query error
+    }
+
+    if (hasAdmin) {
+      notFound();
     }
   }
 
