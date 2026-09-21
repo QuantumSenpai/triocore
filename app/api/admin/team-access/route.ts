@@ -71,3 +71,5 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
+
+export const PATCH = PUT;

@@ -25,18 +25,21 @@ async function runCmsLiveVerification() {
   const crypto = await import("crypto");
   const testOwnerEmail = `TEST-${crypto.randomBytes(6).toString("hex")}@example.test`;
   const testOwnerPassword = `SecureX-${crypto.randomBytes(8).toString("hex")}-2026!`;
-  const testOwnerUserId = crypto.randomUUID();
-  const { hashPassword } = await import("better-auth/crypto");
-  const testOwnerHash = await hashPassword(testOwnerPassword);
 
-  await client`
-    INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
-    VALUES (${testOwnerUserId}, ${testOwnerEmail}, 'TEST CMS Owner', true, NOW(), NOW())
-  `;
-  await client`
-    INSERT INTO "account" (id, account_id, provider_id, user_id, password, created_at, updated_at)
-    VALUES (${crypto.randomUUID()}, ${testOwnerUserId}, 'credential', ${testOwnerUserId}, ${testOwnerHash}, NOW(), NOW())
-  `;
+  const { auth } = await import("../lib/auth");
+  const signUpRes = await auth.api.signUpEmail({
+    body: {
+      email: testOwnerEmail,
+      password: testOwnerPassword,
+      name: "TEST CMS Owner",
+    },
+  });
+
+  if (!signUpRes || !signUpRes.user) {
+    throw new Error("Failed to sign up synthetic owner");
+  }
+  const testOwnerUserId = signUpRes.user.id;
+
   await client`
     INSERT INTO admin_members (id, user_id, role, can_view_finance, status)
     VALUES (${crypto.randomUUID()}, ${testOwnerUserId}, 'owner', true, 'active')

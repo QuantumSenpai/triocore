@@ -437,21 +437,21 @@ async function runChecklistD() {
     const hasOwner = membersData.members?.some((m: { role: string }) => m.role === "owner");
 
     // 3. Test Finance Per-Member Toggle
-    // Insert a temporary member in admin_members with can_view_finance: false
+    // Create a temporary member via Better-Auth
     const testMemberEmail = `TEST-${crypto.randomBytes(6).toString("hex")}@example.test`;
     const testMemberPassword = `MemberX-${crypto.randomBytes(8).toString("hex")}-2026!`;
-    const testMemberUserId = crypto.randomUUID();
-    const { hashPassword } = await import("better-auth/crypto");
-    const testMemberHash = await hashPassword(testMemberPassword);
-
-    await client`
-      INSERT INTO "user" (id, email, name, email_verified, created_at, updated_at)
-      VALUES (${testMemberUserId}, ${testMemberEmail}, 'TEST Member User', true, NOW(), NOW())
-    `;
-    await client`
-      INSERT INTO "account" (id, account_id, provider_id, user_id, password, created_at, updated_at)
-      VALUES (${crypto.randomUUID()}, ${testMemberUserId}, 'credential', ${testMemberUserId}, ${testMemberHash}, NOW(), NOW())
-    `;
+    const { auth } = await import("../lib/auth");
+    const signUpMemberRes = await auth.api.signUpEmail({
+      body: {
+        email: testMemberEmail,
+        password: testMemberPassword,
+        name: "TEST Member User",
+      },
+    });
+    if (!signUpMemberRes || !signUpMemberRes.user) {
+      throw new Error("Failed to create test member via auth.api.signUpEmail");
+    }
+    const testMemberUserId = signUpMemberRes.user.id;
 
     // Add member with can_view_finance = false
     await client`
@@ -477,9 +477,9 @@ async function runChecklistD() {
     const memberDeniedInitially = memberFinanceRes1.status === 403;
     console.log("Member initial finance access (expected 403):", memberFinanceRes1.status);
 
-    // Owner toggles canViewFinance = true for this member via /api/admin/team-access
+    // Owner toggles member finance permission
     const toggleRes = await authFetch("/api/admin/team-access", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({
         userId: testMemberUserId,
         canViewFinance: true,
@@ -487,7 +487,7 @@ async function runChecklistD() {
     });
     console.log("Owner toggle member canViewFinance status:", toggleRes.status);
 
-    // Member re-attempts to access finance endpoint -> MUST now return 200 OK
+    // Member attempts to access finance endpoint again -> MUST return 200 OK
     const memberFinanceRes2 = await fetch("http://localhost:3000/api/admin/payments", {
       headers: { "cookie": memberCookie, "Origin": "http://localhost:3000" },
     });
@@ -525,12 +525,12 @@ async function runChecklistD() {
   await client`DELETE FROM "contacts" WHERE name LIKE 'TEST %'`;
   await client`DELETE FROM "feedback_reports" WHERE message LIKE 'TEST %'`;
   await client`DELETE FROM "notes" WHERE title LIKE 'TEST %'`;
-  await client`DELETE FROM "admin_invites" WHERE email LIKE '%@example.com'`;
-  await client`DELETE FROM "admin_members"`;
-  await client`DELETE FROM "session"`;
-  await client`DELETE FROM "auth_lockouts"`;
-  await client`DELETE FROM "account" WHERE user_id IN (SELECT id FROM "user" WHERE email LIKE 'TEST-%@example.test')`;
-  await client`DELETE FROM "user" WHERE email LIKE 'TEST-%@example.test'`;
+  await client`DELETE FROM "admin_invites" WHERE email LIKE '%@example.com' OR email ILIKE '%@example.test'`;
+  await client`DELETE FROM "admin_members" WHERE user_id IN (SELECT id FROM "user" WHERE email ILIKE 'test-%@example.test')`;
+  await client`DELETE FROM "session" WHERE user_id IN (SELECT id FROM "user" WHERE email ILIKE 'test-%@example.test')`;
+  await client`DELETE FROM "auth_lockouts" WHERE key LIKE '%TEST%' OR key LIKE '%example.test%'`;
+  await client`DELETE FROM "account" WHERE user_id IN (SELECT id FROM "user" WHERE email ILIKE 'test-%@example.test')`;
+  await client`DELETE FROM "user" WHERE email ILIKE 'test-%@example.test'`;
 
   const finalCounts: Record<string, number> = {};
   for (const t of tablesToTrack) {
