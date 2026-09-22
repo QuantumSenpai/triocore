@@ -68,6 +68,19 @@ export function CrmTab({
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [clientForm, setClientForm] = useState({ name: "", email: "", phone: "", company: "", notes: "" });
 
+  // Edit Client Modal
+  const [editClientModalOpen, setEditClientModalOpen] = useState(false);
+  const [clientEditForm, setClientEditForm] = useState({
+    id: "",
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    notes: "",
+    status: "active",
+  });
+  const [savingClient, setSavingClient] = useState(false);
+
   // Project Modal
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [projectForm, setProjectForm] = useState({
@@ -186,7 +199,7 @@ export function CrmTab({
   // Generic Reusable Confirm Delete State
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
-    type: "inquiry" | "project" | "milestone" | "payment" | "expense";
+    type: "inquiry" | "client" | "project" | "milestone" | "payment" | "expense";
     id: string;
     title: string;
     description: string;
@@ -251,6 +264,8 @@ export function CrmTab({
       let endpoint = "";
       if (deleteTarget.type === "inquiry") {
         endpoint = `/api/admin/inquiries?id=${deleteTarget.id}`;
+      } else if (deleteTarget.type === "client") {
+        endpoint = `/api/admin/clients?id=${deleteTarget.id}`;
       } else if (deleteTarget.type === "project") {
         endpoint = `/api/admin/business-projects?id=${deleteTarget.id}`;
       } else if (deleteTarget.type === "milestone") {
@@ -312,6 +327,54 @@ export function CrmTab({
     } catch (err) {
       toast.error((err as Error).message);
     }
+  };
+
+  // Open Edit Client Modal
+  const handleOpenEditClient = (c: AdminClient) => {
+    setClientEditForm({
+      id: c.id,
+      name: c.name,
+      email: c.email || "",
+      phone: c.phone || "",
+      company: c.company || (c as any).businessName || "",
+      notes: c.notes || "",
+      status: c.status || "active",
+    });
+    setEditClientModalOpen(true);
+  };
+
+  // Update Client
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingClient(true);
+    try {
+      const res = await fetch("/api/admin/clients", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientEditForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update client");
+      toast.success("Client updated successfully!");
+      setEditClientModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  // Delete Client Confirm Prompt
+  const handleDeleteClientConfirm = (c: AdminClient) => {
+    setDeleteTarget({
+      type: "client",
+      id: c.id,
+      title: `Delete client "${c.name}"?`,
+      description: "Delete this client? This cannot be undone.",
+      destructiveWarning: "Deleting this client is permanent and will dissociate associated projects.",
+    });
+    setDeleteConfirmOpen(true);
   };
 
   // Create Project
@@ -936,9 +999,25 @@ export function CrmTab({
                     <h4 className="font-heading text-sm font-bold text-[#14141A]">{c.name}</h4>
                     {c.company && <p className="text-xs text-[#374BFF] font-medium">{c.company}</p>}
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold">
-                    Active
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold capitalize">
+                      {c.status || "Active"}
+                    </span>
+                    <button
+                      onClick={() => handleOpenEditClient(c)}
+                      title="Edit Client"
+                      className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClientConfirm(c)}
+                      title="Delete Client"
+                      className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1 text-xs text-[#2B2B38] pt-1">
                   {c.email && <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-[#374BFF]" /> {c.email}</div>}
@@ -1661,6 +1740,99 @@ export function CrmTab({
               >
                 Save Client
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT CLIENT */}
+      {editClientModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Client</h3>
+              <button onClick={() => setEditClientModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateClient} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Client Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={clientEditForm.name}
+                  onChange={(e) => setClientEditForm({ ...clientEditForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Email</label>
+                  <input
+                    type="email"
+                    value={clientEditForm.email}
+                    onChange={(e) => setClientEditForm({ ...clientEditForm, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Phone</label>
+                  <input
+                    type="text"
+                    value={clientEditForm.phone}
+                    onChange={(e) => setClientEditForm({ ...clientEditForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Company / Brand</label>
+                  <input
+                    type="text"
+                    value={clientEditForm.company}
+                    onChange={(e) => setClientEditForm({ ...clientEditForm, company: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Status</label>
+                  <select
+                    value={clientEditForm.status}
+                    onChange={(e) => setClientEditForm({ ...clientEditForm, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Notes</label>
+                <textarea
+                  rows={2}
+                  value={clientEditForm.notes}
+                  onChange={(e) => setClientEditForm({ ...clientEditForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditClientModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingClient}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
