@@ -387,7 +387,7 @@ export const aboutTimeline: TimelineStep[] = [
  {
  step: "02",
  title: "Team Formation",
- desc: "Uniting Krishnendu (Full Stack & ML), Nandita (Software & Hardware), and Chandrima (Robotics & DBMS) into a multidisciplinary development trio.",
+ desc: "Uniting Krishnendu (Full Stack & ML), Nandita (Software & Hardware), Chandrima (Robotics & DBMS) & Danish (Frontend, Finance & Management) into a multidisciplinary development team.",
  iconName: "Users2",
  status: "Completed",
  },
