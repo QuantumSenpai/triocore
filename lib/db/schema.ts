@@ -326,8 +326,12 @@ export const expenses = pgTable("expenses", {
   paidBy: text("paid_by"),
   projectId: text("project_id").references(() => projects.id, { onDelete: "set null" }),
   notes: text("notes"),
+  expenseType: text("expense_type").notNull().default("studio"), // 'studio' | 'personal'
+  memberId: text("member_id").references(() => user.id, { onDelete: "set null" }),
+  isReimbursed: boolean("is_reimbursed").notNull().default(false),
   isSample: boolean("is_sample").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const tasks = pgTable("tasks", {

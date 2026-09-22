@@ -22,7 +22,10 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Filter,
+  Check,
+  RotateCcw
 } from "lucide-react";
 import { formatPaise, rupeesToPaise, paiseToRupees } from "@/lib/money";
 import { toast } from "sonner";
@@ -130,6 +133,36 @@ export function CrmTab({
     notes: "",
   });
   const [savingPayment, setSavingPayment] = useState(false);
+
+  // Expenses State (Studio vs Personal & Reimbursements)
+  const [expenseTab, setExpenseTab] = useState<"studio" | "personal">("studio");
+  const [expenseMemberFilter, setExpenseMemberFilter] = useState<string>("all");
+  const [createExpenseModalOpen, setCreateExpenseModalOpen] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
+    title: "",
+    category: "tools",
+    amountRupees: "2000",
+    date: new Date().toISOString().slice(0, 10),
+    paidBy: "",
+    memberId: "",
+    expenseType: "studio" as "studio" | "personal",
+    notes: "",
+  });
+  const [savingExpense, setSavingExpense] = useState(false);
+
+  const [editExpenseModalOpen, setEditExpenseModalOpen] = useState(false);
+  const [expenseEditForm, setExpenseEditForm] = useState({
+    id: "",
+    title: "",
+    category: "tools",
+    amountRupees: "2000",
+    date: "",
+    paidBy: "",
+    memberId: "",
+    expenseType: "studio" as "studio" | "personal",
+    notes: "",
+    isReimbursed: false,
+  });
 
   // Receipt Modal
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -599,6 +632,136 @@ export function CrmTab({
     setDeleteConfirmOpen(true);
   };
 
+  // Create Expense
+  const handleCreateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingExpense(true);
+    try {
+      const amountPaise = rupeesToPaise(Number(expenseForm.amountRupees) || 0);
+      const res = await fetch("/api/admin/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: expenseForm.title,
+          category: expenseForm.category,
+          amountPaise,
+          date: expenseForm.date,
+          paidBy: expenseForm.paidBy || null,
+          memberId: expenseForm.expenseType === "personal" ? expenseForm.memberId || null : null,
+          expenseType: expenseForm.expenseType,
+          notes: expenseForm.notes || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add expense");
+      toast.success("Expense recorded successfully!");
+      setCreateExpenseModalOpen(false);
+      setExpenseForm({
+        title: "",
+        category: "tools",
+        amountRupees: "2000",
+        date: new Date().toISOString().slice(0, 10),
+        paidBy: "",
+        memberId: "",
+        expenseType: "studio",
+        notes: "",
+      });
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
+  // Open Edit Expense
+  const handleOpenEditExpense = (exp: AdminExpense) => {
+    setExpenseEditForm({
+      id: exp.id,
+      title: exp.title,
+      category: exp.category,
+      amountRupees: String(paiseToRupees(exp.amountPaise)),
+      date: exp.date || (exp.paidAt ? new Date(exp.paidAt).toISOString().slice(0, 10) : ""),
+      paidBy: exp.paidBy || "",
+      memberId: exp.memberId || "",
+      expenseType: (exp.expenseType || "studio") as "studio" | "personal",
+      notes: exp.notes || exp.description || "",
+      isReimbursed: !!exp.isReimbursed,
+    });
+    setEditExpenseModalOpen(true);
+  };
+
+  // Update Expense
+  const handleUpdateExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingExpense(true);
+    try {
+      const amountPaise = rupeesToPaise(Number(expenseEditForm.amountRupees) || 0);
+      const res = await fetch("/api/admin/expenses", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: expenseEditForm.id,
+          title: expenseEditForm.title,
+          category: expenseEditForm.category,
+          amountPaise,
+          date: expenseEditForm.date,
+          paidBy: expenseEditForm.paidBy || null,
+          memberId: expenseEditForm.expenseType === "personal" ? expenseEditForm.memberId || null : null,
+          expenseType: expenseEditForm.expenseType,
+          notes: expenseEditForm.notes || null,
+          isReimbursed: expenseEditForm.isReimbursed,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update expense");
+      toast.success("Expense updated!");
+      setEditExpenseModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
+  // Toggle Reimbursed Status
+  const handleToggleReimbursed = async (exp: AdminExpense) => {
+    try {
+      const nextState = !exp.isReimbursed;
+      const res = await fetch("/api/admin/expenses", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: exp.id,
+          isReimbursed: nextState,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update reimbursement");
+      toast.success(nextState ? "Marked as reimbursed!" : "Reimbursement reverted to pending!");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  // Delete Expense Confirm
+  const handleDeleteExpenseConfirm = (exp: AdminExpense) => {
+    setDeleteTarget({
+      type: "expense",
+      id: exp.id,
+      title: `Delete expense "${exp.title}"?`,
+      description: "Delete this expense record? This cannot be undone.",
+    });
+    setDeleteConfirmOpen(true);
+  };
+
+  // Export Expense CSV
+  const handleExportExpenseCsv = (type: "studio" | "personal") => {
+    window.open(`/api/admin/expenses?type=${type}&format=csv`, "_blank");
+  };
+
   return (
     <div className="space-y-6">
       {/* Sub-Navigation Tabs */}
@@ -629,25 +792,26 @@ export function CrmTab({
         </button>
 
         {canViewFinance && (
-          <>
-            <button
-              onClick={() => setSubTab("payments")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                subTab === "payments" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-              }`}
-            >
-              Payments Ledger
-            </button>
-            <button
-              onClick={() => setSubTab("expenses")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                subTab === "expenses" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-              }`}
-            >
-              Expenses
-            </button>
-          </>
+          <button
+            onClick={() => setSubTab("payments")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              subTab === "payments" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            }`}
+          >
+            Payments Ledger
+          </button>
         )}
+        <button
+          onClick={() => {
+            setSubTab("expenses");
+            if (!canViewFinance) setExpenseTab("personal");
+          }}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            subTab === "expenses" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+          }`}
+        >
+          Expenses ({expenses.length})
+        </button>
       </div>
 
       {/* SUBTAB: INQUIRIES */}
@@ -1091,41 +1255,355 @@ export function CrmTab({
         </div>
       )}
 
-      {/* SUBTAB: EXPENSES */}
-      {subTab === "expenses" && canViewFinance && (
-        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-heading text-lg font-bold text-[#14141A]">
-              Studio Operational Expenses
-            </h3>
+      {/* SUBTAB: EXPENSES (STUDIO VS PERSONAL & REIMBURSEMENTS) */}
+      {subTab === "expenses" && (
+        <div className="space-y-6">
+          {/* Inner Expenses Navigation */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-black/10 shadow-xs">
+            <div className="flex items-center gap-2">
+              {canViewFinance && (
+                <button
+                  onClick={() => setExpenseTab("studio")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    expenseTab === "studio"
+                      ? "bg-[#14141A] text-white shadow-xs"
+                      : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
+                  }`}
+                >
+                  🏢 Studio Expenses (
+                  {expenses.filter((e) => (e.expenseType || "studio") === "studio").length}
+                  )
+                </button>
+              )}
+              <button
+                onClick={() => setExpenseTab("personal")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  expenseTab === "personal"
+                    ? "bg-[#14141A] text-white shadow-xs"
+                    : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
+                }`}
+              >
+                👤 Personal Expenses & Reimbursements (
+                {expenses.filter((e) => e.expenseType === "personal").length}
+                )
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleExportExpenseCsv(expenseTab)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-black/15 bg-white text-[#14141A] text-xs font-bold hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer"
+              >
+                <Download className="h-4 w-4" /> Export {expenseTab === "studio" ? "Studio" : "Personal"} CSV
+              </button>
+              <button
+                onClick={() => {
+                  setExpenseForm({
+                    title: "",
+                    category: "tools",
+                    amountRupees: "2000",
+                    date: new Date().toISOString().slice(0, 10),
+                    paidBy: "",
+                    memberId: teamMembers[0]?.id || "",
+                    expenseType: expenseTab,
+                    notes: "",
+                  });
+                  setCreateExpenseModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> Add {expenseTab === "studio" ? "Studio" : "Personal"} Expense
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-black/10 text-[#2B2B38] font-bold uppercase tracking-wider">
-                <tr>
-                  <th className="py-3 px-3">Date</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Description</th>
-                  <th className="py-3 px-3">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {expenses.map((e) => (
-                  <tr key={e.id} className="hover:bg-[#F5F6FC]">
-                    <td className="py-3 px-3">
-                      {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
-                    </td>
-                    <td className="py-3 px-3 font-bold text-[#14141A]">{e.category}</td>
-                    <td className="py-3 px-3 text-[#2B2B38]">{e.description || "N/A"}</td>
-                    <td className="py-3 px-3 font-mono font-bold text-red-600">
-                      {formatPaise(e.amountPaise)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* VIEW: STUDIO EXPENSES */}
+          {expenseTab === "studio" && canViewFinance && (
+            <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                    Studio Operational Expenses
+                  </h3>
+                  <p className="text-xs text-[#2B2B38]">
+                    Deducted from Total Earned to calculate Net Studio Profit.
+                  </p>
+                </div>
+                <div className="px-4 py-2 rounded-xl bg-[#F5F6FC] border border-black/10">
+                  <span className="text-[10px] font-bold uppercase text-[#2B2B38] block">
+                    Total Studio Spend
+                  </span>
+                  <span className="font-mono font-bold text-sm text-red-600">
+                    {formatPaise(
+                      expenses
+                        .filter((e) => (e.expenseType || "studio") === "studio")
+                        .reduce((sum, e) => sum + e.amountPaise, 0)
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-black/10 text-[#2B2B38] font-bold uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 px-3">Date</th>
+                      <th className="py-3 px-3">Category</th>
+                      <th className="py-3 px-3">Title / Description</th>
+                      <th className="py-3 px-3">Paid By</th>
+                      <th className="py-3 px-3">Amount</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {expenses
+                      .filter((e) => (e.expenseType || "studio") === "studio")
+                      .map((e) => (
+                        <tr key={e.id} className="hover:bg-[#F5F6FC]">
+                          <td className="py-3 px-3">
+                            {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize bg-blue-50 text-blue-700">
+                              {e.category}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 font-bold text-[#14141A]">
+                            {e.title}
+                            {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
+                          </td>
+                          <td className="py-3 px-3 text-[#2B2B38]">{e.paidBy || "Studio"}</td>
+                          <td className="py-3 px-3 font-mono font-bold text-red-600">
+                            {formatPaise(e.amountPaise)}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleOpenEditExpense(e)}
+                                title="Edit Expense"
+                                className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExpenseConfirm(e)}
+                                title="Delete Expense"
+                                className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: PERSONAL EXPENSES & REIMBURSEMENTS */}
+          {expenseTab === "personal" && (
+            <div className="space-y-6">
+              {/* REIMBURSEMENT TRACKER SUMMARY CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-5 rounded-3xl bg-amber-50/70 border border-amber-200">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 block">
+                    ⏳ Unreimbursed Pending
+                  </span>
+                  <p className="mt-2 font-mono text-2xl font-black text-amber-700">
+                    {formatPaise(
+                      expenses
+                        .filter((e) => e.expenseType === "personal" && !e.isReimbursed)
+                        .reduce((sum, e) => sum + e.amountPaise, 0)
+                    )}
+                  </p>
+                  <span className="text-[10px] text-amber-800/80 mt-0.5 block">
+                    Awaiting studio reimbursement payment
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-emerald-50/70 border border-emerald-200">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 block">
+                    ✓ Total Reimbursed
+                  </span>
+                  <p className="mt-2 font-mono text-2xl font-black text-emerald-700">
+                    {formatPaise(
+                      expenses
+                        .filter((e) => e.expenseType === "personal" && e.isReimbursed)
+                        .reduce((sum, e) => sum + e.amountPaise, 0)
+                    )}
+                  </p>
+                  <span className="text-[10px] text-emerald-800/80 mt-0.5 block">
+                    Cleared and reimbursed to team
+                  </span>
+                </div>
+
+                <div className="p-5 rounded-3xl bg-white border border-black/10">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38] block">
+                    📋 Total Personal Submissions
+                  </span>
+                  <p className="mt-2 font-heading text-2xl font-black text-[#14141A]">
+                    {expenses.filter((e) => e.expenseType === "personal").length}
+                  </p>
+                  <span className="text-[10px] text-[#2B2B38] mt-0.5 block">
+                    Tracked separately from Studio Profit
+                  </span>
+                </div>
+              </div>
+
+              {/* PER-MEMBER BREAKDOWN PILLS */}
+              {canViewFinance && (
+                <div className="p-4 rounded-2xl bg-white border border-black/10 space-y-2">
+                  <span className="text-xs font-bold text-[#14141A] block">
+                    Member Reimbursement Balances:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {teamMembers.map((tm) => {
+                      const mExps = expenses.filter((e) => e.expenseType === "personal" && e.memberId === tm.id);
+                      const pending = mExps.filter((e) => !e.isReimbursed).reduce((s, e) => s + e.amountPaise, 0);
+                      const cleared = mExps.filter((e) => e.isReimbursed).reduce((s, e) => s + e.amountPaise, 0);
+                      if (mExps.length === 0) return null;
+                      return (
+                        <div
+                          key={tm.id}
+                          className="px-3 py-1.5 rounded-xl border border-black/10 bg-[#F5F6FC] text-xs flex items-center gap-2"
+                        >
+                          <span className="font-bold text-[#14141A]">{tm.name}:</span>
+                          <span className="font-mono text-amber-700 font-medium">Pending: {formatPaise(pending)}</span>
+                          <span className="text-black/20">•</span>
+                          <span className="font-mono text-emerald-700 font-medium">Paid: {formatPaise(cleared)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* PERSONAL EXPENSES TABLE */}
+              <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                    Personal Expense Submissions
+                  </h3>
+
+                  {canViewFinance && (
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-3.5 w-3.5 text-[#2B2B38]" />
+                      <select
+                        value={expenseMemberFilter}
+                        onChange={(e) => setExpenseMemberFilter(e.target.value)}
+                        className="px-3 py-1.5 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      >
+                        <option value="all">All Members</option>
+                        {teamMembers.map((tm) => (
+                          <option key={tm.id} value={tm.id}>
+                            {tm.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-black/10 text-[#2B2B38] font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-3">Date</th>
+                        <th className="py-3 px-3">Member</th>
+                        <th className="py-3 px-3">Category</th>
+                        <th className="py-3 px-3">Title / Description</th>
+                        <th className="py-3 px-3">Amount</th>
+                        <th className="py-3 px-3">Status</th>
+                        <th className="py-3 px-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {expenses
+                        .filter((e) => {
+                          if (e.expenseType !== "personal") return false;
+                          if (expenseMemberFilter !== "all" && e.memberId !== expenseMemberFilter) return false;
+                          return true;
+                        })
+                        .map((e) => (
+                          <tr key={e.id} className="hover:bg-[#F5F6FC]">
+                            <td className="py-3 px-3">
+                              {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
+                            </td>
+                            <td className="py-3 px-3 font-medium text-[#14141A]">
+                              {e.memberName || e.paidBy || "Team Member"}
+                            </td>
+                            <td className="py-3 px-3">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize bg-purple-50 text-purple-700">
+                                {e.category}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-bold text-[#14141A]">
+                              {e.title}
+                              {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
+                            </td>
+                            <td className="py-3 px-3 font-mono font-bold text-red-600">
+                              {formatPaise(e.amountPaise)}
+                            </td>
+                            <td className="py-3 px-3">
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                                  e.isReimbursed
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-amber-100 text-amber-800"
+                                }`}
+                              >
+                                {e.isReimbursed ? "✓ Reimbursed" : "⏳ Pending"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {canViewFinance && (
+                                  <button
+                                    onClick={() => handleToggleReimbursed(e)}
+                                    title={e.isReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
+                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
+                                      e.isReimbursed
+                                        ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
+                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    }`}
+                                  >
+                                    {e.isReimbursed ? (
+                                      <>
+                                        <RotateCcw className="h-3 w-3" /> Revert
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Check className="h-3 w-3" /> Reimburse
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleOpenEditExpense(e)}
+                                  title="Edit Expense"
+                                  className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteExpenseConfirm(e)}
+                                  title="Delete Expense"
+                                  className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1894,6 +2372,273 @@ export function CrmTab({
                   className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   {savingInquiry ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CREATE EXPENSE */}
+      {createExpenseModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                Record {expenseForm.expenseType === "studio" ? "Studio" : "Personal"} Expense
+              </h3>
+              <button onClick={() => setCreateExpenseModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateExpense} className="space-y-3">
+              {canViewFinance && (
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Expense Classification *</label>
+                  <select
+                    value={expenseForm.expenseType}
+                    onChange={(e) =>
+                      setExpenseForm({
+                        ...expenseForm,
+                        expenseType: e.target.value as "studio" | "personal",
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="studio">🏢 Studio Operational Expense (Deducted from Profit)</option>
+                    <option value="personal">👤 Personal Expense (Reimbursable to Member)</option>
+                  </select>
+                </div>
+              )}
+
+              {expenseForm.expenseType === "personal" && (
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
+                  <select
+                    value={expenseForm.memberId}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="">Select Member</option>
+                    {teamMembers.map((tm) => (
+                      <option key={tm.id} value={tm.id}>
+                        {tm.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Expense Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Domain Renewal or Client Lunch"
+                  value={expenseForm.title}
+                  onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                  <select
+                    value={expenseForm.category}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="tools">Tools / SaaS</option>
+                    <option value="hosting">Hosting & Cloud</option>
+                    <option value="domain">Domain</option>
+                    <option value="software">Software License</option>
+                    <option value="marketing">Marketing & Ads</option>
+                    <option value="travel">Travel</option>
+                    <option value="food">Food & Hospitality</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={expenseForm.amountRupees}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Date</label>
+                  <input
+                    type="date"
+                    value={expenseForm.date}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Paid By</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Card / Cash / UPI"
+                    value={expenseForm.paidBy}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, paidBy: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Notes / Description</label>
+                <textarea
+                  rows={2}
+                  value={expenseForm.notes}
+                  onChange={(e) => setExpenseForm({ ...expenseForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  placeholder="Optional details..."
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCreateExpenseModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingExpense}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Expense"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT EXPENSE */}
+      {editExpenseModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Expense</h3>
+              <button onClick={() => setEditExpenseModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateExpense} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={expenseEditForm.title}
+                  onChange={(e) => setExpenseEditForm({ ...expenseEditForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                  <select
+                    value={expenseEditForm.category}
+                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="tools">Tools / SaaS</option>
+                    <option value="hosting">Hosting & Cloud</option>
+                    <option value="domain">Domain</option>
+                    <option value="software">Software License</option>
+                    <option value="marketing">Marketing & Ads</option>
+                    <option value="travel">Travel</option>
+                    <option value="food">Food & Hospitality</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={expenseEditForm.amountRupees}
+                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Date</label>
+                  <input
+                    type="date"
+                    value={expenseEditForm.date}
+                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, date: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Paid By</label>
+                  <input
+                    type="text"
+                    value={expenseEditForm.paidBy}
+                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, paidBy: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              {expenseEditForm.expenseType === "personal" && canViewFinance && (
+                <div className="p-3 rounded-xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#14141A]">Reimbursement Cleared</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={expenseEditForm.isReimbursed}
+                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, isReimbursed: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Notes</label>
+                <textarea
+                  rows={2}
+                  value={expenseEditForm.notes}
+                  onChange={(e) => setExpenseEditForm({ ...expenseEditForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditExpenseModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingExpense}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
                 </button>
               </div>
             </form>

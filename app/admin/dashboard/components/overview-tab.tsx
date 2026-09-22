@@ -26,6 +26,7 @@ interface OverviewTabProps {
   projects: AdminProject[];
   categoryEarnings: Record<string, number>;
   onUpdateGoal: (newGoalPaise: number) => Promise<void>;
+  studioExpensesPaise?: number;
 }
 
 export function OverviewTab({
@@ -37,12 +38,15 @@ export function OverviewTab({
   projects,
   categoryEarnings,
   onUpdateGoal,
+  studioExpensesPaise = 0,
 }: OverviewTabProps) {
   const [istTime, setIstTime] = useState("");
   const [greeting, setGreeting] = useState("");
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(String(paiseToRupees(goalPaise || 10000000)));
   const [calendarView, setCalendarView] = useState<"month" | "agenda">("month");
+
+  const netProfitPaise = earnedPaise - studioExpensesPaise;
 
   useEffect(() => {
     const updateClock = () => {
@@ -114,7 +118,7 @@ export function OverviewTab({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
@@ -129,6 +133,27 @@ export function OverviewTab({
           </p>
           <span className="mt-1 block text-[11px] font-medium text-[#2B2B38]">
             Cleared payments in integer paise
+          </span>
+        </div>
+
+        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+              Net Profit
+            </span>
+            <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${
+              netProfitPaise >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+            }`}>
+              <TrendingUp className="h-4 w-4" />
+            </div>
+          </div>
+          <p className={`mt-3 font-heading text-2xl sm:text-3xl font-black ${
+            netProfitPaise >= 0 ? "text-emerald-600" : "text-rose-600"
+          }`}>
+            {formatPaise(netProfitPaise)}
+          </p>
+          <span className="mt-1 block text-[11px] font-medium text-[#2B2B38]">
+            Earned − Studio Exp ({formatPaise(studioExpensesPaise)})
           </span>
         </div>
 

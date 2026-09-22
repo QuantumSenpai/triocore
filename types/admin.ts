@@ -102,6 +102,10 @@ export interface AdminExpense {
   paidBy?: string | null;
   projectId?: string | null;
   notes?: string | null;
+  expenseType?: "studio" | "personal";
+  memberId?: string | null;
+  memberName?: string | null;
+  isReimbursed?: boolean;
   isSample?: boolean;
   createdAt?: string | Date;
 }

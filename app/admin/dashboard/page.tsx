@@ -236,6 +236,10 @@ export default function AdminDashboardPage() {
   const totalQuotedPaise = businessProjects.reduce((sum, p) => sum + p.quotedAmountPaise, 0);
   const totalPendingPaise = Math.max(0, totalQuotedPaise - totalEarnedPaise);
 
+  const totalStudioExpensesPaise = expenses
+    .filter((e) => (e.expenseType || "studio") === "studio")
+    .reduce((sum, e) => sum + e.amountPaise, 0);
+
   // Category-wise earnings
   const categoryEarnings: Record<string, number> = {};
   for (const proj of businessProjects) {
@@ -366,6 +370,7 @@ export default function AdminDashboardPage() {
                 projects={businessProjects}
                 categoryEarnings={categoryEarnings}
                 onUpdateGoal={handleUpdateGoal}
+                studioExpensesPaise={totalStudioExpensesPaise}
               />
             )}
 
