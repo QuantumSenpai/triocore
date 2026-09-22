@@ -19,6 +19,7 @@ import {
   Receipt,
   X,
   Edit3,
+  Pencil,
   Trash2,
   Loader2,
   AlertTriangle
@@ -115,6 +116,20 @@ export function CrmTab({
     method: "UPI",
     reference: "",
   });
+
+  // Edit Payment Modal
+  const [editPaymentModalOpen, setEditPaymentModalOpen] = useState(false);
+  const [paymentEditForm, setPaymentEditForm] = useState({
+    id: "",
+    amountRupees: "20000",
+    method: "UPI",
+    receivedDate: "",
+    projectId: "",
+    status: "received" as "received" | "pending" | "overdue",
+    reference: "",
+    notes: "",
+  });
+  const [savingPayment, setSavingPayment] = useState(false);
 
   // Receipt Modal
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -523,6 +538,65 @@ export function CrmTab({
   const handlePrintReceipt = (payment: AdminPayment) => {
     setSelectedPayment(payment);
     setReceiptModalOpen(true);
+  };
+
+  // Open Edit Payment Modal
+  const handleOpenEditPayment = (p: AdminPayment) => {
+    setPaymentEditForm({
+      id: p.id,
+      amountRupees: String(paiseToRupees(p.amountPaise)),
+      method: p.method || "UPI",
+      receivedDate: p.paidAt ? new Date(p.paidAt).toISOString().slice(0, 10) : "",
+      projectId: p.projectId || "",
+      status: ((p.status as any) || "received") as "received" | "pending" | "overdue",
+      reference: p.reference || "",
+      notes: (p as any).notes || "",
+    });
+    setEditPaymentModalOpen(true);
+  };
+
+  // Update Payment
+  const handleUpdatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPayment(true);
+    try {
+      const amountPaise = rupeesToPaise(Number(paymentEditForm.amountRupees) || 0);
+      const res = await fetch("/api/admin/payments", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: paymentEditForm.id,
+          amountPaise,
+          method: paymentEditForm.method,
+          receivedDate: paymentEditForm.receivedDate ? new Date(paymentEditForm.receivedDate).toISOString() : null,
+          projectId: paymentEditForm.projectId || null,
+          status: paymentEditForm.status,
+          reference: paymentEditForm.reference || null,
+          notes: paymentEditForm.notes || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update payment");
+      toast.success("Payment updated and project financials synced!");
+      setEditPaymentModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
+  // Delete Payment Confirm
+  const handleDeletePaymentConfirm = (p: AdminPayment) => {
+    setDeleteTarget({
+      type: "payment",
+      id: p.id,
+      title: `Delete payment of ${formatPaise(p.amountPaise)}?`,
+      description: "This will reduce the project's Earned total and increase its Pending total.",
+      destructiveWarning: "Deleting this payment will permanently remove the transaction record from the ledger.",
+    });
+    setDeleteConfirmOpen(true);
   };
 
   return (
@@ -968,17 +1042,46 @@ export function CrmTab({
                     </td>
                     <td className="py-3.5 px-3">{p.method || "UPI"}</td>
                     <td className="py-3.5 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                        Received
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                          p.status === "received"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : p.status === "pending"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-rose-100 text-rose-700"
+                        }`}
+                      >
+                        {p.status || "Received"}
                       </span>
                     </td>
                     <td className="py-3.5 px-3 text-right">
-                      <button
-                        onClick={() => handlePrintReceipt(p)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-black/15 hover:border-[#374BFF] text-[11px] font-bold text-[#374BFF] transition-all cursor-pointer"
-                      >
-                        <Printer className="h-3 w-3" /> Print
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handlePrintReceipt(p)}
+                          title="Print Receipt"
+                          className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                        >
+                          <Printer className="h-3.5 w-3.5" />
+                        </button>
+                        {canViewFinance && (
+                          <>
+                            <button
+                              onClick={() => handleOpenEditPayment(p)}
+                              title="Edit Payment"
+                              className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePaymentConfirm(p)}
+                              title="Delete Payment"
+                              className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1507,6 +1610,113 @@ export function CrmTab({
               >
                 Record Payment
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT PAYMENT */}
+      {editPaymentModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Payment</h3>
+              <button onClick={() => setEditPaymentModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdatePayment} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Project</label>
+                <select
+                  value={paymentEditForm.projectId}
+                  onChange={(e) => setPaymentEditForm({ ...paymentEditForm, projectId: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                >
+                  <option value="">None / Independent</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || p.title} ({p.clientName || "Client"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={paymentEditForm.amountRupees}
+                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, amountRupees: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
+                  <select
+                    value={paymentEditForm.status}
+                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, status: e.target.value as any })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="received">Received</option>
+                    <option value="pending">Pending</option>
+                    <option value="overdue">Overdue</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Payment Method *</label>
+                  <select
+                    value={paymentEditForm.method}
+                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, method: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="UPI">UPI / GPay / PhonePe</option>
+                    <option value="Bank Transfer">NEFT / IMPS / Bank</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Date</label>
+                  <input
+                    type="date"
+                    value={paymentEditForm.receivedDate}
+                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, receivedDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Transaction Reference</label>
+                <input
+                  type="text"
+                  placeholder="e.g. UPI Ref / UTR / Cheque No."
+                  value={paymentEditForm.reference}
+                  onChange={(e) => setPaymentEditForm({ ...paymentEditForm, reference: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditPaymentModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPayment}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
