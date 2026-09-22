@@ -380,7 +380,7 @@ export const aboutTimeline: TimelineStep[] = [
  {
  step: "01",
  title: "The Idea",
- desc: "Recognizing that businesses and creators lacked fast, modern, and high-performance digital tools, three CSE students converged to engineer custom tech solutions.",
+ desc: "Recognizing that businesses and creators lacked fast, modern, and high-performance digital tools, 4 CSE students converged to engineer custom tech solutions.",
  iconName: "Lightbulb",
  status: "Completed",
  },
