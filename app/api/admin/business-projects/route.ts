@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { projects, clients, milestones, payments, auditLogs } from "@/lib/db/schema";
+import { projects, clients, milestones, payments, auditLogs, projectMembers, user } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
+import { projectEditSchema } from "@/lib/validations/crm";
 
 export async function GET(req: NextRequest) {
   const authCheck = await verifyAdminSession(req);
@@ -15,6 +16,29 @@ export async function GET(req: NextRequest) {
     const allClients = await db.select().from(clients);
     const allMilestones = await db.select().from(milestones);
     const allPayments = await db.select().from(payments);
+
+    let allProjectMembers: {
+      id: string;
+      projectId: string;
+      userId: string;
+      role: string | null;
+      userName: string | null;
+      userEmail: string | null;
+    }[] = [];
+
+    try {
+      allProjectMembers = await db
+        .select({
+          id: projectMembers.id,
+          projectId: projectMembers.projectId,
+          userId: projectMembers.userId,
+          role: projectMembers.role,
+          userName: user.name,
+          userEmail: user.email,
+        })
+        .from(projectMembers)
+        .leftJoin(user, eq(projectMembers.userId, user.id));
+    } catch {}
 
     const now = Date.now();
 
@@ -30,8 +54,18 @@ export async function GET(req: NextRequest) {
       const pendingPaise = Math.max(0, proj.quotedAmountPaise - earnedPaise);
 
       const isOverdue =
+        proj.status !== "delivered" &&
         proj.status !== "completed" &&
         Boolean(proj.deadline && new Date(proj.deadline).getTime() < now);
+
+      const projMembers = allProjectMembers.filter((pm) => pm.projectId === proj.id);
+      const assignees = projMembers.map((pm) => ({
+        id: pm.userId,
+        name: pm.userName || "Team Member",
+        email: pm.userEmail || null,
+        role: pm.role,
+      }));
+      const assignedMemberIds = projMembers.map((pm) => pm.userId);
 
       return {
         ...proj,
@@ -43,6 +77,8 @@ export async function GET(req: NextRequest) {
         earnedPaise,
         pendingPaise,
         isOverdue,
+        assignees,
+        assignedMemberIds,
       };
     });
 
@@ -67,6 +103,7 @@ export async function POST(req: NextRequest) {
       startDate,
       deadline,
       status = "planning",
+      assignedMemberIds,
     } = body;
 
     const title = inputTitle || name;
@@ -106,13 +143,26 @@ export async function POST(req: NextRequest) {
       status,
     }).returning();
 
+    // Assign project members if provided
+    if (assignedMemberIds && Array.isArray(assignedMemberIds) && assignedMemberIds.length > 0) {
+      for (const memberId of assignedMemberIds) {
+        try {
+          await db.insert(projectMembers).values({
+            projectId: newProject[0].id,
+            userId: memberId,
+            role: "developer",
+          });
+        } catch {}
+      }
+    }
+
     try {
       await db.insert(auditLogs).values({
         userId: authCheck.user?.id || null,
         action: "CREATE_PROJECT",
         entityType: "projects",
         entityId: newProject[0].id,
-        details: { name: title, quotedAmountPaise, category },
+        details: { name: title, quotedAmountPaise, category, assignedMemberIds },
       });
     } catch {}
 
@@ -131,43 +181,65 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
+    const parseResult = projectEditSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || "Invalid project data" },
+        { status: 400 }
+      );
+    }
+
     const {
       id,
       clientId,
       name,
-      title: inputTitle,
       category,
       quotedAmountPaise,
       startDate,
       deadline,
       status,
-    } = body;
-
-    const title = inputTitle || name;
-
-    if (!id || !title) {
-      return NextResponse.json({ error: "Project ID and name are required" }, { status: 400 });
-    }
+      assignedMemberIds,
+    } = parseResult.data;
 
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
-    // Recompute pending paise if quotedAmountPaise updated
-    const existing = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
-    const existingReceived = existing[0]?.receivedPaise || 0;
-    const newQuoted = quotedAmountPaise !== undefined ? Number(quotedAmountPaise) : existing[0]?.quotedAmountPaise || 0;
+    const existingRows = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    if (existingRows.length === 0) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    const existing = existingRows[0];
+
+    const existingReceived = existing.receivedPaise || 0;
+    const newQuoted = Number(quotedAmountPaise);
     const newPending = Math.max(0, newQuoted - existingReceived);
 
     const updated = await db.update(projects).set({
-      clientId: clientId !== undefined ? clientId : existing[0]?.clientId,
-      title,
-      category: category !== undefined ? category : existing[0]?.category,
+      clientId,
+      title: name,
+      category,
       quotedAmountPaise: newQuoted,
       pendingPaise: newPending,
-      startDate: startDate ? String(startDate) : existing[0]?.startDate,
-      deadline: deadline ? String(deadline) : existing[0]?.deadline,
-      status: status !== undefined ? status : existing[0]?.status,
+      startDate: startDate ? String(startDate) : existing.startDate,
+      deadline: deadline ? String(deadline) : existing.deadline,
+      status,
       updatedAt: new Date(),
     }).where(eq(projects.id, id)).returning();
+
+    // Synchronize assignees in projectMembers
+    if (assignedMemberIds !== undefined) {
+      try {
+        await db.delete(projectMembers).where(eq(projectMembers.projectId, id));
+        if (Array.isArray(assignedMemberIds) && assignedMemberIds.length > 0) {
+          for (const memberId of assignedMemberIds) {
+            await db.insert(projectMembers).values({
+              projectId: id,
+              userId: memberId,
+              role: "developer",
+            });
+          }
+        }
+      } catch {}
+    }
 
     try {
       await db.insert(auditLogs).values({
@@ -175,11 +247,29 @@ export async function PUT(req: NextRequest) {
         action: "UPDATE_PROJECT",
         entityType: "projects",
         entityId: id,
-        details: { name, status },
+        details: {
+          old: {
+            title: existing.title,
+            clientId: existing.clientId,
+            category: existing.category,
+            quotedAmountPaise: existing.quotedAmountPaise,
+            status: existing.status,
+            deadline: existing.deadline,
+          },
+          new: {
+            title: name,
+            clientId,
+            category,
+            quotedAmountPaise: newQuoted,
+            status,
+            deadline: deadline || null,
+            assignedMemberIds,
+          },
+        },
       });
     } catch {}
 
-    return NextResponse.json({ success: true, project: updated[0] });
+    return NextResponse.json({ success: true, project: { ...updated[0], name: updated[0].title } });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
@@ -189,6 +279,14 @@ export async function DELETE(req: NextRequest) {
   const authCheck = await verifyAdminSession(req);
   if (!authCheck.authorized) return authCheck.response!;
 
+  // Strict role check: Only owner or users with canViewFinance can delete projects
+  if (authCheck.member?.role !== "owner" && !authCheck.member?.canViewFinance) {
+    return NextResponse.json(
+      { error: "Forbidden: Only owner or financial administrator can delete projects." },
+      { status: 403 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -196,6 +294,25 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ error: "Missing project ID" }, { status: 400 });
     if (!db) return NextResponse.json({ success: true });
 
+    // Block delete if project has payments
+    const existingPayments = await db.select().from(payments).where(eq(payments.projectId, id));
+    if (existingPayments.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete project with ${existingPayments.length} existing payment(s). Delete or reassign payments first, or set status to 'cancelled'.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const existing = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    if (existing.length === 0) {
+      return NextResponse.json({ success: true });
+    }
+
+    // Explicitly delete child relations for database integrity
+    await db.delete(projectMembers).where(eq(projectMembers.projectId, id));
+    await db.delete(milestones).where(eq(milestones.projectId, id));
     await db.delete(projects).where(eq(projects.id, id));
 
     try {
@@ -204,7 +321,11 @@ export async function DELETE(req: NextRequest) {
         action: "DELETE_PROJECT",
         entityType: "projects",
         entityId: id,
-        details: { id },
+        details: {
+          title: existing[0].title,
+          quotedAmountPaise: existing[0].quotedAmountPaise,
+          category: existing[0].category,
+        },
       });
     } catch {}
 
@@ -213,3 +334,4 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
+

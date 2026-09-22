@@ -60,6 +60,8 @@ export interface AdminProject {
   milestoneProgressPercent?: number;
   createdAt?: string | Date;
   milestones?: AdminMilestone[];
+  assignees?: { id: string; name: string; email?: string | null; role?: string | null }[];
+  assignedMemberIds?: string[];
 }
 
 export interface AdminPayment {

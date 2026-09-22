@@ -76,10 +76,36 @@ export function CrmTab({
     deadline: "",
   });
 
+  // Edit Project Modal
+  const [editProjectModalOpen, setEditProjectModalOpen] = useState(false);
+  const [projectEditForm, setProjectEditForm] = useState({
+    id: "",
+    clientId: "",
+    name: "",
+    category: "Apps",
+    quotedRupees: "50000",
+    assignedMemberIds: [] as string[],
+    deadline: "",
+    status: "planning",
+  });
+  const [savingProject, setSavingProject] = useState(false);
+
   // Milestone Modal
   const [milestoneModalOpen, setMilestoneModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [milestoneForm, setMilestoneForm] = useState({ title: "", description: "", dueDate: "" });
+
+  // Edit Milestone Modal
+  const [editMilestoneModalOpen, setEditMilestoneModalOpen] = useState(false);
+  const [milestoneEditForm, setMilestoneEditForm] = useState({
+    id: "",
+    projectId: "",
+    title: "",
+    description: "",
+    dueDate: "",
+    status: "pending",
+  });
+  const [savingMilestone, setSavingMilestone] = useState(false);
 
   // Payment Modal
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -268,6 +294,98 @@ export function CrmTab({
     }
   };
 
+  // Open Edit Project
+  const handleOpenEditProject = (p: AdminProject) => {
+    setProjectEditForm({
+      id: p.id,
+      clientId: p.clientId,
+      name: p.name || p.title || "",
+      category: p.category || "Apps",
+      quotedRupees: String(paiseToRupees(p.quotedAmountPaise || 0)),
+      assignedMemberIds: p.assignedMemberIds || p.assignees?.map((a) => a.id) || [],
+      deadline: p.deadline ? new Date(p.deadline).toISOString().slice(0, 10) : "",
+      status: p.status || "planning",
+    });
+    setEditProjectModalOpen(true);
+  };
+
+  // Update Project
+  const handleUpdateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProject(true);
+    try {
+      const quotedAmountPaise = rupeesToPaise(Number(projectEditForm.quotedRupees) || 0);
+      const res = await fetch("/api/admin/business-projects", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: projectEditForm.id,
+          clientId: projectEditForm.clientId,
+          name: projectEditForm.name,
+          category: projectEditForm.category,
+          quotedAmountPaise,
+          deadline: projectEditForm.deadline ? new Date(projectEditForm.deadline).toISOString() : null,
+          status: projectEditForm.status,
+          assignedMemberIds: projectEditForm.assignedMemberIds,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update project");
+      toast.success("Project updated successfully!");
+      setEditProjectModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  // Delete Project Confirm
+  const handleDeleteProjectConfirm = (p: AdminProject) => {
+    // Check if project has payments
+    const hasPayments = payments.some((pay) => pay.projectId === p.id);
+    if (hasPayments) {
+      toast.error("Cannot delete project with existing payments. Delete or reassign payments first, or set status to 'cancelled'.");
+      return;
+    }
+    setDeleteTarget({
+      type: "project",
+      id: p.id,
+      title: `Delete project "${p.name || p.title}"?`,
+      description: "Delete this project? This cannot be undone.",
+      destructiveWarning: "Deleting this project will permanently remove all associated milestones and member assignments.",
+    });
+    setDeleteConfirmOpen(true);
+  };
+
+  // Unassign Team Member from Project
+  const handleUnassignMember = async (p: AdminProject, memberId: string) => {
+    const currentIds = p.assignedMemberIds || p.assignees?.map((a) => a.id) || [];
+    const newIds = currentIds.filter((id) => id !== memberId);
+    try {
+      const res = await fetch("/api/admin/business-projects", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: p.id,
+          clientId: p.clientId,
+          name: p.name || p.title,
+          category: p.category,
+          quotedAmountPaise: p.quotedAmountPaise,
+          deadline: p.deadline,
+          status: p.status,
+          assignedMemberIds: newIds,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to unassign member");
+      toast.success("Team member unassigned!");
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
   // Create Milestone
   const handleCreateMilestone = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,17 +411,76 @@ export function CrmTab({
     }
   };
 
-  // Toggle Milestone Status
-  const handleToggleMilestone = async (id: string, currentStatus: string) => {
+  // Open Edit Milestone
+  const handleOpenEditMilestone = (m: AdminMilestone) => {
+    setMilestoneEditForm({
+      id: m.id,
+      projectId: m.projectId,
+      title: m.title,
+      description: m.description || "",
+      dueDate: m.dueDate ? new Date(m.dueDate).toISOString().slice(0, 10) : "",
+      status: m.status,
+    });
+    setEditMilestoneModalOpen(true);
+  };
+
+  // Update Milestone
+  const handleUpdateMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingMilestone(true);
     try {
-      const newStatus = currentStatus === "completed" ? "pending" : "completed";
       const res = await fetch("/api/admin/milestones", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: newStatus }),
+        body: JSON.stringify({
+          id: milestoneEditForm.id,
+          title: milestoneEditForm.title,
+          description: milestoneEditForm.description || null,
+          dueDate: milestoneEditForm.dueDate ? new Date(milestoneEditForm.dueDate).toISOString() : null,
+          status: milestoneEditForm.status,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update milestone");
+      toast.success("Milestone updated!");
+      setEditMilestoneModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingMilestone(false);
+    }
+  };
+
+  // Delete Milestone Confirm
+  const handleDeleteMilestoneConfirm = (m: AdminMilestone) => {
+    setDeleteTarget({
+      type: "milestone",
+      id: m.id,
+      title: `Delete milestone "${m.title}"?`,
+      description: "Delete this milestone? Project progress % will recalculate automatically.",
+    });
+    setDeleteConfirmOpen(true);
+  };
+
+  // 3-Stage Toggle Milestone Status: Pending -> In Progress -> Done
+  const handleToggleMilestone = async (id: string, currentStatus: string) => {
+    try {
+      const nextStatus =
+        currentStatus === "pending"
+          ? "in_progress"
+          : currentStatus === "in_progress"
+          ? "completed"
+          : "pending";
+
+      const res = await fetch("/api/admin/milestones", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: nextStatus }),
       });
       if (!res.ok) throw new Error("Failed to update milestone");
-      toast.success(`Milestone marked as ${newStatus}!`);
+      const label = nextStatus === "completed" ? "Done" : nextStatus === "in_progress" ? "In Progress" : "Pending";
+      toast.success(`Milestone set to ${label}!`);
       await onRefresh();
     } catch (err) {
       toast.error((err as Error).message);
@@ -563,20 +740,48 @@ export function CrmTab({
           <div className="space-y-4">
             {projects.map((p) => (
               <div key={p.id} className="p-6 rounded-2xl bg-[#F5F6FC] border border-black/10 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-heading text-base font-bold text-[#14141A]">{p.name}</h4>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-heading text-base font-bold text-[#14141A]">{p.name || p.title}</h4>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#374BFF]/10 text-[#374BFF]">
                         {p.category}
                       </span>
+                      {/* Status Badge */}
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        p.status === "delivered" || p.status === "completed"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : p.status === "development"
+                          ? "bg-blue-100 text-[#374BFF]"
+                          : p.status === "design"
+                          ? "bg-cyan-100 text-cyan-800"
+                          : p.status === "review"
+                          ? "bg-purple-100 text-purple-700"
+                          : p.status === "on_hold"
+                          ? "bg-amber-100 text-amber-800"
+                          : p.status === "cancelled"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-indigo-100 text-indigo-800"
+                      }`}>
+                        {p.status === "on_hold" ? "On Hold" : p.status || "Planning"}
+                      </span>
+                      {p.isOverdue && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                          Overdue
+                        </span>
+                      )}
                     </div>
-                    <p className="text-xs text-[#2B2B38]">
+                    <p className="text-xs text-[#2B2B38] mt-1">
                       Client: <span className="font-bold text-[#14141A]">{p.clientName}</span>
+                      {p.deadline && (
+                        <span className="ml-2 text-[11px] text-[#2B2B38]">
+                          • Deadline: {new Date(p.deadline).toLocaleDateString("en-IN")}
+                        </span>
+                      )}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
                     <div className="text-right">
                       <span className="text-[10px] uppercase font-bold text-[#2B2B38] block">Quoted</span>
                       <span className="font-mono text-sm font-bold text-[#14141A]">{formatPaise(p.quotedAmountPaise)}</span>
@@ -589,7 +794,58 @@ export function CrmTab({
                       <span className="text-[10px] uppercase font-bold text-amber-600 block">Pending</span>
                       <span className="font-mono text-sm font-bold text-amber-600">{formatPaise(p.pendingPaise || 0)}</span>
                     </div>
+
+                    <div className="flex items-center gap-1.5 pl-2 border-l border-black/10">
+                      <button
+                        onClick={() => handleOpenEditProject(p)}
+                        className="p-1.5 rounded-lg border border-black/10 text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer"
+                        title="Edit project"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      {(isOwner || canViewFinance) && (
+                        <button
+                          onClick={() => handleDeleteProjectConfirm(p)}
+                          className="p-1.5 rounded-lg border border-black/10 text-rose-600 hover:border-rose-400 hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Delete project"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
+                </div>
+
+                {/* Team Assignees Section */}
+                <div className="pt-2 border-t border-black/5 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-[#2B2B38]">Assignees:</span>
+                    {p.assignees && p.assignees.length > 0 ? (
+                      p.assignees.map((assignee) => (
+                        <span
+                          key={assignee.id}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-black/10 text-[11px] font-medium text-[#14141A]"
+                        >
+                          <span>{assignee.name}</span>
+                          <button
+                            onClick={() => handleUnassignMember(p, assignee.id)}
+                            className="text-[#2B2B38] hover:text-rose-600 ml-0.5 cursor-pointer"
+                            title={`Unassign ${assignee.name}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-[#2B2B38]/60 italic">No assignees yet</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleOpenEditProject(p)}
+                    className="text-[11px] font-bold text-[#374BFF] hover:underline cursor-pointer"
+                  >
+                    Manage Assignees
+                  </button>
                 </div>
 
                 {/* Milestones Section */}
@@ -613,17 +869,40 @@ export function CrmTab({
                     {p.milestones?.map((m: AdminMilestone) => (
                       <div
                         key={m.id}
-                        onClick={() => handleToggleMilestone(m.id, m.status)}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition-all ${
+                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
                           m.status === "completed"
                             ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
+                            : m.status === "in_progress"
+                            ? "bg-blue-50/70 border-blue-200 text-blue-900"
                             : "bg-white border-black/10 text-[#14141A]"
                         }`}
                       >
-                        <span className="font-medium truncate">{m.title}</span>
-                        <span className="text-[10px] font-bold">
-                          {m.status === "completed" ? "✓ Done" : "Pending"}
-                        </span>
+                        <div
+                          onClick={() => handleToggleMilestone(m.id, m.status)}
+                          className="flex-1 cursor-pointer pr-2 truncate"
+                          title="Click to cycle status: Pending -> In Progress -> Done"
+                        >
+                          <span className="font-medium truncate block">{m.title}</span>
+                          <span className="text-[10px] font-bold block mt-0.5">
+                            {m.status === "completed" ? "✓ Done" : m.status === "in_progress" ? "⏳ In Progress" : "○ Pending"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleOpenEditMilestone(m)}
+                            className="p-1 rounded hover:bg-black/5 text-[#2B2B38] hover:text-[#14141A] cursor-pointer"
+                            title="Edit milestone"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMilestoneConfirm(m)}
+                            className="p-1 rounded hover:bg-rose-50 text-rose-600 cursor-pointer"
+                            title="Delete milestone"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -910,6 +1189,143 @@ export function CrmTab({
         </div>
       )}
 
+      {/* MODAL: EDIT PROJECT */}
+      {editProjectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-black/10 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Project</h3>
+              <button onClick={() => setEditProjectModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateProject} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Client *</label>
+                <select
+                  required
+                  value={projectEditForm.clientId}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, clientId: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                >
+                  <option value="">Select a Client</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.company || "Direct"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={projectEditForm.name}
+                  onChange={(e) => setProjectEditForm({ ...projectEditForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                  <select
+                    value={projectEditForm.category}
+                    onChange={(e) => setProjectEditForm({ ...projectEditForm, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="Apps">Apps</option>
+                    <option value="Web">Web</option>
+                    <option value="NFC">NFC</option>
+                    <option value="QR menu">QR menu</option>
+                    <option value="ML">ML</option>
+                    <option value="Robotics">Robotics</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
+                  <select
+                    value={projectEditForm.status}
+                    onChange={(e) => setProjectEditForm({ ...projectEditForm, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="planning">Planning</option>
+                    <option value="design">Design</option>
+                    <option value="development">Development</option>
+                    <option value="review">Review</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="on_hold">On Hold</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Quoted Amount (₹) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={projectEditForm.quotedRupees}
+                    onChange={(e) => setProjectEditForm({ ...projectEditForm, quotedRupees: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Deadline</label>
+                  <input
+                    type="date"
+                    value={projectEditForm.deadline}
+                    onChange={(e) => setProjectEditForm({ ...projectEditForm, deadline: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Assign Team Members</label>
+                <div className="grid grid-cols-2 gap-1.5 mt-1 max-h-40 overflow-y-auto p-1">
+                  {teamMembers.map((tm) => (
+                    <label key={tm.id} className="flex items-center gap-2 text-xs text-[#14141A] p-2 rounded-lg bg-[#F5F6FC]">
+                      <input
+                        type="checkbox"
+                        checked={projectEditForm.assignedMemberIds.includes(tm.id)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setProjectEditForm((prev) => ({
+                            ...prev,
+                            assignedMemberIds: checked
+                              ? [...prev.assignedMemberIds, tm.id]
+                              : prev.assignedMemberIds.filter((id) => id !== tm.id),
+                          }));
+                        }}
+                      />
+                      <span className="truncate">{tm.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditProjectModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProject}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Project"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: CREATE MILESTONE */}
       {milestoneModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -947,6 +1363,80 @@ export function CrmTab({
               >
                 Save Milestone
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT MILESTONE */}
+      {editMilestoneModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Milestone</h3>
+              <button onClick={() => setEditMilestoneModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateMilestone} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Milestone Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={milestoneEditForm.title}
+                  onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Description</label>
+                <textarea
+                  rows={2}
+                  value={milestoneEditForm.description}
+                  onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
+                  <select
+                    value={milestoneEditForm.status}
+                    onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Due Date</label>
+                  <input
+                    type="date"
+                    value={milestoneEditForm.dueDate}
+                    onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, dueDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditMilestoneModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingMilestone}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingMilestone ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Milestone"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
