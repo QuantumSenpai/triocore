@@ -17,7 +17,11 @@ import {
   Calendar as CalendarIcon,
   Sparkles,
   Receipt,
-  X
+  X,
+  Edit3,
+  Trash2,
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 import { formatPaise, rupeesToPaise, paiseToRupees } from "@/lib/money";
 import { toast } from "sonner";
@@ -39,6 +43,7 @@ interface CrmTabProps {
   expenses: AdminExpense[];
   teamMembers: AdminTeamMember[];
   canViewFinance: boolean;
+  isOwner?: boolean;
   onRefresh: () => Promise<void>;
 }
 
@@ -50,6 +55,7 @@ export function CrmTab({
   expenses,
   teamMembers,
   canViewFinance,
+  isOwner = true,
   onRefresh,
 }: CrmTabProps) {
   const [subTab, setSubTab] = useState<"inquiries" | "clients" | "projects" | "payments" | "expenses">("inquiries");
@@ -88,8 +94,118 @@ export function CrmTab({
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<AdminPayment | null>(null);
 
+  // Inquiry Edit Modal State
+  const [editInquiryModalOpen, setEditInquiryModalOpen] = useState(false);
+  const [inquiryForm, setInquiryForm] = useState({
+    id: "",
+    name: "",
+    email: "",
+    phone: "",
+    service: "",
+    budget: "",
+    message: "",
+    status: "Unread",
+  });
+  const [savingInquiry, setSavingInquiry] = useState(false);
+  const [convertingInquiryId, setConvertingInquiryId] = useState<string | null>(null);
+
+  // Generic Reusable Confirm Delete State
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "inquiry" | "project" | "milestone" | "payment" | "expense";
+    id: string;
+    title: string;
+    description: string;
+    destructiveWarning?: string;
+    extraId?: string; // e.g. projectId for milestone
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Open Edit Inquiry
+  const handleOpenEditInquiry = (inq: AdminInquiry) => {
+    setInquiryForm({
+      id: inq.id,
+      name: inq.name,
+      email: inq.email,
+      phone: inq.phone || "",
+      service: inq.service || "",
+      budget: inq.budget || "",
+      message: inq.message,
+      status: inq.status || "Unread",
+    });
+    setEditInquiryModalOpen(true);
+  };
+
+  // Update Inquiry
+  const handleUpdateInquiry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingInquiry(true);
+    try {
+      const res = await fetch("/api/admin/inquiries", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inquiryForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update inquiry");
+      toast.success("Inquiry updated successfully!");
+      setEditInquiryModalOpen(false);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSavingInquiry(false);
+    }
+  };
+
+  // Delete Inquiry Confirm Prompt
+  const handleDeleteInquiryConfirm = (inq: AdminInquiry) => {
+    setDeleteTarget({
+      type: "inquiry",
+      id: inq.id,
+      title: `Delete inquiry from ${inq.name}?`,
+      description: "Delete this inquiry? This cannot be undone.",
+    });
+    setDeleteConfirmOpen(true);
+  };
+
+  // Execute Delete for all entities
+  const handleExecuteDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      let endpoint = "";
+      if (deleteTarget.type === "inquiry") {
+        endpoint = `/api/admin/inquiries?id=${deleteTarget.id}`;
+      } else if (deleteTarget.type === "project") {
+        endpoint = `/api/admin/business-projects?id=${deleteTarget.id}`;
+      } else if (deleteTarget.type === "milestone") {
+        endpoint = `/api/admin/milestones?id=${deleteTarget.id}`;
+      } else if (deleteTarget.type === "payment") {
+        endpoint = `/api/admin/payments?id=${deleteTarget.id}`;
+      } else if (deleteTarget.type === "expense") {
+        endpoint = `/api/admin/expenses?id=${deleteTarget.id}`;
+      }
+
+      const res = await fetch(endpoint, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to delete ${deleteTarget.type}`);
+
+      const entityName = deleteTarget.type.charAt(0).toUpperCase() + deleteTarget.type.slice(1);
+      toast.success(`${entityName} deleted successfully!`);
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
+      await onRefresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Convert Inquiry to Client
   const handleConvertInquiry = async (id: string) => {
+    setConvertingInquiryId(id);
     try {
       const res = await fetch(`/api/admin/inquiries/${id}/convert`, { method: "POST" });
       const data = await res.json();
@@ -99,6 +215,8 @@ export function CrmTab({
       setSubTab("clients");
     } catch (err) {
       toast.error((err as Error).message);
+    } finally {
+      setConvertingInquiryId(null);
     }
   };
 
@@ -319,23 +437,58 @@ export function CrmTab({
                     </td>
                     <td className="py-3.5 px-3 text-[#2B2B38] max-w-xs truncate">{inq.message}</td>
                     <td className="py-3.5 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                        inq.status === "converted"
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                        inq.status?.toLowerCase() === "converted"
                           ? "bg-emerald-100 text-emerald-700"
+                          : inq.status?.toLowerCase() === "contacted"
+                          ? "bg-purple-100 text-purple-700"
+                          : inq.status?.toLowerCase() === "archived"
+                          ? "bg-zinc-200 text-zinc-700"
                           : "bg-blue-100 text-[#374BFF]"
                       }`}>
-                        {inq.status || "unread"}
+                        {inq.status || "Unread"}
                       </span>
                     </td>
                     <td className="py-3.5 px-3 text-right">
-                      {inq.status !== "converted" && (
+                      <div className="flex items-center justify-end gap-1.5">
+                        {inq.status?.toLowerCase() === "converted" ? (
+                          <button
+                            disabled
+                            className="px-2.5 py-1.5 rounded-xl bg-black/5 text-[#2B2B38]/50 text-[11px] font-bold cursor-not-allowed inline-flex items-center gap-1"
+                            title="Inquiry already converted to client"
+                          >
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                            Converted
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleConvertInquiry(inq.id)}
+                            disabled={convertingInquiryId === inq.id}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#374BFF] text-white text-[11px] font-bold hover:bg-[#14141A] transition-all cursor-pointer inline-flex items-center gap-1 disabled:opacity-50"
+                          >
+                            {convertingInquiryId === inq.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <UserCheck className="h-3 w-3" />
+                            )}
+                            Convert
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleConvertInquiry(inq.id)}
-                          className="px-3 py-1.5 rounded-xl bg-[#374BFF] text-white text-[11px] font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+                          onClick={() => handleOpenEditInquiry(inq)}
+                          className="p-1.5 rounded-lg border border-black/10 text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer"
+                          title="Edit inquiry"
                         >
-                          Convert to Client
+                          <Edit3 className="h-3.5 w-3.5" />
                         </button>
-                      )}
+                        <button
+                          onClick={() => handleDeleteInquiryConfirm(inq)}
+                          className="p-1.5 rounded-lg border border-black/10 text-rose-600 hover:border-rose-400 hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Delete inquiry"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -928,6 +1081,169 @@ export function CrmTab({
                 className="px-4 py-2.5 rounded-xl border border-black/15 text-xs font-bold hover:bg-[#F5F6FC] transition-all"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT INQUIRY */}
+      {editInquiryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-black/10 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Inquiry</h3>
+              <button onClick={() => setEditInquiryModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateInquiry} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inquiryForm.name}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={inquiryForm.email}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Phone</label>
+                  <input
+                    type="text"
+                    value={inquiryForm.phone}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Service *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inquiryForm.service}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, service: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Budget</label>
+                  <input
+                    type="text"
+                    value={inquiryForm.budget}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, budget: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    placeholder="e.g. ₹50,000 - ₹1,00,000"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
+                  <select
+                    value={inquiryForm.status}
+                    onChange={(e) => setInquiryForm({ ...inquiryForm, status: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                  >
+                    <option value="Unread">Unread</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Converted">Converted</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#14141A]">Message *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={inquiryForm.message}
+                  onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditInquiryModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingInquiry}
+                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingInquiry ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* REUSABLE CONFIRM DELETE DIALOG */}
+      {deleteConfirmOpen && deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="h-10 w-10 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-heading text-base font-bold text-[#14141A]">
+                  {deleteTarget.title}
+                </h3>
+                <p className="text-xs text-[#2B2B38] mt-0.5">
+                  {deleteTarget.description}
+                </p>
+              </div>
+            </div>
+
+            {deleteTarget.destructiveWarning && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                {deleteTarget.destructiveWarning}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteTarget(null);
+                }}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteDelete}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
               </button>
             </div>
           </div>

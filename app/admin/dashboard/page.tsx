@@ -378,6 +378,7 @@ export default function AdminDashboardPage() {
                 expenses={expenses}
                 teamMembers={teamMembers}
                 canViewFinance={canViewFinance}
+                isOwner={userRole === "owner"}
                 onRefresh={loadAllData}
               />
             )}
