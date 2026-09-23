@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { expenses, auditLogs, user } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { expenses, auditLogs, user, teamMembers } from "@/lib/db/schema";
+import { eq, desc, ilike } from "drizzle-orm";
 import { requireAdmin } from "@/lib/dal/auth";
 import { formatPaise, paiseToRupees } from "@/lib/money";
 import { expenseCreateSchema, expenseEditSchema } from "@/lib/validations/crm";
@@ -145,19 +145,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine target memberId for personal expenses
-    let targetMemberId = memberId || null;
+    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
+
+    // Determine target memberId for personal expenses, resolving team_members.id to user.id if needed
+    let targetMemberId: string | null = null;
     if (expenseType === "personal") {
-      if (!isFinance) {
-        targetMemberId = authCheck.user?.id || null;
-      } else if (!targetMemberId) {
+      const candidateId = isFinance ? (memberId || authCheck.user?.id) : authCheck.user?.id;
+      if (candidateId) {
+        // 1. Direct check if candidateId is a valid user.id
+        const userExists = await db.select({ id: user.id }).from(user).where(eq(user.id, candidateId)).limit(1);
+        if (userExists.length > 0) {
+          targetMemberId = userExists[0].id;
+        } else {
+          // 2. Check if candidateId is a team_members.id and resolve to user by name
+          const tm = await db.select({ name: teamMembers.name }).from(teamMembers).where(eq(teamMembers.id, candidateId)).limit(1);
+          if (tm.length > 0) {
+            const firstName = tm[0].name.trim().split(" ")[0];
+            const matchedUser = await db.select({ id: user.id }).from(user).where(ilike(user.name, `%${firstName}%`)).limit(1);
+            if (matchedUser.length > 0) {
+              targetMemberId = matchedUser[0].id;
+            }
+          }
+        }
+      }
+      if (!targetMemberId) {
         targetMemberId = authCheck.user?.id || null;
       }
-    } else {
-      targetMemberId = null;
+      if (targetMemberId) {
+        const verified = await db.select({ id: user.id }).from(user).where(eq(user.id, targetMemberId)).limit(1);
+        if (verified.length === 0) {
+          targetMemberId = null;
+        }
+      }
     }
-
-    if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
     // Personal expenses store project name in title; projectId foreign key must be null
     const safeProjectId = expenseType === "personal" ? null : (projectId || null);
@@ -271,9 +291,34 @@ export async function PUT(req: NextRequest) {
       ? (projectId || null)
       : existing.projectId;
 
-    const safeMemberId = isPersonal
-      ? (memberId !== undefined ? (memberId || null) : existing.memberId)
-      : null;
+    let safeMemberId: string | null = null;
+    if (isPersonal) {
+      const candidateId = memberId !== undefined ? memberId : existing.memberId;
+      if (candidateId) {
+        const userExists = await db.select({ id: user.id }).from(user).where(eq(user.id, candidateId)).limit(1);
+        if (userExists.length > 0) {
+          safeMemberId = userExists[0].id;
+        } else {
+          const tm = await db.select({ name: teamMembers.name }).from(teamMembers).where(eq(teamMembers.id, candidateId)).limit(1);
+          if (tm.length > 0) {
+            const firstName = tm[0].name.trim().split(" ")[0];
+            const matchedUser = await db.select({ id: user.id }).from(user).where(ilike(user.name, `%${firstName}%`)).limit(1);
+            if (matchedUser.length > 0) {
+              safeMemberId = matchedUser[0].id;
+            }
+          }
+        }
+      }
+      if (!safeMemberId) {
+        safeMemberId = existing.memberId;
+      }
+      if (safeMemberId) {
+        const verified = await db.select({ id: user.id }).from(user).where(eq(user.id, safeMemberId)).limit(1);
+        if (verified.length === 0) {
+          safeMemberId = null;
+        }
+      }
+    }
 
     const updated = await db
       .update(expenses)

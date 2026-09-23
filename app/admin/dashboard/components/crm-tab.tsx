@@ -1408,7 +1408,7 @@ export function CrmTab({
                     amountLeftRupees: "0",
                     date: new Date().toISOString().slice(0, 10),
                     paidBy: "",
-                    memberId: teamMembers[0]?.id || "",
+                    memberId: teamMembers[0]?.userId || teamMembers[0]?.id || "",
                     expenseType: expenseTab,
                     notes: "",
                   });
@@ -1564,7 +1564,11 @@ export function CrmTab({
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
                     {teamMembers.map((tm) => {
-                      const mExps = expenses.filter((e) => e.expenseType === "personal" && e.memberId === tm.id);
+                      const mExps = expenses.filter(
+                        (e) =>
+                          e.expenseType === "personal" &&
+                          (e.memberId === tm.id || (tm.userId && e.memberId === tm.userId))
+                      );
                       const pending = mExps.filter((e) => !e.isReimbursed).reduce((s, e) => s + e.amountPaise, 0);
                       const cleared = mExps.filter((e) => e.isReimbursed).reduce((s, e) => s + e.amountPaise, 0);
                       if (mExps.length === 0) return null;
@@ -1601,7 +1605,7 @@ export function CrmTab({
                       >
                         <option value="all">All Members</option>
                         {teamMembers.map((tm) => (
-                          <option key={tm.id} value={tm.id}>
+                          <option key={tm.id} value={tm.userId || tm.id}>
                             {tm.name}
                           </option>
                         ))}
@@ -1627,7 +1631,17 @@ export function CrmTab({
                       {expenses
                         .filter((e) => {
                           if (e.expenseType !== "personal") return false;
-                          if (expenseMemberFilter !== "all" && e.memberId !== expenseMemberFilter) return false;
+                          if (expenseMemberFilter !== "all") {
+                            const selectedMember = teamMembers.find(
+                              (m) => m.id === expenseMemberFilter || m.userId === expenseMemberFilter
+                            );
+                            const matches =
+                              e.memberId === expenseMemberFilter ||
+                              (selectedMember &&
+                                (e.memberId === selectedMember.id ||
+                                  (selectedMember.userId && e.memberId === selectedMember.userId)));
+                            if (!matches) return false;
+                          }
                           return true;
                         })
                         .map((e) => (
@@ -2629,7 +2643,7 @@ export function CrmTab({
                   >
                     <option value="">Select Member</option>
                     {teamMembers.map((tm) => (
-                      <option key={tm.id} value={tm.id}>
+                      <option key={tm.id} value={tm.userId || tm.id}>
                         {tm.name}
                       </option>
                     ))}
@@ -2708,7 +2722,7 @@ export function CrmTab({
                     </div>
                   </div>
                   <p className="text-[11px] text-[#2B2B38]">
-                    Amount still owed to {teamMembers.find((m) => m.id === expenseForm.memberId)?.name || "member"} for this expense
+                    Amount still owed to {teamMembers.find((m) => m.id === expenseForm.memberId || (m.userId && m.userId === expenseForm.memberId))?.name || "member"} for this expense
                   </p>
                 </div>
               )}
@@ -2848,7 +2862,7 @@ export function CrmTab({
                     </div>
                   </div>
                   <p className="text-[11px] text-[#2B2B38]">
-                    Amount still owed to {teamMembers.find((m) => m.id === expenseEditForm.memberId)?.name || "member"} for this expense
+                    Amount still owed to {teamMembers.find((m) => m.id === expenseEditForm.memberId || (m.userId && m.userId === expenseEditForm.memberId))?.name || "member"} for this expense
                   </p>
                 </div>
               )}

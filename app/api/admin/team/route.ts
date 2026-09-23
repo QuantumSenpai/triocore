@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, mockTeamMembers } from "@/lib/db";
-import { teamMembers, auditLogs, contentRevisions } from "@/lib/db/schema";
+import { teamMembers, auditLogs, contentRevisions, user } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
@@ -18,7 +18,20 @@ export async function GET(req: NextRequest) {
     if (data.length === 0) {
       return NextResponse.json({ members: mockTeamMembers, team: mockTeamMembers });
     }
-    return NextResponse.json({ members: data, team: data });
+
+    const allUsers = await db.select({ id: user.id, name: user.name, email: user.email }).from(user);
+    const enriched = data.map((tm) => {
+      const firstName = tm.name.trim().split(" ")[0];
+      const matched = allUsers.find(
+        (u) => u.name && u.name.toLowerCase().includes(firstName.toLowerCase())
+      );
+      return {
+        ...tm,
+        userId: matched?.id || tm.id,
+      };
+    });
+
+    return NextResponse.json({ members: enriched, team: enriched });
   } catch (error) {
     return NextResponse.json({ members: mockTeamMembers, team: mockTeamMembers, error: (error as Error).message });
   }
