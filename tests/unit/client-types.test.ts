@@ -30,20 +30,18 @@ describe("Client Type Validations & Dropdown Options", () => {
     expect(resNull.success).toBe(true);
   });
 
-  it("tolerates legacy value lawdaaa without failing validation", () => {
-    const res = clientCreateSchema.safeParse({
-      name: "Legacy Client",
-      company: "lawdaaa",
-    });
-    expect(res.success).toBe(true);
-  });
-
-  it("rejects invalid client types outside the allowed enum", () => {
+  it("rejects invalid client types outside the 4 allowed types", () => {
     const res = clientCreateSchema.safeParse({
       name: "Invalid Client",
       company: "EnterpriseCorpNotAllowed",
     });
     expect(res.success).toBe(false);
+
+    const resLegacy = clientCreateSchema.safeParse({
+      name: "Legacy Client",
+      company: "lawdaaa",
+    });
+    expect(resLegacy.success).toBe(false);
   });
 
   it("validates client edit schema with allowed types", () => {

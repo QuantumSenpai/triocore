@@ -130,14 +130,13 @@ export type ExpenseEditData = z.infer<typeof expenseEditSchema>;
 // =============================================================================
 
 export const clientTypeValues = ["Company", "Brand", "Startup", "Individual"] as const;
-export const clientTypeWithLegacyValues = ["Company", "Brand", "Startup", "Individual", "lawdaaa"] as const;
 
 export const clientCreateSchema = z.object({
   name: z.string().trim().min(1, "Client name is required").max(100),
   email: z.string().trim().email("Invalid email").optional().nullable().or(z.literal("")),
   phone: z.string().trim().optional().nullable(),
-  company: z.enum(clientTypeWithLegacyValues).optional().nullable().or(z.literal("")),
-  businessName: z.enum(clientTypeWithLegacyValues).optional().nullable().or(z.literal("")),
+  company: z.enum(clientTypeValues).optional().nullable().or(z.literal("")),
+  businessName: z.enum(clientTypeValues).optional().nullable().or(z.literal("")),
   address: z.string().trim().optional().nullable(),
   city: z.string().trim().optional().nullable(),
   notes: z.string().trim().optional().nullable(),
@@ -149,13 +148,14 @@ export const clientEditSchema = z.object({
   name: z.string().trim().min(1, "Client name is required").max(100),
   email: z.string().trim().email("Invalid email").optional().nullable().or(z.literal("")),
   phone: z.string().trim().optional().nullable(),
-  company: z.enum(clientTypeWithLegacyValues).optional().nullable().or(z.literal("")),
-  businessName: z.enum(clientTypeWithLegacyValues).optional().nullable().or(z.literal("")),
+  company: z.enum(clientTypeValues).optional().nullable().or(z.literal("")),
+  businessName: z.enum(clientTypeValues).optional().nullable().or(z.literal("")),
   address: z.string().trim().optional().nullable(),
   city: z.string().trim().optional().nullable(),
   notes: z.string().trim().optional().nullable(),
   status: z.enum(["active", "inactive", "lead", "completed", "archived"]).default("active"),
 });
+
 
 export type ClientCreateData = z.infer<typeof clientCreateSchema>;
 export type ClientEditData = z.infer<typeof clientEditSchema>;
