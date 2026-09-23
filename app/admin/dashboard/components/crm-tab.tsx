@@ -995,9 +995,19 @@ export function CrmTab({
             {clients.map((c) => (
               <div key={c.id} className="p-5 rounded-2xl bg-[#F5F6FC] border border-black/10 space-y-2">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="space-y-1">
                     <h4 className="font-heading text-sm font-bold text-[#14141A]">{c.name}</h4>
-                    {c.company && <p className="text-xs text-[#374BFF] font-medium">{c.company}</p>}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {c.company ? (
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-[#374BFF] border border-blue-200/60 text-[10px] font-bold">
+                          {c.company}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 text-[10px] font-medium">
+                          Not set
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold capitalize">
@@ -1726,13 +1736,18 @@ export function CrmTab({
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-[#14141A]">Category</label>
-                <input
-                  type="text"
+                <label className="text-xs font-bold text-[#14141A]">Type</label>
+                <select
                   value={clientForm.company}
                   onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
+                >
+                  <option value="">Select Type (Optional)</option>
+                  <option value="Company">Company</option>
+                  <option value="Brand">Brand</option>
+                  <option value="Startup">Startup</option>
+                  <option value="Individual">Individual</option>
+                </select>
               </div>
               <button
                 type="submit"
@@ -1788,13 +1803,21 @@ export function CrmTab({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-[#14141A]">Category</label>
-                  <input
-                    type="text"
+                  <label className="text-xs font-bold text-[#14141A]">Type</label>
+                  <select
                     value={clientEditForm.company}
                     onChange={(e) => setClientEditForm({ ...clientEditForm, company: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
+                  >
+                    <option value="">Select Type (Optional)</option>
+                    {clientEditForm.company && !["Company", "Brand", "Startup", "Individual"].includes(clientEditForm.company) && (
+                      <option value={clientEditForm.company}>{clientEditForm.company} (Legacy)</option>
+                    )}
+                    <option value="Company">Company</option>
+                    <option value="Brand">Brand</option>
+                    <option value="Startup">Startup</option>
+                    <option value="Individual">Individual</option>
+                  </select>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-[#14141A]">Status</label>

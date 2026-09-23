@@ -2,32 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { clients, auditLogs } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { verifyAdminSession } from "@/lib/auth-guard";
+import { requireAdmin } from "@/lib/dal/auth";
+import { clientCreateSchema, clientEditSchema } from "@/lib/validations/crm";
 
 export async function GET(req: NextRequest) {
-  const authCheck = await verifyAdminSession(req);
+  const authCheck = await requireAdmin(req);
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
     if (!db) return NextResponse.json({ clients: [] });
     const data = await db.select().from(clients).orderBy(desc(clients.createdAt));
-    return NextResponse.json({ clients: data });
+    const enriched = data.map((c) => ({
+      ...c,
+      company: c.businessName || null,
+    }));
+    return NextResponse.json({ clients: enriched });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  const authCheck = await verifyAdminSession(req);
+  const authCheck = await requireAdmin(req);
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
     const body = await req.json();
-    const { name, email, phone, company, businessName, address, city, notes, status } = body;
-
-    if (!name) {
-      return NextResponse.json({ error: "Client name is required" }, { status: 400 });
+    const parseResult = clientCreateSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || "Invalid client data" },
+        { status: 400 }
+      );
     }
+
+    const { name, email, phone, company, businessName, address, city, notes, status } = parseResult.data;
+    const finalBusinessName = businessName || company || null;
 
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
@@ -35,7 +45,7 @@ export async function POST(req: NextRequest) {
       name,
       email: email || null,
       phone: phone || null,
-      businessName: businessName || company || null,
+      businessName: finalBusinessName,
       city: city || address || null,
       notes: notes || null,
       status: status || "active",
@@ -47,7 +57,7 @@ export async function POST(req: NextRequest) {
         action: "CREATE_CLIENT",
         entityType: "clients",
         entityId: newClient[0].id,
-        details: { name, company: businessName || company },
+        details: { name, businessName: finalBusinessName },
       });
     } catch {}
 
@@ -61,29 +71,43 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const authCheck = await verifyAdminSession(req);
+  const authCheck = await requireAdmin(req);
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
     const body = await req.json();
-    const { id, name, email, phone, company, businessName, address, city, notes, status } = body;
-
-    if (!id || !name) {
-      return NextResponse.json({ error: "Client ID and name are required" }, { status: 400 });
+    const parseResult = clientEditSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: parseResult.error.issues[0]?.message || "Invalid client data" },
+        { status: 400 }
+      );
     }
+
+    const { id, name, email, phone, company, businessName, address, city, notes, status } = parseResult.data;
+    const finalBusinessName = businessName !== undefined ? businessName : (company !== undefined ? company : undefined);
 
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
-    const updated = await db.update(clients).set({
+    const updatePayload: Record<string, unknown> = {
       name,
       email: email || null,
       phone: phone || null,
-      businessName: businessName || company || null,
       city: city || address || null,
       notes: notes || null,
       status: status || "active",
       updatedAt: new Date(),
-    }).where(eq(clients.id, id)).returning();
+    };
+
+    if (finalBusinessName !== undefined) {
+      updatePayload.businessName = finalBusinessName || null;
+    }
+
+    const updated = await db.update(clients).set(updatePayload).where(eq(clients.id, id)).returning();
+
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
 
     try {
       await db.insert(auditLogs).values({
@@ -91,18 +115,21 @@ export async function PUT(req: NextRequest) {
         action: "UPDATE_CLIENT",
         entityType: "clients",
         entityId: id,
-        details: { name },
+        details: { name, businessName: finalBusinessName },
       });
     } catch {}
 
-    return NextResponse.json({ success: true, client: updated[0] });
+    return NextResponse.json({
+      success: true,
+      client: { ...updated[0], company: updated[0].businessName },
+    });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  const authCheck = await verifyAdminSession(req);
+  const authCheck = await requireAdmin(req);
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
