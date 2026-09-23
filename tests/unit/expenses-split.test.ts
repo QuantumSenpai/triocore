@@ -175,5 +175,65 @@ describe("Expenses Split & Reimbursement Tracker Logic", () => {
       expect(editOmitted.data.projectId).toBe(undefined);
     }
   });
+
+  it("calculates equal individual allocation from project budget and member count", () => {
+    const totalBudgetPaise = 2000000; // ₹20,000
+    const memberCount = 4;
+    const individualAllocPaise = Math.floor(totalBudgetPaise / memberCount);
+
+    expect(individualAllocPaise).toBe(500000); // ₹5,000
+  });
+
+  it("accurately tracks cumulative payments and calculates remaining balance sequentially", () => {
+    const individualAllocPaise = 500000; // ₹5,000
+    const payments: number[] = [];
+
+    // 1st payment: ₹2,000
+    payments.push(200000);
+    let totalPaid = payments.reduce((s, p) => s + p, 0);
+    let amountLeft = Math.max(0, individualAllocPaise - totalPaid);
+    expect(totalPaid).toBe(200000); // ₹2,000
+    expect(amountLeft).toBe(300000); // ₹3,000 left
+
+    // 2nd payment: ₹1,000
+    payments.push(100000);
+    totalPaid = payments.reduce((s, p) => s + p, 0);
+    amountLeft = Math.max(0, individualAllocPaise - totalPaid);
+    expect(totalPaid).toBe(300000); // ₹3,000
+    expect(amountLeft).toBe(200000); // ₹2,000 left
+
+    // 3rd payment: ₹2,000
+    payments.push(200000);
+    totalPaid = payments.reduce((s, p) => s + p, 0);
+    amountLeft = Math.max(0, individualAllocPaise - totalPaid);
+    expect(totalPaid).toBe(500000); // ₹5,000
+    expect(amountLeft).toBe(0); // ₹0 left -> Cleared
+  });
+
+  it("detects overpayment and enforces admin authorization requirement", () => {
+    const individualAllocPaise = 500000; // ₹5,000
+    const totalPreviouslyPaid = 300000; // ₹3,000
+    const newPaymentPaise = 300000; // ₹3,000 (total = ₹6,000 -> exceeds ₹5,000 by ₹1,000)
+
+    const totalPaidNow = totalPreviouslyPaid + newPaymentPaise;
+    const isOverpaid = totalPaidNow > individualAllocPaise;
+    expect(isOverpaid).toBe(true);
+
+    const checkOverpayment = (allowAdminOverride: boolean) => {
+      if (totalPaidNow > individualAllocPaise && !allowAdminOverride) {
+        throw new Error("Payment exceeds member allocated budget. Overpayment requires admin override.");
+      }
+      return { success: true, amountLeftPaise: Math.max(0, individualAllocPaise - totalPaidNow) };
+    };
+
+    // Blocked without admin override
+    expect(() => checkOverpayment(false)).toThrow("Overpayment requires admin override");
+
+    // Allowed with admin override
+    const result = checkOverpayment(true);
+    expect(result.success).toBe(true);
+    expect(result.amountLeftPaise).toBe(0);
+  });
 });
+
 

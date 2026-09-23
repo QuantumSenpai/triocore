@@ -112,6 +112,8 @@ export const expenseCreateSchema = z.object({
   expenseType: z.enum(expenseTypeValues).default("studio"),
   memberId: emptyToNull,
   isReimbursed: z.boolean().default(false),
+  allocatedAmountPaise: z.coerce.number().int().min(0).default(0).optional(),
+  allowOverpayment: z.boolean().default(false).optional(),
 }).refine(
   (data) => {
     if (data.expenseType === "personal" && !data.memberId) {
@@ -142,6 +144,8 @@ export const expenseEditSchema = z.object({
   category: z.string().trim().optional(),
   amountPaise: z.number().int().positive("Amount must be positive").optional(),
   amountLeftPaise: z.coerce.number().int().min(0, "Amount left must be 0 or positive").optional(),
+  allocatedAmountPaise: z.coerce.number().int().min(0).optional(),
+  allowOverpayment: z.boolean().default(false).optional(),
   date: z.string().min(1, "Date is required").optional(),
   paidBy: z.string().trim().optional().nullable(),
   projectId: emptyToNullOptional,

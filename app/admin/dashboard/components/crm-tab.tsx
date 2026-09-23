@@ -156,11 +156,16 @@ export function CrmTab({
     category: "tools",
     amountRupees: "2000",
     amountLeftRupees: "0",
+    allocatedAmountRupees: "0",
+    totalBudgetRupees: "0",
+    memberCount: "4",
+    selectedProjectId: "",
     date: new Date().toISOString().slice(0, 10),
     paidBy: "",
     memberId: "",
     expenseType: "studio" as "studio" | "personal",
     notes: "",
+    allowOverpayment: false,
   });
   const [savingExpense, setSavingExpense] = useState(false);
 
@@ -171,12 +176,15 @@ export function CrmTab({
     category: "tools",
     amountRupees: "2000",
     amountLeftRupees: "0",
+    allocatedAmountRupees: "0",
+    projectId: "",
     date: "",
     paidBy: "",
     memberId: "",
     expenseType: "studio" as "studio" | "personal",
     notes: "",
     isReimbursed: false,
+    allowOverpayment: false,
   });
 
   // Receipt Modal
@@ -703,9 +711,9 @@ export function CrmTab({
     setSavingExpense(true);
     try {
       const amountPaise = rupeesToPaise(Number(expenseForm.amountRupees) || 0);
-      const amountLeftPaise =
+      const allocatedAmountPaise =
         expenseForm.expenseType === "personal"
-          ? rupeesToPaise(Number(expenseForm.amountLeftRupees) || 0)
+          ? rupeesToPaise(Number(expenseForm.allocatedAmountRupees) || 0)
           : 0;
       const res = await fetch("/api/admin/expenses", {
         method: "POST",
@@ -714,9 +722,14 @@ export function CrmTab({
           title: expenseForm.title,
           category: expenseForm.expenseType === "personal" ? "personal" : expenseForm.category,
           amountPaise,
-          amountLeftPaise,
+          allocatedAmountPaise,
+          allowOverpayment: expenseForm.allowOverpayment,
           date: expenseForm.date,
           paidBy: expenseForm.paidBy || null,
+          projectId:
+            expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom"
+              ? expenseForm.selectedProjectId
+              : null,
           memberId: expenseForm.expenseType === "personal" ? expenseForm.memberId || null : null,
           expenseType: expenseForm.expenseType,
           notes: expenseForm.notes || null,
@@ -731,11 +744,16 @@ export function CrmTab({
         category: "tools",
         amountRupees: "2000",
         amountLeftRupees: "0",
+        allocatedAmountRupees: "0",
+        totalBudgetRupees: "0",
+        memberCount: "4",
+        selectedProjectId: "",
         date: new Date().toISOString().slice(0, 10),
         paidBy: "",
         memberId: "",
         expenseType: "studio",
         notes: "",
+        allowOverpayment: false,
       });
       await onRefresh();
     } catch (err) {
@@ -753,12 +771,15 @@ export function CrmTab({
       category: exp.category,
       amountRupees: String(paiseToRupees(exp.amountPaise)),
       amountLeftRupees: String(paiseToRupees(exp.amountLeftPaise || 0)),
+      allocatedAmountRupees: String(paiseToRupees(exp.allocatedAmountPaise || 0)),
+      projectId: exp.projectId || "",
       date: exp.date || (exp.paidAt ? new Date(exp.paidAt).toISOString().slice(0, 10) : ""),
       paidBy: exp.paidBy || "",
       memberId: exp.memberId || "",
       expenseType: (exp.expenseType || "studio") as "studio" | "personal",
       notes: exp.notes || exp.description || "",
       isReimbursed: !!exp.isReimbursed,
+      allowOverpayment: false,
     });
     setEditExpenseModalOpen(true);
   };
@@ -769,9 +790,9 @@ export function CrmTab({
     setSavingExpense(true);
     try {
       const amountPaise = rupeesToPaise(Number(expenseEditForm.amountRupees) || 0);
-      const amountLeftPaise =
+      const allocatedAmountPaise =
         expenseEditForm.expenseType === "personal"
-          ? rupeesToPaise(Number(expenseEditForm.amountLeftRupees) || 0)
+          ? rupeesToPaise(Number(expenseEditForm.allocatedAmountRupees) || 0)
           : 0;
       const res = await fetch("/api/admin/expenses", {
         method: "PUT",
@@ -781,9 +802,11 @@ export function CrmTab({
           title: expenseEditForm.title,
           category: expenseEditForm.expenseType === "personal" ? "personal" : expenseEditForm.category,
           amountPaise,
-          amountLeftPaise,
+          allocatedAmountPaise,
+          allowOverpayment: expenseEditForm.allowOverpayment,
           date: expenseEditForm.date,
           paidBy: expenseEditForm.paidBy || null,
+          projectId: expenseEditForm.projectId || null,
           memberId: expenseEditForm.expenseType === "personal" ? expenseEditForm.memberId || null : null,
           expenseType: expenseEditForm.expenseType,
           notes: expenseEditForm.notes || null,
@@ -1401,16 +1424,26 @@ export function CrmTab({
               </button>
               <button
                 onClick={() => {
+                  const defaultProj = projects[0];
+                  const defaultBudget = defaultProj ? paiseToRupees(defaultProj.quotedAmountPaise) : 20000;
+                  const defaultMembers = defaultProj?.assignees?.length || 4;
+                  const defaultAlloc = Math.floor(defaultBudget / defaultMembers);
+
                   setExpenseForm({
-                    title: "",
+                    title: defaultProj?.title || defaultProj?.name || "",
                     category: "tools",
                     amountRupees: "2000",
                     amountLeftRupees: "0",
+                    allocatedAmountRupees: String(defaultAlloc),
+                    totalBudgetRupees: String(defaultBudget),
+                    memberCount: String(defaultMembers),
+                    selectedProjectId: defaultProj ? defaultProj.id : "custom",
                     date: new Date().toISOString().slice(0, 10),
                     paidBy: "",
                     memberId: teamMembers[0]?.userId || teamMembers[0]?.id || "",
                     expenseType: expenseTab,
                     notes: "",
+                    allowOverpayment: false,
                   });
                   setCreateExpenseModalOpen(true);
                 }}
@@ -1621,9 +1654,10 @@ export function CrmTab({
                         <th className="py-3 px-3">Date</th>
                         <th className="py-3 px-3">Member</th>
                         <th className="py-3 px-3">Project Name</th>
-                        <th className="py-3 px-3">Total Amount</th>
-                        <th className="py-3 px-3">Status</th>
+                        <th className="py-3 px-3">Allocated Amount</th>
+                        <th className="py-3 px-3">Amount Paid</th>
                         <th className="py-3 px-3">Amount Left to Pay</th>
+                        <th className="py-3 px-3">Status</th>
                         <th className="py-3 px-3 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -1656,22 +1690,25 @@ export function CrmTab({
                               {e.title}
                               {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
                             </td>
+                            <td className="py-3 px-3 font-mono font-bold text-[#374BFF]">
+                              {e.allocatedAmountPaise ? formatPaise(e.allocatedAmountPaise) : "—"}
+                            </td>
                             <td className="py-3 px-3 font-mono font-bold text-red-600">
                               {formatPaise(e.amountPaise)}
+                            </td>
+                            <td className="py-3 px-3 font-mono font-bold text-amber-700">
+                              {formatPaise(e.amountLeftPaise || 0)}
                             </td>
                             <td className="py-3 px-3">
                               <span
                                 className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                                  e.isReimbursed
+                                  (e.amountLeftPaise === 0 || e.isReimbursed)
                                     ? "bg-emerald-100 text-emerald-800"
                                     : "bg-amber-100 text-amber-800"
                                 }`}
                               >
-                                {e.isReimbursed ? "✓ Reimbursed" : "⏳ Pending"}
+                                {(e.amountLeftPaise === 0 || e.isReimbursed) ? "✓ Cleared" : "⏳ Pending"}
                               </span>
-                            </td>
-                            <td className="py-3 px-3 font-mono font-bold text-amber-700">
-                              {formatPaise(e.amountLeftPaise || 0)}
                             </td>
                             <td className="py-3 px-3 text-right">
                               <div className="flex items-center justify-end gap-1.5">
@@ -2634,58 +2671,131 @@ export function CrmTab({
               )}
 
               {expenseForm.expenseType === "personal" && (
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
-                  <select
-                    value={expenseForm.memberId}
-                    onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="">Select Member</option>
-                    {teamMembers.map((tm) => (
-                      <option key={tm.id} value={tm.userId || tm.id}>
-                        {tm.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">
-                  {expenseForm.expenseType === "personal" ? "Project Name *" : "Expense Title *"}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={expenseForm.expenseType === "personal" ? "e.g. Website Redesign or Branding Project" : "e.g. Domain Renewal or Client Lunch"}
-                  value={expenseForm.title}
-                  onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-
-              {expenseForm.expenseType === "studio" ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div>
-                    <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                    <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
                     <select
-                      value={expenseForm.category}
-                      onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                      value={expenseForm.memberId}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                     >
-                      <option value="tools">Tools / SaaS</option>
-                      <option value="hosting">Hosting & Cloud</option>
-                      <option value="domain">Domain</option>
-                      <option value="software">Software License</option>
-                      <option value="marketing">Marketing & Ads</option>
-                      <option value="travel">Travel</option>
-                      <option value="food">Food & Hospitality</option>
-                      <option value="other">Other</option>
+                      <option value="">Select Member</option>
+                      {teamMembers.map((tm) => (
+                        <option key={tm.id} value={tm.userId || tm.id}>
+                          {tm.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
+
                   <div>
-                    <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                    <label className="text-xs font-bold text-[#14141A]">Project Selection *</label>
+                    <select
+                      value={expenseForm.selectedProjectId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "custom") {
+                          setExpenseForm({
+                            ...expenseForm,
+                            selectedProjectId: "custom",
+                            title: "",
+                            totalBudgetRupees: "20000",
+                            memberCount: "4",
+                            allocatedAmountRupees: "5000",
+                          });
+                        } else {
+                          const selProj = projects.find((p) => p.id === val);
+                          if (selProj) {
+                            const budgetRupees = paiseToRupees(selProj.quotedAmountPaise);
+                            const count = selProj.assignees?.length || 4;
+                            const alloc = Math.floor(budgetRupees / Math.max(1, count));
+                            setExpenseForm({
+                              ...expenseForm,
+                              selectedProjectId: selProj.id,
+                              title: selProj.title || selProj.name || "",
+                              totalBudgetRupees: String(budgetRupees),
+                              memberCount: String(count),
+                              allocatedAmountRupees: String(alloc),
+                            });
+                          }
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    >
+                      <option value="">-- Choose Existing CRM Project --</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title || p.name} (Budget: ₹{paiseToRupees(p.quotedAmountPaise).toLocaleString("en-IN")})
+                        </option>
+                      ))}
+                      <option value="custom">-- Custom / Other Project --</option>
+                    </select>
+                  </div>
+
+                  {expenseForm.selectedProjectId === "custom" && (
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Website Redesign or Saathi"
+                        value={expenseForm.title}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                  )}
+
+                  {/* PROJECT BUDGET & MEMBER DIVISION */}
+                  <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-[#F5F6FC] border border-black/10">
+                    <div>
+                      <label className="text-[11px] font-bold text-[#14141A]">Total Project Budget (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={expenseForm.totalBudgetRupees}
+                        onChange={(e) => {
+                          const newBudget = e.target.value;
+                          const count = Math.max(1, Number(expenseForm.memberCount) || 1);
+                          const alloc = Math.floor((Number(newBudget) || 0) / count);
+                          setExpenseForm({
+                            ...expenseForm,
+                            totalBudgetRupees: newBudget,
+                            allocatedAmountRupees: String(alloc),
+                          });
+                        }}
+                        className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-[#14141A]">Divide Among Members</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={expenseForm.memberCount}
+                        onChange={(e) => {
+                          const newCount = e.target.value;
+                          const budget = Number(expenseForm.totalBudgetRupees) || 0;
+                          const alloc = Math.floor(budget / Math.max(1, Number(newCount) || 1));
+                          setExpenseForm({
+                            ...expenseForm,
+                            memberCount: newCount,
+                            allocatedAmountRupees: String(alloc),
+                          });
+                        }}
+                        className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                    <div className="col-span-2 pt-1 text-[11px] text-[#2B2B38] flex items-center justify-between border-t border-black/5">
+                      <span>Individual Allocation:</span>
+                      <span className="font-mono font-bold text-[#374BFF]">
+                        ₹{Number(expenseForm.allocatedAmountRupees || 0).toLocaleString("en-IN")} per member
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Amount Paid (This Payment) (₹) *</label>
                     <input
                       type="number"
                       min="1"
@@ -2695,12 +2805,132 @@ export function CrmTab({
                       className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
                     />
                   </div>
+
+                  {/* SYSTEM-GENERATED READ-ONLY CALCULATION */}
+                  {(() => {
+                    const currentAllocRupees = Number(expenseForm.allocatedAmountRupees) || 0;
+                    const currentPaymentRupees = Number(expenseForm.amountRupees) || 0;
+                    const priorPaidPaise = expenses
+                      .filter((e) => {
+                        if (e.expenseType !== "personal") return false;
+                        if (e.memberId !== expenseForm.memberId) return false;
+                        if (expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom" && e.projectId) {
+                          return e.projectId === expenseForm.selectedProjectId;
+                        }
+                        return (
+                          e.title &&
+                          expenseForm.title &&
+                          e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
+                        );
+                      })
+                      .reduce((sum, e) => sum + e.amountPaise, 0);
+                    const priorPaidRupees = paiseToRupees(priorPaidPaise);
+                    const totalPaidRupees = priorPaidRupees + currentPaymentRupees;
+                    const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
+                    const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
+                    const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
+
+                    return (
+                      <div className="space-y-2">
+                        <div className="p-3.5 rounded-2xl bg-white border border-black/10 space-y-2">
+                          <span className="text-[11px] font-bold text-[#2B2B38] uppercase tracking-wider block">
+                            Automatic Balance Calculation
+                          </span>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                              <span className="text-[10px] text-[#2B2B38] block">Allocated Amount</span>
+                              <span className="text-xs font-bold font-mono text-[#374BFF]">
+                                ₹{currentAllocRupees.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                              <span className="text-[10px] text-[#2B2B38] block">Total Paid</span>
+                              <span className="text-xs font-bold font-mono text-[#14141A]">
+                                ₹{totalPaidRupees.toLocaleString("en-IN")}
+                              </span>
+                              <span className="text-[9px] text-[#2B2B38] block">
+                                (Prior: ₹{priorPaidRupees.toLocaleString("en-IN")})
+                              </span>
+                            </div>
+                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                              <span className="text-[10px] text-[#2B2B38] block">Amount Left</span>
+                              <span
+                                className={`text-xs font-bold font-mono ${
+                                  amountLeftRupees === 0 ? "text-emerald-600 font-black" : "text-amber-700"
+                                }`}
+                              >
+                                ₹{amountLeftRupees.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* OVERPAYMENT GUARD */}
+                        {isOverpaid && (
+                          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                              <p className="text-xs text-red-800">
+                                <span className="font-bold">Overpayment detected:</span> Total paid (₹
+                                {totalPaidRupees.toLocaleString("en-IN")}) exceeds allocation (₹
+                                {currentAllocRupees.toLocaleString("en-IN")}) by ₹{excessRupees.toLocaleString("en-IN")}.
+                              </p>
+                            </div>
+                            {canViewFinance && (
+                              <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={expenseForm.allowOverpayment}
+                                  onChange={(e) =>
+                                    setExpenseForm({ ...expenseForm, allowOverpayment: e.target.checked })
+                                  }
+                                  className="rounded text-[#374BFF]"
+                                />
+                                I am an authorized admin and approve this overpayment
+                              </label>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
-              ) : (
-                <div className="space-y-1.5">
+              )}
+
+              {expenseForm.expenseType === "studio" && (
+                <>
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Expense Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Domain Renewal or Client Lunch"
+                      value={expenseForm.title}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-[#14141A]">Total Amount (₹) *</label>
+                      <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                      <select
+                        value={expenseForm.category}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      >
+                        <option value="tools">Tools / SaaS</option>
+                        <option value="hosting">Hosting & Cloud</option>
+                        <option value="domain">Domain</option>
+                        <option value="software">Software License</option>
+                        <option value="marketing">Marketing & Ads</option>
+                        <option value="travel">Travel</option>
+                        <option value="food">Food & Hospitality</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
                       <input
                         type="number"
                         min="1"
@@ -2710,21 +2940,8 @@ export function CrmTab({
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-[#14141A]">Amount Left to Pay (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={expenseForm.amountLeftRupees}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, amountLeftRupees: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
                   </div>
-                  <p className="text-[11px] text-[#2B2B38]">
-                    Amount still owed to {teamMembers.find((m) => m.id === expenseForm.memberId || (m.userId && m.userId === expenseForm.memberId))?.name || "member"} for this expense
-                  </p>
-                </div>
+                </>
               )}
 
               <div className="grid grid-cols-2 gap-3">
@@ -2770,7 +2987,34 @@ export function CrmTab({
                 </button>
                 <button
                   type="submit"
-                  disabled={savingExpense}
+                  disabled={
+                    savingExpense ||
+                    (expenseForm.expenseType === "personal" &&
+                      Number(expenseForm.allocatedAmountRupees || 0) > 0 &&
+                      (Number(expenseForm.amountRupees || 0) +
+                        paiseToRupees(
+                          expenses
+                            .filter((e) => {
+                              if (e.expenseType !== "personal") return false;
+                              if (e.memberId !== expenseForm.memberId) return false;
+                              if (
+                                expenseForm.selectedProjectId &&
+                                expenseForm.selectedProjectId !== "custom" &&
+                                e.projectId
+                              ) {
+                                return e.projectId === expenseForm.selectedProjectId;
+                              }
+                              return (
+                                e.title &&
+                                expenseForm.title &&
+                                e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
+                              );
+                            })
+                            .reduce((sum, e) => sum + e.amountPaise, 0)
+                        )) >
+                        Number(expenseForm.allocatedAmountRupees) &&
+                      !expenseForm.allowOverpayment)
+                  }
                   className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Expense"}
@@ -2837,33 +3081,103 @@ export function CrmTab({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-bold text-[#14141A]">Total Amount (₹) *</label>
+                      <label className="text-xs font-bold text-[#14141A]">Individual Allocation (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={expenseEditForm.allocatedAmountRupees}
+                        onChange={(e) =>
+                          setExpenseEditForm({ ...expenseEditForm, allocatedAmountRupees: e.target.value })
+                        }
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Amount Paid (₹) *</label>
                       <input
                         type="number"
                         min="1"
                         required
                         value={expenseEditForm.amountRupees}
-                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-[#14141A]">Amount Left to Pay (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={expenseEditForm.amountLeftRupees}
-                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountLeftRupees: e.target.value })}
+                        onChange={(e) =>
+                          setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })
+                        }
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-[#2B2B38]">
-                    Amount still owed to {teamMembers.find((m) => m.id === expenseEditForm.memberId || (m.userId && m.userId === expenseEditForm.memberId))?.name || "member"} for this expense
-                  </p>
+
+                  {(() => {
+                    const currentAllocRupees = Number(expenseEditForm.allocatedAmountRupees) || 0;
+                    const currentPaymentRupees = Number(expenseEditForm.amountRupees) || 0;
+                    const priorPaidOtherPaise = expenses
+                      .filter((e) => {
+                        if (e.id === expenseEditForm.id) return false;
+                        if (e.expenseType !== "personal") return false;
+                        if (e.memberId !== expenseEditForm.memberId) return false;
+                        if (expenseEditForm.projectId && e.projectId) {
+                          return e.projectId === expenseEditForm.projectId;
+                        }
+                        return (
+                          e.title &&
+                          expenseEditForm.title &&
+                          e.title.trim().toLowerCase() === expenseEditForm.title.trim().toLowerCase()
+                        );
+                      })
+                      .reduce((sum, e) => sum + e.amountPaise, 0);
+                    const priorPaidOtherRupees = paiseToRupees(priorPaidOtherPaise);
+                    const totalPaidRupees = priorPaidOtherRupees + currentPaymentRupees;
+                    const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
+                    const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
+                    const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
+
+                    return (
+                      <div className="space-y-2">
+                        <div className="p-3 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between text-xs font-bold">
+                          <span>Amount Left to Pay:</span>
+                          <span
+                            className={
+                              amountLeftRupees === 0
+                                ? "text-emerald-600 font-mono font-black"
+                                : "text-amber-700 font-mono"
+                            }
+                          >
+                            ₹{amountLeftRupees.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                        {isOverpaid && (
+                          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                              <p className="text-xs text-red-800">
+                                <span className="font-bold">Overpayment detected:</span> Exceeds allocation by ₹
+                                {excessRupees.toLocaleString("en-IN")}.
+                              </p>
+                            </div>
+                            {canViewFinance && (
+                              <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={expenseEditForm.allowOverpayment}
+                                  onChange={(e) =>
+                                    setExpenseEditForm({
+                                      ...expenseEditForm,
+                                      allowOverpayment: e.target.checked,
+                                    })
+                                  }
+                                  className="rounded text-[#374BFF]"
+                                />
+                                Authorize overpayment as admin
+                              </label>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -2923,7 +3237,31 @@ export function CrmTab({
                 </button>
                 <button
                   type="submit"
-                  disabled={savingExpense}
+                  disabled={
+                    savingExpense ||
+                    (expenseEditForm.expenseType === "personal" &&
+                      Number(expenseEditForm.allocatedAmountRupees || 0) > 0 &&
+                      (Number(expenseEditForm.amountRupees || 0) +
+                        paiseToRupees(
+                          expenses
+                            .filter((e) => {
+                              if (e.id === expenseEditForm.id) return false;
+                              if (e.expenseType !== "personal") return false;
+                              if (e.memberId !== expenseEditForm.memberId) return false;
+                              if (expenseEditForm.projectId && e.projectId) {
+                                return e.projectId === expenseEditForm.projectId;
+                              }
+                              return (
+                                e.title &&
+                                expenseEditForm.title &&
+                                e.title.trim().toLowerCase() === expenseEditForm.title.trim().toLowerCase()
+                              );
+                            })
+                            .reduce((sum, e) => sum + e.amountPaise, 0)
+                        )) >
+                        Number(expenseEditForm.allocatedAmountRupees) &&
+                      !expenseEditForm.allowOverpayment)
+                  }
                   className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
                   {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}

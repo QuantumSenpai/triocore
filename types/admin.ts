@@ -109,6 +109,9 @@ export interface AdminExpense {
   amountLeftPaise?: number;
   amountLeftRupees?: number;
   formattedAmountLeft?: string;
+  allocatedAmountPaise?: number;
+  allocatedAmountRupees?: number;
+  formattedAllocatedAmount?: string;
   isSample?: boolean;
   createdAt?: string | Date;
 }

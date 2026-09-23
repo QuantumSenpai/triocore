@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { expenses, auditLogs, user, teamMembers } from "@/lib/db/schema";
-import { eq, desc, ilike } from "drizzle-orm";
+import { expenses, auditLogs, user, teamMembers, projects } from "@/lib/db/schema";
+import { eq, desc, ilike, and } from "drizzle-orm";
 import { requireAdmin } from "@/lib/dal/auth";
 import { formatPaise, paiseToRupees } from "@/lib/money";
 import { expenseCreateSchema, expenseEditSchema } from "@/lib/validations/crm";
@@ -65,17 +65,20 @@ export async function GET(req: NextRequest) {
       amountLeftPaise: e.amountLeftPaise || 0,
       amountLeftRupees: paiseToRupees(e.amountLeftPaise || 0),
       formattedAmountLeft: formatPaise(e.amountLeftPaise || 0),
+      allocatedAmountPaise: e.allocatedAmountPaise || 0,
+      allocatedAmountRupees: paiseToRupees(e.allocatedAmountPaise || 0),
+      formattedAllocatedAmount: formatPaise(e.allocatedAmountPaise || 0),
       memberName: (e.memberId && userMap.get(e.memberId)?.name) || e.paidBy || "Team Member",
       paidAt: e.date || (e.createdAt ? new Date(e.createdAt).toISOString() : ""),
     }));
 
     if (searchParams.get("format") === "csv") {
       if (typeParam === "personal") {
-        const csvHeader = "ID,Date,ProjectName,Member,TotalAmount(INR),AmountLeft(INR),Reimbursed,Notes\n";
+        const csvHeader = "ID,Date,ProjectName,Member,AllocatedAmount(INR),AmountPaid(INR),AmountLeft(INR),Status,Notes\n";
         const csvRows = enriched
           .map(
             (e) =>
-              `"${e.id}","${e.date}","${e.title}","${e.memberName}",${e.amountRupees},${e.amountLeftRupees},"${e.isReimbursed ? "Yes" : "No"}","${e.notes || ""}"`
+              `"${e.id}","${e.date}","${e.title}","${e.memberName}",${e.allocatedAmountRupees || 0},${e.amountRupees},${e.amountLeftRupees},"${e.isReimbursed ? "Cleared" : "Pending"}","${e.notes || ""}"`
           )
           .join("\n");
         return new NextResponse(csvHeader + csvRows, {
@@ -128,6 +131,8 @@ export async function POST(req: NextRequest) {
       category,
       amountPaise,
       amountLeftPaise = 0,
+      allocatedAmountPaise = 0,
+      allowOverpayment = false,
       date,
       paidBy,
       projectId,
@@ -179,8 +184,60 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Personal expenses store project name in title; projectId foreign key must be null
-    const safeProjectId = expenseType === "personal" ? null : (projectId || null);
+    // Verify projectId exists in projects table if provided
+    let safeProjectId: string | null = null;
+    if (projectId && projectId.trim() !== "") {
+      const projExists = await db.select({ id: projects.id }).from(projects).where(eq(projects.id, projectId)).limit(1);
+      if (projExists.length > 0) {
+        safeProjectId = projExists[0].id;
+      }
+    }
+
+    // Cumulative personal expense balance & overpayment prevention logic
+    let calculatedAmountLeftPaise = amountLeftPaise ?? 0;
+    let finalAllocatedAmountPaise = allocatedAmountPaise ?? 0;
+    let finalIsReimbursed = isFinance ? isReimbursed : false;
+
+    if (expenseType === "personal" && targetMemberId) {
+      const memberPersonalExpenses = await db
+        .select()
+        .from(expenses)
+        .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, targetMemberId)));
+
+      const priorForProject = memberPersonalExpenses.filter((e) => {
+        if (safeProjectId && e.projectId === safeProjectId) return true;
+        if (e.title && e.title.trim().toLowerCase() === title.trim().toLowerCase()) return true;
+        return false;
+      });
+
+      const totalPreviouslyPaid = priorForProject.reduce((sum, e) => sum + e.amountPaise, 0);
+      const totalPaidNow = totalPreviouslyPaid + amountPaise;
+
+      if (finalAllocatedAmountPaise <= 0) {
+        const priorWithAlloc = priorForProject.find((e) => (e.allocatedAmountPaise || 0) > 0);
+        if (priorWithAlloc) {
+          finalAllocatedAmountPaise = priorWithAlloc.allocatedAmountPaise || 0;
+        }
+      }
+
+      if (finalAllocatedAmountPaise > 0) {
+        // Prevent accidental overpayment unless explicitly authorized by admin
+        if (totalPaidNow > finalAllocatedAmountPaise && !allowOverpayment) {
+          return NextResponse.json(
+            {
+              error: `Payment of ${formatPaise(amountPaise)} would bring total paid to ${formatPaise(totalPaidNow)}, exceeding member's allocated budget of ${formatPaise(finalAllocatedAmountPaise)}. Overpayment requires authorized admin override.`,
+              allocatedPaise: finalAllocatedAmountPaise,
+              totalPaidPaise: totalPaidNow,
+              excessPaise: totalPaidNow - finalAllocatedAmountPaise,
+            },
+            { status: 400 }
+          );
+        }
+
+        calculatedAmountLeftPaise = Math.max(0, finalAllocatedAmountPaise - totalPaidNow);
+        finalIsReimbursed = isFinance ? (isReimbursed || calculatedAmountLeftPaise === 0) : calculatedAmountLeftPaise === 0;
+      }
+    }
 
     const newExpense = await db
       .insert(expenses)
@@ -195,8 +252,9 @@ export async function POST(req: NextRequest) {
         notes: notes?.trim() || null,
         expenseType,
         memberId: targetMemberId,
-        isReimbursed: isFinance ? isReimbursed : false,
-        amountLeftPaise: expenseType === "personal" ? (amountLeftPaise ?? 0) : 0,
+        isReimbursed: finalIsReimbursed,
+        amountLeftPaise: calculatedAmountLeftPaise,
+        allocatedAmountPaise: finalAllocatedAmountPaise,
         isSample: false,
       })
       .returning();
@@ -207,7 +265,7 @@ export async function POST(req: NextRequest) {
         action: "RECORD_EXPENSE",
         entityType: "expenses",
         entityId: newExpense[0].id,
-        details: { category: newExpense[0].category, amountPaise, amountLeftPaise, expenseType, memberId: targetMemberId },
+        details: { category: newExpense[0].category, amountPaise, amountLeftPaise: calculatedAmountLeftPaise, allocatedAmountPaise: finalAllocatedAmountPaise, expenseType, memberId: targetMemberId },
       });
     } catch {}
 
@@ -239,6 +297,8 @@ export async function PUT(req: NextRequest) {
       category,
       amountPaise,
       amountLeftPaise,
+      allocatedAmountPaise,
+      allowOverpayment = false,
       date,
       paidBy,
       projectId,
@@ -285,11 +345,15 @@ export async function PUT(req: NextRequest) {
       ? (category || existing.category || "personal")
       : (category !== undefined ? category : existing.category);
 
-    const safeProjectId = isPersonal
-      ? null
-      : projectId !== undefined
-      ? (projectId || null)
-      : existing.projectId;
+    let safeProjectId: string | null = existing.projectId;
+    if (projectId !== undefined) {
+      if (!projectId || projectId.trim() === "") {
+        safeProjectId = null;
+      } else {
+        const projExists = await db.select({ id: projects.id }).from(projects).where(eq(projects.id, projectId)).limit(1);
+        safeProjectId = projExists.length > 0 ? projExists[0].id : null;
+      }
+    }
 
     let safeMemberId: string | null = null;
     if (isPersonal) {
@@ -320,20 +384,69 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    let finalAllocatedPaise = allocatedAmountPaise !== undefined ? allocatedAmountPaise : (existing.allocatedAmountPaise || 0);
+    let finalAmountLeftPaise = amountLeftPaise !== undefined ? amountLeftPaise : existing.amountLeftPaise;
+    let finalIsReimbursed = isReimbursed !== undefined ? isReimbursed : existing.isReimbursed;
+
+    if (isPersonal && safeMemberId) {
+      const targetTitle = title !== undefined ? title : existing.title;
+      const effectiveAmountPaise = amountPaise !== undefined ? amountPaise : existing.amountPaise;
+
+      const memberPersonalExpenses = await db
+        .select()
+        .from(expenses)
+        .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, safeMemberId)));
+
+      const otherExpensesForProject = memberPersonalExpenses.filter((e) => {
+        if (e.id === id) return false;
+        if (safeProjectId && e.projectId === safeProjectId) return true;
+        if (e.title && e.title.trim().toLowerCase() === targetTitle.trim().toLowerCase()) return true;
+        return false;
+      });
+
+      const totalPreviouslyPaidOther = otherExpensesForProject.reduce((sum, e) => sum + e.amountPaise, 0);
+      const totalPaidNow = totalPreviouslyPaidOther + effectiveAmountPaise;
+
+      if (finalAllocatedPaise <= 0) {
+        const priorWithAlloc = otherExpensesForProject.find((e) => (e.allocatedAmountPaise || 0) > 0);
+        if (priorWithAlloc) {
+          finalAllocatedPaise = priorWithAlloc.allocatedAmountPaise || 0;
+        }
+      }
+
+      if (finalAllocatedPaise > 0) {
+        if (totalPaidNow > finalAllocatedPaise && !allowOverpayment) {
+          return NextResponse.json(
+            {
+              error: `Updated payment of ${formatPaise(effectiveAmountPaise)} would bring total paid to ${formatPaise(totalPaidNow)}, exceeding member's allocated budget of ${formatPaise(finalAllocatedPaise)}. Overpayment requires authorized admin override.`,
+              allocatedPaise: finalAllocatedPaise,
+              totalPaidPaise: totalPaidNow,
+              excessPaise: totalPaidNow - finalAllocatedPaise,
+            },
+            { status: 400 }
+          );
+        }
+
+        finalAmountLeftPaise = Math.max(0, finalAllocatedPaise - totalPaidNow);
+        finalIsReimbursed = isFinance ? (isReimbursed !== undefined ? isReimbursed : finalAmountLeftPaise === 0) : finalAmountLeftPaise === 0;
+      }
+    }
+
     const updated = await db
       .update(expenses)
       .set({
         title: title !== undefined ? title : existing.title,
         category: finalCategory,
         amountPaise: amountPaise !== undefined ? amountPaise : existing.amountPaise,
-        amountLeftPaise: amountLeftPaise !== undefined ? amountLeftPaise : existing.amountLeftPaise,
+        amountLeftPaise: finalAmountLeftPaise,
+        allocatedAmountPaise: finalAllocatedPaise,
         date: date !== undefined ? date : existing.date,
         paidBy: paidBy !== undefined ? (paidBy?.trim() || null) : existing.paidBy,
         projectId: safeProjectId,
         notes: notes !== undefined ? (notes?.trim() || null) : existing.notes,
         expenseType: expenseType !== undefined ? expenseType : existing.expenseType,
         memberId: safeMemberId,
-        isReimbursed: isReimbursed !== undefined ? isReimbursed : existing.isReimbursed,
+        isReimbursed: finalIsReimbursed,
         updatedAt: new Date(),
       })
       .where(eq(expenses.id, id))
@@ -346,8 +459,8 @@ export async function PUT(req: NextRequest) {
         entityType: "expenses",
         entityId: id,
         details: {
-          old: { amountPaise: existing.amountPaise, amountLeftPaise: existing.amountLeftPaise, isReimbursed: existing.isReimbursed },
-          new: { amountPaise, amountLeftPaise, isReimbursed },
+          old: { amountPaise: existing.amountPaise, amountLeftPaise: existing.amountLeftPaise, allocatedAmountPaise: existing.allocatedAmountPaise, isReimbursed: existing.isReimbursed },
+          new: { amountPaise, amountLeftPaise: finalAmountLeftPaise, allocatedAmountPaise: finalAllocatedPaise, isReimbursed: finalIsReimbursed },
         },
       });
     } catch {}

@@ -330,6 +330,7 @@ export const expenses = pgTable("expenses", {
   memberId: text("member_id").references(() => user.id, { onDelete: "set null" }),
   isReimbursed: boolean("is_reimbursed").notNull().default(false),
   amountLeftPaise: integer("amount_left_paise").notNull().default(0), // integer paise
+  allocatedAmountPaise: integer("allocated_amount_paise").notNull().default(0), // integer paise
   isSample: boolean("is_sample").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
