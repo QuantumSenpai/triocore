@@ -160,10 +160,10 @@ export async function POST(req: NextRequest) {
     const newExpense = await db
       .insert(expenses)
       .values({
+        id: crypto.randomUUID(),
         title,
-        category: expenseType === "personal" ? "personal" : (category || "tools"),
         amountPaise,
-        amountLeftPaise: expenseType === "personal" ? (amountLeftPaise || 0) : 0,
+        category: expenseType === "personal" ? "personal" : (category || "tools"),
         date: date || new Date().toISOString().slice(0, 10),
         paidBy: paidBy || authCheck.user?.name || authCheck.user?.email || "admin",
         projectId: projectId || null,
@@ -171,6 +171,8 @@ export async function POST(req: NextRequest) {
         expenseType,
         memberId: targetMemberId,
         isReimbursed: isFinance ? isReimbursed : false,
+        amountLeftPaise: expenseType === "personal" ? (amountLeftPaise ?? 0) : 0,
+        isSample: false,
       })
       .returning();
 
