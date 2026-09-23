@@ -78,7 +78,7 @@ describe("Expenses Split & Reimbursement Tracker Logic", () => {
       { id: "e2", amountPaise: 2500000, expenseType: "personal", memberId: "m2", isReimbursed: false },
     ];
 
-    let { unreimbursedPaise, reimbursedPaise } = calculateFinancials(totalEarnedPaise, expenses);
+    const { unreimbursedPaise, reimbursedPaise } = calculateFinancials(totalEarnedPaise, expenses);
     expect(unreimbursedPaise).toBe(3500000);
     expect(reimbursedPaise).toBe(0);
 

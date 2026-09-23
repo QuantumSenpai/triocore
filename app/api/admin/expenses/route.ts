@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { expenses, auditLogs, user, teamMembers, projects } from "@/lib/db/schema";
-import { eq, desc, ilike, and } from "drizzle-orm";
+import { eq, desc, ilike, and, inArray } from "drizzle-orm";
 import { requireAdmin } from "@/lib/dal/auth";
 import { formatPaise, paiseToRupees } from "@/lib/money";
 import { expenseCreateSchema, expenseEditSchema } from "@/lib/validations/crm";
@@ -197,6 +197,7 @@ export async function POST(req: NextRequest) {
     let calculatedAmountLeftPaise = amountLeftPaise ?? 0;
     let finalAllocatedAmountPaise = allocatedAmountPaise ?? 0;
     let finalIsReimbursed = isFinance ? isReimbursed : false;
+    let priorForProject: (typeof expenses.$inferSelect)[] = [];
 
     if (expenseType === "personal" && targetMemberId) {
       const memberPersonalExpenses = await db
@@ -204,7 +205,7 @@ export async function POST(req: NextRequest) {
         .from(expenses)
         .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, targetMemberId)));
 
-      const priorForProject = memberPersonalExpenses.filter((e) => {
+      priorForProject = memberPersonalExpenses.filter((e) => {
         if (safeProjectId && e.projectId === safeProjectId) return true;
         if (e.title && e.title.trim().toLowerCase() === title.trim().toLowerCase()) return true;
         return false;
@@ -258,6 +259,20 @@ export async function POST(req: NextRequest) {
         isSample: false,
       })
       .returning();
+
+    // Synchronize prior personal expense records for this member and project to the updated balance
+    if (expenseType === "personal" && targetMemberId && priorForProject.length > 0) {
+      const priorIds = priorForProject.map((e) => e.id);
+      await db
+        .update(expenses)
+        .set({
+          amountLeftPaise: calculatedAmountLeftPaise,
+          allocatedAmountPaise: finalAllocatedAmountPaise > 0 ? finalAllocatedAmountPaise : undefined,
+          isReimbursed: calculatedAmountLeftPaise === 0 ? true : undefined,
+          updatedAt: new Date(),
+        })
+        .where(inArray(expenses.id, priorIds));
+    }
 
     try {
       await db.insert(auditLogs).values({
@@ -387,6 +402,7 @@ export async function PUT(req: NextRequest) {
     let finalAllocatedPaise = allocatedAmountPaise !== undefined ? allocatedAmountPaise : (existing.allocatedAmountPaise || 0);
     let finalAmountLeftPaise = amountLeftPaise !== undefined ? amountLeftPaise : existing.amountLeftPaise;
     let finalIsReimbursed = isReimbursed !== undefined ? isReimbursed : existing.isReimbursed;
+    let otherExpensesForProject: (typeof expenses.$inferSelect)[] = [];
 
     if (isPersonal && safeMemberId) {
       const targetTitle = title !== undefined ? title : existing.title;
@@ -397,7 +413,7 @@ export async function PUT(req: NextRequest) {
         .from(expenses)
         .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, safeMemberId)));
 
-      const otherExpensesForProject = memberPersonalExpenses.filter((e) => {
+      otherExpensesForProject = memberPersonalExpenses.filter((e) => {
         if (e.id === id) return false;
         if (safeProjectId && e.projectId === safeProjectId) return true;
         if (e.title && e.title.trim().toLowerCase() === targetTitle.trim().toLowerCase()) return true;
@@ -451,6 +467,20 @@ export async function PUT(req: NextRequest) {
       })
       .where(eq(expenses.id, id))
       .returning();
+
+    // Synchronize other personal expense records for this member and project to the updated balance
+    if (isPersonal && safeMemberId && otherExpensesForProject.length > 0) {
+      const otherIds = otherExpensesForProject.map((e) => e.id);
+      await db
+        .update(expenses)
+        .set({
+          amountLeftPaise: finalAmountLeftPaise,
+          allocatedAmountPaise: finalAllocatedPaise > 0 ? finalAllocatedPaise : undefined,
+          isReimbursed: finalAmountLeftPaise === 0 ? true : undefined,
+          updatedAt: new Date(),
+        })
+        .where(inArray(expenses.id, otherIds));
+    }
 
     try {
       await db.insert(auditLogs).values({
@@ -506,6 +536,40 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.delete(expenses).where(eq(expenses.id, id));
+
+    // Recalculate remaining balance for other personal expenses of the same member and project
+    if (existing.expenseType === "personal" && existing.memberId) {
+      const remainingForMember = await db
+        .select()
+        .from(expenses)
+        .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, existing.memberId)));
+
+      const sameProjectRemaining = remainingForMember.filter((e) => {
+        if (existing.projectId && e.projectId === existing.projectId) return true;
+        if (e.title && existing.title && e.title.trim().toLowerCase() === existing.title.trim().toLowerCase()) return true;
+        return false;
+      });
+
+      const totalAllocatedPaise = sameProjectRemaining.reduce(
+        (max, e) => Math.max(max, e.allocatedAmountPaise || 0),
+        existing.allocatedAmountPaise || 0
+      );
+      const totalPaidRemaining = sameProjectRemaining.reduce((sum, e) => sum + e.amountPaise, 0);
+      const newAmountLeftPaise = Math.max(0, totalAllocatedPaise - totalPaidRemaining);
+      const newIsReimbursed = newAmountLeftPaise === 0;
+
+      const remainingIds = sameProjectRemaining.map((e) => e.id);
+      if (remainingIds.length > 0 && totalAllocatedPaise > 0) {
+        await db
+          .update(expenses)
+          .set({
+            amountLeftPaise: newAmountLeftPaise,
+            isReimbursed: newIsReimbursed ? true : undefined,
+            updatedAt: new Date(),
+          })
+          .where(inArray(expenses.id, remainingIds));
+      }
+    }
 
     try {
       await db.insert(auditLogs).values({

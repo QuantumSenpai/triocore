@@ -2691,6 +2691,7 @@ export function CrmTab({
                   <div>
                     <label className="text-xs font-bold text-[#14141A]">Project Selection *</label>
                     <select
+                      required
                       value={expenseForm.selectedProjectId}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -2702,6 +2703,15 @@ export function CrmTab({
                             totalBudgetRupees: "20000",
                             memberCount: "4",
                             allocatedAmountRupees: "5000",
+                          });
+                        } else if (!val) {
+                          setExpenseForm({
+                            ...expenseForm,
+                            selectedProjectId: "",
+                            title: "",
+                            totalBudgetRupees: "0",
+                            memberCount: "1",
+                            allocatedAmountRupees: "0",
                           });
                         } else {
                           const selProj = projects.find((p) => p.id === val);
