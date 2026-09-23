@@ -107,4 +107,34 @@ describe("Expenses Split & Reimbursement Tracker Logic", () => {
     expect(m2Balances.clearedReimbursement).toBe(0);
     expect(m2Balances.pendingReimbursement).toBe(4000000);
   });
+
+  it("validates personal expense creation without category and with amountLeftPaise", async () => {
+    const { expenseCreateSchema } = await import("@/lib/validations/crm");
+
+    // Personal expense without Category provided: valid, category defaults to 'personal'
+    const personalRes = expenseCreateSchema.safeParse({
+      title: "Mobile App Client Redesign",
+      amountPaise: 500000, // ₹5,000
+      amountLeftPaise: 200000, // ₹2,000 still owed
+      date: "2026-09-23",
+      expenseType: "personal",
+      memberId: "user-123",
+    });
+    expect(personalRes.success).toBe(true);
+    if (personalRes.success) {
+      expect(personalRes.data.category).toBe("personal");
+      expect(personalRes.data.amountLeftPaise).toBe(200000);
+    }
+
+    // Studio expense without Category: must fail validation
+    const studioRes = expenseCreateSchema.safeParse({
+      title: "Server Hosting",
+      amountPaise: 1000000,
+      date: "2026-09-23",
+      expenseType: "studio",
+      category: "",
+    });
+    expect(studioRes.success).toBe(false);
+  });
 });
+

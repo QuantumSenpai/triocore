@@ -86,8 +86,9 @@ export const expenseTypeValues = ["studio", "personal"] as const;
 
 export const expenseCreateSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(200),
-  category: z.string().trim().min(1, "Category is required"),
+  category: z.string().trim().optional().default("personal"),
   amountPaise: z.number().int().positive("Amount must be positive"),
+  amountLeftPaise: z.number().int().min(0, "Amount left must be 0 or positive").default(0),
   date: z.string().min(1, "Date is required"),
   paidBy: z.string().trim().optional().nullable(),
   projectId: z.string().optional().nullable(),
@@ -106,13 +107,25 @@ export const expenseCreateSchema = z.object({
     message: "memberId is required for personal expenses",
     path: ["memberId"],
   }
+).refine(
+  (data) => {
+    if (data.expenseType === "studio" && (!data.category || data.category.trim().length === 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Category is required for studio expenses",
+    path: ["category"],
+  }
 );
 
 export const expenseEditSchema = z.object({
   id: z.string().min(1, "Expense ID is required"),
   title: z.string().trim().min(1, "Title is required").max(200).optional(),
-  category: z.string().trim().min(1, "Category is required").optional(),
+  category: z.string().trim().optional(),
   amountPaise: z.number().int().positive("Amount must be positive").optional(),
+  amountLeftPaise: z.number().int().min(0, "Amount left must be 0 or positive").optional(),
   date: z.string().min(1, "Date is required").optional(),
   paidBy: z.string().trim().optional().nullable(),
   projectId: z.string().optional().nullable(),

@@ -106,6 +106,9 @@ export interface AdminExpense {
   memberId?: string | null;
   memberName?: string | null;
   isReimbursed?: boolean;
+  amountLeftPaise?: number;
+  amountLeftRupees?: number;
+  formattedAmountLeft?: string;
   isSample?: boolean;
   createdAt?: string | Date;
 }

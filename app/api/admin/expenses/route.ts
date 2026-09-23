@@ -62,17 +62,20 @@ export async function GET(req: NextRequest) {
       ...e,
       formattedAmount: formatPaise(e.amountPaise),
       amountRupees: paiseToRupees(e.amountPaise),
+      amountLeftPaise: e.amountLeftPaise || 0,
+      amountLeftRupees: paiseToRupees(e.amountLeftPaise || 0),
+      formattedAmountLeft: formatPaise(e.amountLeftPaise || 0),
       memberName: (e.memberId && userMap.get(e.memberId)?.name) || e.paidBy || "Team Member",
       paidAt: e.date || (e.createdAt ? new Date(e.createdAt).toISOString() : ""),
     }));
 
     if (searchParams.get("format") === "csv") {
       if (typeParam === "personal") {
-        const csvHeader = "ID,Date,Category,Title,Member,Amount(INR),Reimbursed,Notes\n";
+        const csvHeader = "ID,Date,ProjectName,Member,TotalAmount(INR),AmountLeft(INR),Reimbursed,Notes\n";
         const csvRows = enriched
           .map(
             (e) =>
-              `"${e.id}","${e.date}","${e.category}","${e.title}","${e.memberName}",${e.amountRupees},"${e.isReimbursed ? "Yes" : "No"}","${e.notes || ""}"`
+              `"${e.id}","${e.date}","${e.title}","${e.memberName}",${e.amountRupees},${e.amountLeftRupees},"${e.isReimbursed ? "Yes" : "No"}","${e.notes || ""}"`
           )
           .join("\n");
         return new NextResponse(csvHeader + csvRows, {
@@ -124,6 +127,7 @@ export async function POST(req: NextRequest) {
       title,
       category,
       amountPaise,
+      amountLeftPaise = 0,
       date,
       paidBy,
       projectId,
@@ -157,8 +161,9 @@ export async function POST(req: NextRequest) {
       .insert(expenses)
       .values({
         title,
-        category,
+        category: expenseType === "personal" ? "personal" : (category || "tools"),
         amountPaise,
+        amountLeftPaise: expenseType === "personal" ? (amountLeftPaise || 0) : 0,
         date: date || new Date().toISOString().slice(0, 10),
         paidBy: paidBy || authCheck.user?.name || authCheck.user?.email || "admin",
         projectId: projectId || null,
@@ -175,7 +180,7 @@ export async function POST(req: NextRequest) {
         action: "RECORD_EXPENSE",
         entityType: "expenses",
         entityId: newExpense[0].id,
-        details: { category, amountPaise, expenseType, memberId: targetMemberId },
+        details: { category: newExpense[0].category, amountPaise, amountLeftPaise, expenseType, memberId: targetMemberId },
       });
     } catch {}
 
@@ -206,6 +211,7 @@ export async function PUT(req: NextRequest) {
       title,
       category,
       amountPaise,
+      amountLeftPaise,
       date,
       paidBy,
       projectId,
@@ -246,12 +252,17 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    const finalCategory = (existing.expenseType === "personal" || expenseType === "personal")
+      ? (category || existing.category || "personal")
+      : (category !== undefined ? category : existing.category);
+
     const updated = await db
       .update(expenses)
       .set({
         title: title !== undefined ? title : existing.title,
-        category: category !== undefined ? category : existing.category,
+        category: finalCategory,
         amountPaise: amountPaise !== undefined ? amountPaise : existing.amountPaise,
+        amountLeftPaise: amountLeftPaise !== undefined ? amountLeftPaise : existing.amountLeftPaise,
         date: date !== undefined ? date : existing.date,
         paidBy: paidBy !== undefined ? paidBy : existing.paidBy,
         projectId: projectId !== undefined ? projectId : existing.projectId,
@@ -271,8 +282,8 @@ export async function PUT(req: NextRequest) {
         entityType: "expenses",
         entityId: id,
         details: {
-          old: { amountPaise: existing.amountPaise, isReimbursed: existing.isReimbursed },
-          new: { amountPaise, isReimbursed },
+          old: { amountPaise: existing.amountPaise, amountLeftPaise: existing.amountLeftPaise, isReimbursed: existing.isReimbursed },
+          new: { amountPaise, amountLeftPaise, isReimbursed },
         },
       });
     } catch {}

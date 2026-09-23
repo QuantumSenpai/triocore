@@ -155,6 +155,7 @@ export function CrmTab({
     title: "",
     category: "tools",
     amountRupees: "2000",
+    amountLeftRupees: "0",
     date: new Date().toISOString().slice(0, 10),
     paidBy: "",
     memberId: "",
@@ -169,6 +170,7 @@ export function CrmTab({
     title: "",
     category: "tools",
     amountRupees: "2000",
+    amountLeftRupees: "0",
     date: "",
     paidBy: "",
     memberId: "",
@@ -701,13 +703,18 @@ export function CrmTab({
     setSavingExpense(true);
     try {
       const amountPaise = rupeesToPaise(Number(expenseForm.amountRupees) || 0);
+      const amountLeftPaise =
+        expenseForm.expenseType === "personal"
+          ? rupeesToPaise(Number(expenseForm.amountLeftRupees) || 0)
+          : 0;
       const res = await fetch("/api/admin/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: expenseForm.title,
-          category: expenseForm.category,
+          category: expenseForm.expenseType === "personal" ? "personal" : expenseForm.category,
           amountPaise,
+          amountLeftPaise,
           date: expenseForm.date,
           paidBy: expenseForm.paidBy || null,
           memberId: expenseForm.expenseType === "personal" ? expenseForm.memberId || null : null,
@@ -723,6 +730,7 @@ export function CrmTab({
         title: "",
         category: "tools",
         amountRupees: "2000",
+        amountLeftRupees: "0",
         date: new Date().toISOString().slice(0, 10),
         paidBy: "",
         memberId: "",
@@ -744,6 +752,7 @@ export function CrmTab({
       title: exp.title,
       category: exp.category,
       amountRupees: String(paiseToRupees(exp.amountPaise)),
+      amountLeftRupees: String(paiseToRupees(exp.amountLeftPaise || 0)),
       date: exp.date || (exp.paidAt ? new Date(exp.paidAt).toISOString().slice(0, 10) : ""),
       paidBy: exp.paidBy || "",
       memberId: exp.memberId || "",
@@ -760,14 +769,19 @@ export function CrmTab({
     setSavingExpense(true);
     try {
       const amountPaise = rupeesToPaise(Number(expenseEditForm.amountRupees) || 0);
+      const amountLeftPaise =
+        expenseEditForm.expenseType === "personal"
+          ? rupeesToPaise(Number(expenseEditForm.amountLeftRupees) || 0)
+          : 0;
       const res = await fetch("/api/admin/expenses", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: expenseEditForm.id,
           title: expenseEditForm.title,
-          category: expenseEditForm.category,
+          category: expenseEditForm.expenseType === "personal" ? "personal" : expenseEditForm.category,
           amountPaise,
+          amountLeftPaise,
           date: expenseEditForm.date,
           paidBy: expenseEditForm.paidBy || null,
           memberId: expenseEditForm.expenseType === "personal" ? expenseEditForm.memberId || null : null,
@@ -1391,6 +1405,7 @@ export function CrmTab({
                     title: "",
                     category: "tools",
                     amountRupees: "2000",
+                    amountLeftRupees: "0",
                     date: new Date().toISOString().slice(0, 10),
                     paidBy: "",
                     memberId: teamMembers[0]?.id || "",
@@ -1601,10 +1616,10 @@ export function CrmTab({
                       <tr>
                         <th className="py-3 px-3">Date</th>
                         <th className="py-3 px-3">Member</th>
-                        <th className="py-3 px-3">Category</th>
-                        <th className="py-3 px-3">Title / Description</th>
-                        <th className="py-3 px-3">Amount</th>
+                        <th className="py-3 px-3">Project Name</th>
+                        <th className="py-3 px-3">Total Amount</th>
                         <th className="py-3 px-3">Status</th>
+                        <th className="py-3 px-3">Amount Left to Pay</th>
                         <th className="py-3 px-3 text-right">Actions</th>
                       </tr>
                     </thead>
@@ -1623,11 +1638,6 @@ export function CrmTab({
                             <td className="py-3 px-3 font-medium text-[#14141A]">
                               {e.memberName || e.paidBy || "Team Member"}
                             </td>
-                            <td className="py-3 px-3">
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold capitalize bg-purple-50 text-purple-700">
-                                {e.category}
-                              </span>
-                            </td>
                             <td className="py-3 px-3 font-bold text-[#14141A]">
                               {e.title}
                               {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
@@ -1645,6 +1655,9 @@ export function CrmTab({
                               >
                                 {e.isReimbursed ? "✓ Reimbursed" : "⏳ Pending"}
                               </span>
+                            </td>
+                            <td className="py-3 px-3 font-mono font-bold text-amber-700">
+                              {formatPaise(e.amountLeftPaise || 0)}
                             </td>
                             <td className="py-3 px-3 text-right">
                               <div className="flex items-center justify-end gap-1.5">
@@ -2625,47 +2638,80 @@ export function CrmTab({
               )}
 
               <div>
-                <label className="text-xs font-bold text-[#14141A]">Expense Title *</label>
+                <label className="text-xs font-bold text-[#14141A]">
+                  {expenseForm.expenseType === "personal" ? "Project Name *" : "Expense Title *"}
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Domain Renewal or Client Lunch"
+                  placeholder={expenseForm.expenseType === "personal" ? "e.g. Website Redesign or Branding Project" : "e.g. Domain Renewal or Client Lunch"}
                   value={expenseForm.title}
                   onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
-                  <select
-                    value={expenseForm.category}
-                    onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="tools">Tools / SaaS</option>
-                    <option value="hosting">Hosting & Cloud</option>
-                    <option value="domain">Domain</option>
-                    <option value="software">Software License</option>
-                    <option value="marketing">Marketing & Ads</option>
-                    <option value="travel">Travel</option>
-                    <option value="food">Food & Hospitality</option>
-                    <option value="other">Other</option>
-                  </select>
+              {expenseForm.expenseType === "studio" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                    <select
+                      value={expenseForm.category}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    >
+                      <option value="tools">Tools / SaaS</option>
+                      <option value="hosting">Hosting & Cloud</option>
+                      <option value="domain">Domain</option>
+                      <option value="software">Software License</option>
+                      <option value="marketing">Marketing & Ads</option>
+                      <option value="travel">Travel</option>
+                      <option value="food">Food & Hospitality</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={expenseForm.amountRupees}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={expenseForm.amountRupees}
-                    onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                  />
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Total Amount (₹) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={expenseForm.amountRupees}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Amount Left to Pay (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={expenseForm.amountLeftRupees}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, amountLeftRupees: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-[#2B2B38]">
+                    Amount still owed to {teamMembers.find((m) => m.id === expenseForm.memberId)?.name || "member"} for this expense
+                  </p>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2733,7 +2779,9 @@ export function CrmTab({
             </div>
             <form onSubmit={handleUpdateExpense} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-[#14141A]">Title *</label>
+                <label className="text-xs font-bold text-[#14141A]">
+                  {expenseEditForm.expenseType === "personal" ? "Project Name *" : "Title *"}
+                </label>
                 <input
                   type="text"
                   required
@@ -2743,36 +2791,67 @@ export function CrmTab({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
-                  <select
-                    value={expenseEditForm.category}
-                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="tools">Tools / SaaS</option>
-                    <option value="hosting">Hosting & Cloud</option>
-                    <option value="domain">Domain</option>
-                    <option value="software">Software License</option>
-                    <option value="marketing">Marketing & Ads</option>
-                    <option value="travel">Travel</option>
-                    <option value="food">Food & Hospitality</option>
-                    <option value="other">Other</option>
-                  </select>
+              {expenseEditForm.expenseType === "studio" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                    <select
+                      value={expenseEditForm.category}
+                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, category: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    >
+                      <option value="tools">Tools / SaaS</option>
+                      <option value="hosting">Hosting & Cloud</option>
+                      <option value="domain">Domain</option>
+                      <option value="software">Software License</option>
+                      <option value="marketing">Marketing & Ads</option>
+                      <option value="travel">Travel</option>
+                      <option value="food">Food & Hospitality</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={expenseEditForm.amountRupees}
+                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={expenseEditForm.amountRupees}
-                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                  />
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Total Amount (₹) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        required
+                        value={expenseEditForm.amountRupees}
+                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Amount Left to Pay (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={expenseEditForm.amountLeftRupees}
+                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountLeftRupees: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-[#2B2B38]">
+                    Amount still owed to {teamMembers.find((m) => m.id === expenseEditForm.memberId)?.name || "member"} for this expense
+                  </p>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
