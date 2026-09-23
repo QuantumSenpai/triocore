@@ -136,5 +136,44 @@ describe("Expenses Split & Reimbursement Tracker Logic", () => {
     });
     expect(studioRes.success).toBe(false);
   });
+
+  it("transforms empty strings or whitespace for projectId and memberId to null", async () => {
+    const { expenseCreateSchema, expenseEditSchema } = await import("@/lib/validations/crm");
+
+    // Create schema with empty string projectId
+    const createRes = expenseCreateSchema.safeParse({
+      title: "Saathi Project",
+      amountPaise: 200000,
+      amountLeftPaise: 50000,
+      date: "2026-09-23",
+      expenseType: "personal",
+      memberId: "user-123",
+      projectId: "",
+    });
+    expect(createRes.success).toBe(true);
+    if (createRes.success) {
+      expect(createRes.data.projectId).toBe(null);
+    }
+
+    // Edit schema with whitespace or empty projectId
+    const editRes = expenseEditSchema.safeParse({
+      id: "exp-1",
+      projectId: "   ",
+    });
+    expect(editRes.success).toBe(true);
+    if (editRes.success) {
+      expect(editRes.data.projectId).toBe(null);
+    }
+
+    // Edit schema with omitted projectId stays undefined
+    const editOmitted = expenseEditSchema.safeParse({
+      id: "exp-1",
+      title: "Updated Title",
+    });
+    expect(editOmitted.success).toBe(true);
+    if (editOmitted.success) {
+      expect(editOmitted.data.projectId).toBe(undefined);
+    }
+  });
 });
 

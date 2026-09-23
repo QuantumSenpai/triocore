@@ -64,14 +64,30 @@ export type MilestoneEditData = z.infer<typeof milestoneEditSchema>;
 // Payments Validations
 // =============================================================================
 
+const emptyToNull = z
+  .string()
+  .trim()
+  .nullish()
+  .transform((val) => (val && val.length > 0 ? val : null));
+
+const emptyToNullOptional = z
+  .string()
+  .trim()
+  .nullish()
+  .transform((val) => {
+    if (val === undefined) return undefined;
+    if (!val || val.length === 0) return null;
+    return val;
+  });
+
 export const paymentEditSchema = z.object({
   id: z.string().min(1, "Payment ID is required"),
   amountPaise: z.number().int().positive("Payment amount must be greater than zero"),
   method: z.string().trim().min(1, "Payment method is required"),
   receivedDate: z.string().nullable().optional(),
   reference: z.string().trim().max(100).optional().nullable(),
-  projectId: z.string().nullable().optional(),
-  clientId: z.string().nullable().optional(),
+  projectId: emptyToNullOptional,
+  clientId: emptyToNullOptional,
   status: z.enum(["received", "pending", "overdue"]),
   notes: z.string().trim().max(1000).optional().nullable(),
 });
@@ -91,10 +107,10 @@ export const expenseCreateSchema = z.object({
   amountLeftPaise: z.coerce.number().int().min(0, "Amount left must be 0 or positive").default(0),
   date: z.string().min(1, "Date is required"),
   paidBy: z.string().trim().optional().nullable(),
-  projectId: z.string().optional().nullable(),
+  projectId: emptyToNull,
   notes: z.string().trim().max(1000).optional().nullable(),
   expenseType: z.enum(expenseTypeValues).default("studio"),
-  memberId: z.string().optional().nullable(),
+  memberId: emptyToNull,
   isReimbursed: z.boolean().default(false),
 }).refine(
   (data) => {
@@ -128,10 +144,10 @@ export const expenseEditSchema = z.object({
   amountLeftPaise: z.coerce.number().int().min(0, "Amount left must be 0 or positive").optional(),
   date: z.string().min(1, "Date is required").optional(),
   paidBy: z.string().trim().optional().nullable(),
-  projectId: z.string().optional().nullable(),
+  projectId: emptyToNullOptional,
   notes: z.string().trim().max(1000).optional().nullable(),
   expenseType: z.enum(expenseTypeValues).optional(),
-  memberId: z.string().optional().nullable(),
+  memberId: emptyToNullOptional,
   isReimbursed: z.boolean().optional(),
 });
 

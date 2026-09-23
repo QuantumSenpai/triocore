@@ -153,9 +153,14 @@ export async function POST(req: NextRequest) {
       } else if (!targetMemberId) {
         targetMemberId = authCheck.user?.id || null;
       }
+    } else {
+      targetMemberId = null;
     }
 
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
+
+    // Personal expenses store project name in title; projectId foreign key must be null
+    const safeProjectId = expenseType === "personal" ? null : (projectId?.trim() || null);
 
     const newExpense = await db
       .insert(expenses)
@@ -165,9 +170,9 @@ export async function POST(req: NextRequest) {
         amountPaise,
         category: expenseType === "personal" ? "personal" : (category || "tools"),
         date: date || new Date().toISOString().slice(0, 10),
-        paidBy: paidBy || authCheck.user?.name || authCheck.user?.email || "admin",
-        projectId: projectId || null,
-        notes: notes || null,
+        paidBy: paidBy?.trim() || authCheck.user?.name || authCheck.user?.email || "admin",
+        projectId: safeProjectId,
+        notes: notes?.trim() || null,
         expenseType,
         memberId: targetMemberId,
         isReimbursed: isFinance ? isReimbursed : false,
@@ -254,9 +259,21 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const finalCategory = (existing.expenseType === "personal" || expenseType === "personal")
+    const isPersonal = (expenseType || existing.expenseType) === "personal";
+
+    const finalCategory = isPersonal
       ? (category || existing.category || "personal")
       : (category !== undefined ? category : existing.category);
+
+    const safeProjectId = isPersonal
+      ? null
+      : projectId !== undefined
+      ? (projectId?.trim() || null)
+      : existing.projectId;
+
+    const safeMemberId = isPersonal
+      ? (memberId !== undefined ? (memberId?.trim() || null) : existing.memberId)
+      : null;
 
     const updated = await db
       .update(expenses)
@@ -266,11 +283,11 @@ export async function PUT(req: NextRequest) {
         amountPaise: amountPaise !== undefined ? amountPaise : existing.amountPaise,
         amountLeftPaise: amountLeftPaise !== undefined ? amountLeftPaise : existing.amountLeftPaise,
         date: date !== undefined ? date : existing.date,
-        paidBy: paidBy !== undefined ? paidBy : existing.paidBy,
-        projectId: projectId !== undefined ? projectId : existing.projectId,
-        notes: notes !== undefined ? notes : existing.notes,
+        paidBy: paidBy !== undefined ? (paidBy?.trim() || null) : existing.paidBy,
+        projectId: safeProjectId,
+        notes: notes !== undefined ? (notes?.trim() || null) : existing.notes,
         expenseType: expenseType !== undefined ? expenseType : existing.expenseType,
-        memberId: memberId !== undefined ? memberId : existing.memberId,
+        memberId: safeMemberId,
         isReimbursed: isReimbursed !== undefined ? isReimbursed : existing.isReimbursed,
         updatedAt: new Date(),
       })
