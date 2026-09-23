@@ -1726,7 +1726,7 @@ export function CrmTab({
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-[#14141A]">Company / Brand</label>
+                <label className="text-xs font-bold text-[#14141A]">Category</label>
                 <input
                   type="text"
                   value={clientForm.company}
@@ -1788,7 +1788,7 @@ export function CrmTab({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-[#14141A]">Company / Brand</label>
+                  <label className="text-xs font-bold text-[#14141A]">Category</label>
                   <input
                     type="text"
                     value={clientEditForm.company}
