@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
     // Personal expenses store project name in title; projectId foreign key must be null
-    const safeProjectId = expenseType === "personal" ? null : (projectId?.trim() || null);
+    const safeProjectId = expenseType === "personal" ? null : (projectId || null);
 
     const newExpense = await db
       .insert(expenses)
@@ -268,11 +268,11 @@ export async function PUT(req: NextRequest) {
     const safeProjectId = isPersonal
       ? null
       : projectId !== undefined
-      ? (projectId?.trim() || null)
+      ? (projectId || null)
       : existing.projectId;
 
     const safeMemberId = isPersonal
-      ? (memberId !== undefined ? (memberId?.trim() || null) : existing.memberId)
+      ? (memberId !== undefined ? (memberId || null) : existing.memberId)
       : null;
 
     const updated = await db
