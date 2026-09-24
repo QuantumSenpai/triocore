@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Users, 
-  FolderGit2, 
-  CreditCard, 
-  Plus, 
-  Download, 
-  Printer, 
-  CheckCircle2, 
-  UserCheck, 
-  DollarSign, 
-  Mail, 
-  Phone, 
-  Building, 
+import {
+  Users,
+  FolderGit2,
+  CreditCard,
+  Plus,
+  Download,
+  Printer,
+  CheckCircle2,
+  UserCheck,
+  DollarSign,
+  Mail,
+  Phone,
+  Building,
   Calendar as CalendarIcon,
   Sparkles,
   Receipt,
@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { formatPaise, rupeesToPaise, paiseToRupees } from "@/lib/money";
 import { toast } from "sonner";
+import { AdminModal } from "@/components/shared/admin-modal";
 import type {
   AdminInquiry,
   AdminClient,
@@ -591,8 +592,8 @@ export function CrmTab({
         currentStatus === "pending"
           ? "in_progress"
           : currentStatus === "in_progress"
-          ? "completed"
-          : "pending";
+            ? "completed"
+            : "pending";
 
       const res = await fetch("/api/admin/milestones", {
         method: "PUT",
@@ -868,25 +869,22 @@ export function CrmTab({
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white border border-black/10 shadow-xs">
         <button
           onClick={() => setSubTab("inquiries")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "inquiries" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "inquiries" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            }`}
         >
           Inquiries ({inquiries.length})
         </button>
         <button
           onClick={() => setSubTab("clients")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "clients" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "clients" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            }`}
         >
           Clients ({clients.length})
         </button>
         <button
           onClick={() => setSubTab("projects")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "projects" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "projects" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            }`}
         >
           Projects ({projects.length})
         </button>
@@ -894,9 +892,8 @@ export function CrmTab({
         {canViewFinance && (
           <button
             onClick={() => setSubTab("payments")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              subTab === "payments" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "payments" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+              }`}
           >
             Payments Ledger
           </button>
@@ -906,9 +903,8 @@ export function CrmTab({
             setSubTab("expenses");
             if (!canViewFinance) setExpenseTab("personal");
           }}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "expenses" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "expenses" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            }`}
         >
           Expenses ({expenses.length})
         </button>
@@ -952,15 +948,14 @@ export function CrmTab({
                     </td>
                     <td className="py-3.5 px-3 text-[#2B2B38] max-w-xs truncate">{inq.message}</td>
                     <td className="py-3.5 px-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                        inq.status?.toLowerCase() === "converted"
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize ${inq.status?.toLowerCase() === "converted"
                           ? "bg-emerald-100 text-emerald-700"
                           : inq.status?.toLowerCase() === "contacted"
-                          ? "bg-purple-100 text-purple-700"
-                          : inq.status?.toLowerCase() === "archived"
-                          ? "bg-zinc-200 text-zinc-700"
-                          : "bg-blue-100 text-[#374BFF]"
-                      }`}>
+                            ? "bg-purple-100 text-purple-700"
+                            : inq.status?.toLowerCase() === "archived"
+                              ? "bg-zinc-200 text-zinc-700"
+                              : "bg-blue-100 text-[#374BFF]"
+                        }`}>
                         {inq.status || "Unread"}
                       </span>
                     </td>
@@ -1112,21 +1107,20 @@ export function CrmTab({
                         {p.category}
                       </span>
                       {/* Status Badge */}
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        p.status === "delivered" || p.status === "completed"
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${p.status === "delivered" || p.status === "completed"
                           ? "bg-emerald-100 text-emerald-700"
                           : p.status === "development"
-                          ? "bg-blue-100 text-[#374BFF]"
-                          : p.status === "design"
-                          ? "bg-cyan-100 text-cyan-800"
-                          : p.status === "review"
-                          ? "bg-purple-100 text-purple-700"
-                          : p.status === "on_hold"
-                          ? "bg-amber-100 text-amber-800"
-                          : p.status === "cancelled"
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-indigo-100 text-indigo-800"
-                      }`}>
+                            ? "bg-blue-100 text-[#374BFF]"
+                            : p.status === "design"
+                              ? "bg-cyan-100 text-cyan-800"
+                              : p.status === "review"
+                                ? "bg-purple-100 text-purple-700"
+                                : p.status === "on_hold"
+                                  ? "bg-amber-100 text-amber-800"
+                                  : p.status === "cancelled"
+                                    ? "bg-rose-100 text-rose-700"
+                                    : "bg-indigo-100 text-indigo-800"
+                        }`}>
                         {p.status === "on_hold" ? "On Hold" : p.status || "Planning"}
                       </span>
                       {p.isOverdue && (
@@ -1233,13 +1227,12 @@ export function CrmTab({
                     {p.milestones?.map((m: AdminMilestone) => (
                       <div
                         key={m.id}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
-                          m.status === "completed"
+                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${m.status === "completed"
                             ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
                             : m.status === "in_progress"
-                            ? "bg-blue-50/70 border-blue-200 text-blue-900"
-                            : "bg-white border-black/10 text-[#14141A]"
-                        }`}
+                              ? "bg-blue-50/70 border-blue-200 text-blue-900"
+                              : "bg-white border-black/10 text-[#14141A]"
+                          }`}
                       >
                         <div
                           onClick={() => handleToggleMilestone(m.id, m.status)}
@@ -1333,13 +1326,12 @@ export function CrmTab({
                     <td className="py-3.5 px-3">{p.method || "UPI"}</td>
                     <td className="py-3.5 px-3">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
-                          p.status === "received"
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${p.status === "received"
                             ? "bg-emerald-100 text-emerald-700"
                             : p.status === "pending"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-rose-100 text-rose-700"
-                        }`}
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-rose-100 text-rose-700"
+                          }`}
                       >
                         {p.status || "Received"}
                       </span>
@@ -1390,11 +1382,10 @@ export function CrmTab({
               {canViewFinance && (
                 <button
                   onClick={() => setExpenseTab("studio")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                    expenseTab === "studio"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${expenseTab === "studio"
                       ? "bg-[#14141A] text-white shadow-xs"
                       : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
-                  }`}
+                    }`}
                 >
                   🏢 Studio Expenses (
                   {expenses.filter((e) => (e.expenseType || "studio") === "studio").length}
@@ -1403,11 +1394,10 @@ export function CrmTab({
               )}
               <button
                 onClick={() => setExpenseTab("personal")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  expenseTab === "personal"
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${expenseTab === "personal"
                     ? "bg-[#14141A] text-white shadow-xs"
                     : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
-                }`}
+                  }`}
               >
                 👤 Personal Expenses & Reimbursements (
                 {expenses.filter((e) => e.expenseType === "personal").length}
@@ -1701,11 +1691,10 @@ export function CrmTab({
                             </td>
                             <td className="py-3 px-3">
                               <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                                  (e.amountLeftPaise === 0 || e.isReimbursed)
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${(e.amountLeftPaise === 0 || e.isReimbursed)
                                     ? "bg-emerald-100 text-emerald-800"
                                     : "bg-amber-100 text-amber-800"
-                                }`}
+                                  }`}
                               >
                                 {(e.amountLeftPaise === 0 || e.isReimbursed) ? "✓ Cleared" : "⏳ Pending"}
                               </span>
@@ -1716,11 +1705,10 @@ export function CrmTab({
                                   <button
                                     onClick={() => handleToggleReimbursed(e)}
                                     title={e.isReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
-                                      e.isReimbursed
+                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${e.isReimbursed
                                         ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
                                         : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                    }`}
+                                      }`}
                                   >
                                     {e.isReimbursed ? (
                                       <>
@@ -1761,703 +1749,701 @@ export function CrmTab({
       )}
 
       {/* MODAL: CREATE CLIENT */}
-      {clientModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Add New Client</h3>
-              <button onClick={() => setClientModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateClient} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Client Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={clientForm.name}
-                  onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Email</label>
-                <input
-                  type="email"
-                  value={clientForm.email}
-                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Phone</label>
-                <input
-                  type="text"
-                  value={clientForm.phone}
-                  onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Type</label>
-                <select
-                  value={clientForm.company}
-                  onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                >
-                  <option value="">Select Type (Optional)</option>
-                  <option value="Company">Company</option>
-                  <option value="Brand">Brand</option>
-                  <option value="Startup">Startup</option>
-                  <option value="Individual">Individual</option>
-                </select>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer mt-2"
-              >
-                Save Client
-              </button>
-            </form>
+      <AdminModal
+        isOpen={clientModalOpen}
+        onClose={() => setClientModalOpen(false)}
+        title="Add New Client"
+        onSubmit={handleCreateClient}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setClientModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+            >
+              Save Client
+            </button>
           </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Client Name *</label>
+          <input
+            type="text"
+            required
+            value={clientForm.name}
+            onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
         </div>
-      )}
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Email</label>
+          <input
+            type="email"
+            value={clientForm.email}
+            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Phone</label>
+          <input
+            type="text"
+            value={clientForm.phone}
+            onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Type</label>
+          <select
+            value={clientForm.company}
+            onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          >
+            <option value="">Select Type (Optional)</option>
+            <option value="Company">Company</option>
+            <option value="Brand">Brand</option>
+            <option value="Startup">Startup</option>
+            <option value="Individual">Individual</option>
+          </select>
+        </div>
+      </AdminModal>
 
       {/* MODAL: EDIT CLIENT */}
-      {editClientModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Client</h3>
-              <button onClick={() => setEditClientModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateClient} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Client Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={clientEditForm.name}
-                  onChange={(e) => setClientEditForm({ ...clientEditForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Email</label>
-                  <input
-                    type="email"
-                    value={clientEditForm.email}
-                    onChange={(e) => setClientEditForm({ ...clientEditForm, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Phone</label>
-                  <input
-                    type="text"
-                    value={clientEditForm.phone}
-                    onChange={(e) => setClientEditForm({ ...clientEditForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Type</label>
-                  <select
-                    value={clientEditForm.company}
-                    onChange={(e) => setClientEditForm({ ...clientEditForm, company: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="">Select Type (Optional)</option>
-                    {clientEditForm.company && !["Company", "Brand", "Startup", "Individual"].includes(clientEditForm.company) && (
-                      <option value={clientEditForm.company}>{clientEditForm.company} (Legacy)</option>
-                    )}
-                    <option value="Company">Company</option>
-                    <option value="Brand">Brand</option>
-                    <option value="Startup">Startup</option>
-                    <option value="Individual">Individual</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Status</label>
-                  <select
-                    value={clientEditForm.status}
-                    onChange={(e) => setClientEditForm({ ...clientEditForm, status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Notes</label>
-                <textarea
-                  rows={2}
-                  value={clientEditForm.notes}
-                  onChange={(e) => setClientEditForm({ ...clientEditForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditClientModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingClient}
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        isOpen={editClientModalOpen}
+        onClose={() => setEditClientModalOpen(false)}
+        title="Edit Client"
+        onSubmit={handleUpdateClient}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditClientModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingClient}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {savingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Client Name *</label>
+          <input
+            type="text"
+            required
+            value={clientEditForm.name}
+            onChange={(e) => setClientEditForm({ ...clientEditForm, name: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Email</label>
+            <input
+              type="email"
+              value={clientEditForm.email}
+              onChange={(e) => setClientEditForm({ ...clientEditForm, email: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Phone</label>
+            <input
+              type="text"
+              value={clientEditForm.phone}
+              onChange={(e) => setClientEditForm({ ...clientEditForm, phone: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
           </div>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Type</label>
+            <select
+              value={clientEditForm.company}
+              onChange={(e) => setClientEditForm({ ...clientEditForm, company: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="">Select Type (Optional)</option>
+              {clientEditForm.company && !["Company", "Brand", "Startup", "Individual"].includes(clientEditForm.company) && (
+                <option value={clientEditForm.company}>{clientEditForm.company} (Legacy)</option>
+              )}
+              <option value="Company">Company</option>
+              <option value="Brand">Brand</option>
+              <option value="Startup">Startup</option>
+              <option value="Individual">Individual</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Status</label>
+            <select
+              value={clientEditForm.status}
+              onChange={(e) => setClientEditForm({ ...clientEditForm, status: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Notes</label>
+          <textarea
+            rows={2}
+            value={clientEditForm.notes}
+            onChange={(e) => setClientEditForm({ ...clientEditForm, notes: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+      </AdminModal>
 
       {/* MODAL: CREATE PROJECT */}
-      {projectModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Create New Project</h3>
-              <button onClick={() => setProjectModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateProject} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={projectForm.name}
-                  onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Client</label>
-                  <select
-                    value={projectForm.clientId}
-                    onChange={(e) => setProjectForm({ ...projectForm, clientId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="">Select client</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Category</label>
-                  <select
-                    value={projectForm.category}
-                    onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="Apps">Apps (Mobile & Web)</option>
-                    <option value="Websites">Websites</option>
-                    <option value="Hardware">Hardware / Robotics</option>
-                    <option value="Maintenance">Maintenance</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Quoted Amount (₹ Rupees) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={projectForm.quotedRupees}
-                    onChange={(e) => setProjectForm({ ...projectForm, quotedRupees: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Deadline Date</label>
-                  <input
-                    type="date"
-                    value={projectForm.deadline}
-                    onChange={(e) => setProjectForm({ ...projectForm, deadline: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Assign Team Members (Assign 2+)</label>
-                <div className="grid grid-cols-2 gap-1.5 mt-1">
-                  {teamMembers.map((tm) => (
-                    <label key={tm.id} className="flex items-center gap-2 text-xs text-[#14141A] p-2 rounded-lg bg-[#F5F6FC]">
-                      <input
-                        type="checkbox"
-                        checked={projectForm.assignedMemberIds.includes(tm.id)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setProjectForm((prev) => ({
-                            ...prev,
-                            assignedMemberIds: checked
-                              ? [...prev.assignedMemberIds, tm.id]
-                              : prev.assignedMemberIds.filter((id) => id !== tm.id),
-                          }));
-                        }}
-                      />
-                      <span>{tm.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer mt-2"
-              >
-                Create Project
-              </button>
-            </form>
+      <AdminModal
+        isOpen={projectModalOpen}
+        onClose={() => setProjectModalOpen(false)}
+        title="Create New Project"
+        onSubmit={handleCreateProject}
+        maxWidth="lg"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setProjectModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              Create Project
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
+          <input
+            type="text"
+            required
+            value={projectForm.name}
+            onChange={(e) => setProjectForm({ ...projectForm, name: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Client</label>
+            <select
+              value={projectForm.clientId}
+              onChange={(e) => setProjectForm({ ...projectForm, clientId: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="">Select client</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Category</label>
+            <select
+              value={projectForm.category}
+              onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="Apps">Apps (Mobile & Web)</option>
+              <option value="Websites">Websites</option>
+              <option value="Hardware">Hardware / Robotics</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
           </div>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Quoted Amount (₹ Rupees) *</label>
+            <input
+              type="number"
+              required
+              value={projectForm.quotedRupees}
+              onChange={(e) => setProjectForm({ ...projectForm, quotedRupees: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Deadline Date</label>
+            <input
+              type="date"
+              value={projectForm.deadline}
+              onChange={(e) => setProjectForm({ ...projectForm, deadline: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Assign Team Members (Assign 2+)</label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1">
+            {teamMembers.map((tm) => (
+              <label key={tm.id} className="flex items-center gap-2 text-xs text-[#14141A] p-2 rounded-lg bg-[#F5F6FC]">
+                <input
+                  type="checkbox"
+                  checked={projectForm.assignedMemberIds.includes(tm.id)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setProjectForm((prev) => ({
+                      ...prev,
+                      assignedMemberIds: checked
+                        ? [...prev.assignedMemberIds, tm.id]
+                        : prev.assignedMemberIds.filter((id) => id !== tm.id),
+                    }));
+                  }}
+                />
+                <span>{tm.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </AdminModal>
 
       {/* MODAL: EDIT PROJECT */}
-      {editProjectModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-black/10 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Project</h3>
-              <button onClick={() => setEditProjectModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateProject} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Client *</label>
-                <select
-                  required
-                  value={projectEditForm.clientId}
-                  onChange={(e) => setProjectEditForm({ ...projectEditForm, clientId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                >
-                  <option value="">Select a Client</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.company || "Direct"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={projectEditForm.name}
-                  onChange={(e) => setProjectEditForm({ ...projectEditForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Category *</label>
-                  <select
-                    value={projectEditForm.category}
-                    onChange={(e) => setProjectEditForm({ ...projectEditForm, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="Apps">Apps</option>
-                    <option value="Web">Web</option>
-                    <option value="NFC">NFC</option>
-                    <option value="QR menu">QR menu</option>
-                    <option value="ML">ML</option>
-                    <option value="Robotics">Robotics</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
-                  <select
-                    value={projectEditForm.status}
-                    onChange={(e) => setProjectEditForm({ ...projectEditForm, status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="planning">Planning</option>
-                    <option value="design">Design</option>
-                    <option value="development">Development</option>
-                    <option value="review">Review</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="on_hold">On Hold</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Quoted Amount (₹) *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={projectEditForm.quotedRupees}
-                    onChange={(e) => setProjectEditForm({ ...projectEditForm, quotedRupees: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Deadline</label>
-                  <input
-                    type="date"
-                    value={projectEditForm.deadline}
-                    onChange={(e) => setProjectEditForm({ ...projectEditForm, deadline: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Assign Team Members</label>
-                <div className="grid grid-cols-2 gap-1.5 mt-1 max-h-40 overflow-y-auto p-1">
-                  {teamMembers.map((tm) => (
-                    <label key={tm.id} className="flex items-center gap-2 text-xs text-[#14141A] p-2 rounded-lg bg-[#F5F6FC]">
-                      <input
-                        type="checkbox"
-                        checked={projectEditForm.assignedMemberIds.includes(tm.id)}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setProjectEditForm((prev) => ({
-                            ...prev,
-                            assignedMemberIds: checked
-                              ? [...prev.assignedMemberIds, tm.id]
-                              : prev.assignedMemberIds.filter((id) => id !== tm.id),
-                          }));
-                        }}
-                      />
-                      <span className="truncate">{tm.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditProjectModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingProject}
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Project"}
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        isOpen={editProjectModalOpen}
+        onClose={() => setEditProjectModalOpen(false)}
+        title="Edit Project"
+        onSubmit={handleUpdateProject}
+        maxWidth="lg"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditProjectModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingProject}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {savingProject ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Project"}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Client *</label>
+          <select
+            required
+            value={projectEditForm.clientId}
+            onChange={(e) => setProjectEditForm({ ...projectEditForm, clientId: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          >
+            <option value="">Select a Client</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.company || "Direct"})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
+          <input
+            type="text"
+            required
+            value={projectEditForm.name}
+            onChange={(e) => setProjectEditForm({ ...projectEditForm, name: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Category *</label>
+            <select
+              value={projectEditForm.category}
+              onChange={(e) => setProjectEditForm({ ...projectEditForm, category: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="Apps">Apps</option>
+              <option value="Web">Web</option>
+              <option value="NFC">NFC</option>
+              <option value="QR menu">QR menu</option>
+              <option value="ML">ML</option>
+              <option value="Robotics">Robotics</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Status *</label>
+            <select
+              value={projectEditForm.status}
+              onChange={(e) => setProjectEditForm({ ...projectEditForm, status: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="planning">Planning</option>
+              <option value="design">Design</option>
+              <option value="development">Development</option>
+              <option value="review">Review</option>
+              <option value="delivered">Delivered</option>
+              <option value="on_hold">On Hold</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
           </div>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Quoted Amount (₹) *</label>
+            <input
+              type="number"
+              min="0"
+              required
+              value={projectEditForm.quotedRupees}
+              onChange={(e) => setProjectEditForm({ ...projectEditForm, quotedRupees: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Deadline</label>
+            <input
+              type="date"
+              value={projectEditForm.deadline}
+              onChange={(e) => setProjectEditForm({ ...projectEditForm, deadline: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Assign Team Members</label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1 max-h-40 overflow-y-auto p-1">
+            {teamMembers.map((tm) => (
+              <label key={tm.id} className="flex items-center gap-2 text-xs text-[#14141A] p-2 rounded-lg bg-[#F5F6FC]">
+                <input
+                  type="checkbox"
+                  checked={projectEditForm.assignedMemberIds.includes(tm.id)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setProjectEditForm((prev) => ({
+                      ...prev,
+                      assignedMemberIds: checked
+                        ? [...prev.assignedMemberIds, tm.id]
+                        : prev.assignedMemberIds.filter((id) => id !== tm.id),
+                    }));
+                  }}
+                />
+                <span className="truncate">{tm.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </AdminModal>
 
       {/* MODAL: CREATE MILESTONE */}
-      {milestoneModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Add Milestone</h3>
-              <button onClick={() => setMilestoneModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateMilestone} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Milestone Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Prototype UI Review"
-                  value={milestoneForm.title}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Due Date</label>
-                <input
-                  type="date"
-                  value={milestoneForm.dueDate}
-                  onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer mt-2"
-              >
-                Save Milestone
-              </button>
-            </form>
+      <AdminModal
+        isOpen={milestoneModalOpen}
+        onClose={() => setMilestoneModalOpen(false)}
+        title="Add Milestone"
+        onSubmit={handleCreateMilestone}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setMilestoneModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+            >
+              Save Milestone
+            </button>
           </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Milestone Title *</label>
+          <input
+            type="text"
+            required
+            placeholder="e.g. Prototype UI Review"
+            value={milestoneForm.title}
+            onChange={(e) => setMilestoneForm({ ...milestoneForm, title: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
         </div>
-      )}
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Due Date</label>
+          <input
+            type="date"
+            value={milestoneForm.dueDate}
+            onChange={(e) => setMilestoneForm({ ...milestoneForm, dueDate: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+      </AdminModal>
 
       {/* MODAL: EDIT MILESTONE */}
-      {editMilestoneModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Milestone</h3>
-              <button onClick={() => setEditMilestoneModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateMilestone} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Milestone Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={milestoneEditForm.title}
-                  onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Description</label>
-                <textarea
-                  rows={2}
-                  value={milestoneEditForm.description}
-                  onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
-                  <select
-                    value={milestoneEditForm.status}
-                    onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Due Date</label>
-                  <input
-                    type="date"
-                    value={milestoneEditForm.dueDate}
-                    onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditMilestoneModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingMilestone}
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingMilestone ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Milestone"}
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        isOpen={editMilestoneModalOpen}
+        onClose={() => setEditMilestoneModalOpen(false)}
+        title="Edit Milestone"
+        onSubmit={handleUpdateMilestone}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditMilestoneModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingMilestone}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {savingMilestone ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Milestone"}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Milestone Title *</label>
+          <input
+            type="text"
+            required
+            value={milestoneEditForm.title}
+            onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, title: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Description</label>
+          <textarea
+            rows={2}
+            value={milestoneEditForm.description}
+            onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, description: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Status *</label>
+            <select
+              value={milestoneEditForm.status}
+              onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, status: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Due Date</label>
+            <input
+              type="date"
+              value={milestoneEditForm.dueDate}
+              onChange={(e) => setMilestoneEditForm({ ...milestoneEditForm, dueDate: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
           </div>
         </div>
-      )}
+      </AdminModal>
 
       {/* MODAL: RECORD PAYMENT */}
-      {paymentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Record Client Payment</h3>
-              <button onClick={() => setPaymentModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleRecordPayment} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Project *</label>
-                <select
-                  required
-                  value={paymentForm.projectId}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, projectId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                >
-                  <option value="">Select project</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} (Quoted {formatPaise(p.quotedAmountPaise)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Payment Amount (₹ Rupees) *</label>
-                <input
-                  type="number"
-                  required
-                  value={paymentForm.amountRupees}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, amountRupees: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Payment Method</label>
-                <select
-                  value={paymentForm.method}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                >
-                  <option value="UPI">UPI / GPay / PhonePe</option>
-                  <option value="Bank Transfer">NEFT / IMPS / Bank</option>
-                  <option value="Cash">Cash</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Transaction Reference</label>
-                <input
-                  type="text"
-                  placeholder="e.g. UPI Ref / UTR"
-                  value={paymentForm.reference}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer mt-2"
-              >
-                Record Payment
-              </button>
-            </form>
+      <AdminModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        title="Record Client Payment"
+        onSubmit={handleRecordPayment}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setPaymentModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+            >
+              Record Payment
+            </button>
           </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Project *</label>
+          <select
+            required
+            value={paymentForm.projectId}
+            onChange={(e) => setPaymentForm({ ...paymentForm, projectId: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          >
+            <option value="">Select project</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} (Quoted {formatPaise(p.quotedAmountPaise)})
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Payment Amount (₹ Rupees) *</label>
+          <input
+            type="number"
+            required
+            value={paymentForm.amountRupees}
+            onChange={(e) => setPaymentForm({ ...paymentForm, amountRupees: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Payment Method</label>
+          <select
+            value={paymentForm.method}
+            onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          >
+            <option value="UPI">UPI / GPay / PhonePe</option>
+            <option value="Bank Transfer">NEFT / IMPS / Bank</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Transaction Reference</label>
+          <input
+            type="text"
+            placeholder="e.g. UPI Ref / UTR"
+            value={paymentForm.reference}
+            onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+      </AdminModal>
 
       {/* MODAL: EDIT PAYMENT */}
-      {editPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Payment</h3>
-              <button onClick={() => setEditPaymentModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdatePayment} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Project</label>
-                <select
-                  value={paymentEditForm.projectId}
-                  onChange={(e) => setPaymentEditForm({ ...paymentEditForm, projectId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                >
-                  <option value="">None / Independent</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || p.title} ({p.clientName || "Client"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    value={paymentEditForm.amountRupees}
-                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, amountRupees: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
-                  <select
-                    value={paymentEditForm.status}
-                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, status: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="received">Received</option>
-                    <option value="pending">Pending</option>
-                    <option value="overdue">Overdue</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Payment Method *</label>
-                  <select
-                    value={paymentEditForm.method}
-                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, method: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="UPI">UPI / GPay / PhonePe</option>
-                    <option value="Bank Transfer">NEFT / IMPS / Bank</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Card</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Date</label>
-                  <input
-                    type="date"
-                    value={paymentEditForm.receivedDate}
-                    onChange={(e) => setPaymentEditForm({ ...paymentEditForm, receivedDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Transaction Reference</label>
-                <input
-                  type="text"
-                  placeholder="e.g. UPI Ref / UTR / Cheque No."
-                  value={paymentEditForm.reference}
-                  onChange={(e) => setPaymentEditForm({ ...paymentEditForm, reference: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditPaymentModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingPayment}
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        isOpen={editPaymentModalOpen}
+        onClose={() => setEditPaymentModalOpen(false)}
+        title="Edit Payment"
+        onSubmit={handleUpdatePayment}
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditPaymentModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingPayment}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {savingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Project</label>
+          <select
+            value={paymentEditForm.projectId}
+            onChange={(e) => setPaymentEditForm({ ...paymentEditForm, projectId: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          >
+            <option value="">None / Independent</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name || p.title} ({p.clientName || "Client"})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+            <input
+              type="number"
+              min="1"
+              required
+              value={paymentEditForm.amountRupees}
+              onChange={(e) => setPaymentEditForm({ ...paymentEditForm, amountRupees: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Status *</label>
+            <select
+              value={paymentEditForm.status}
+              onChange={(e) => setPaymentEditForm({ ...paymentEditForm, status: e.target.value as any })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="received">Received</option>
+              <option value="pending">Pending</option>
+              <option value="overdue">Overdue</option>
+            </select>
           </div>
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Payment Method *</label>
+            <select
+              value={paymentEditForm.method}
+              onChange={(e) => setPaymentEditForm({ ...paymentEditForm, method: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="UPI">UPI / GPay / PhonePe</option>
+              <option value="Bank Transfer">NEFT / IMPS / Bank</option>
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Date</label>
+            <input
+              type="date"
+              value={paymentEditForm.receivedDate}
+              onChange={(e) => setPaymentEditForm({ ...paymentEditForm, receivedDate: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Transaction Reference</label>
+          <input
+            type="text"
+            placeholder="e.g. UPI Ref / UTR / Cheque No."
+            value={paymentEditForm.reference}
+            onChange={(e) => setPaymentEditForm({ ...paymentEditForm, reference: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+      </AdminModal>
 
       {/* MODAL: PRINTABLE RECEIPT */}
       {receiptModalOpen && selectedPayment && (
@@ -2525,422 +2511,321 @@ export function CrmTab({
       )}
 
       {/* MODAL: EDIT INQUIRY */}
-      {editInquiryModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-black/10 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Inquiry</h3>
-              <button onClick={() => setEditInquiryModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateInquiry} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={inquiryForm.name}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={inquiryForm.email}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Phone</label>
-                  <input
-                    type="text"
-                    value={inquiryForm.phone}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Service *</label>
-                  <input
-                    type="text"
-                    required
-                    value={inquiryForm.service}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, service: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Budget</label>
-                  <input
-                    type="text"
-                    value={inquiryForm.budget}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, budget: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                    placeholder="e.g. ₹50,000 - ₹1,00,000"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Status *</label>
-                  <select
-                    value={inquiryForm.status}
-                    onChange={(e) => setInquiryForm({ ...inquiryForm, status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="Unread">Unread</option>
-                    <option value="Contacted">Contacted</option>
-                    <option value="Converted">Converted</option>
-                    <option value="Archived">Archived</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Message *</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={inquiryForm.message}
-                  onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditInquiryModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingInquiry}
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingInquiry ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        isOpen={editInquiryModalOpen}
+        onClose={() => setEditInquiryModalOpen(false)}
+        title="Edit Inquiry"
+        onSubmit={handleUpdateInquiry}
+        maxWidth="lg"
+        footer={
+          <div className="flex gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setEditInquiryModalOpen(false)}
+              className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={savingInquiry}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              {savingInquiry ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+            </button>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Name *</label>
+            <input
+              type="text"
+              required
+              value={inquiryForm.name}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Email *</label>
+            <input
+              type="email"
+              required
+              value={inquiryForm.email}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
           </div>
         </div>
-      )}
 
-      {/* MODAL: CREATE EXPENSE */}
-      {createExpenseModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">
-                Record {expenseForm.expenseType === "studio" ? "Studio" : "Personal"} Expense
-              </h3>
-              <button onClick={() => setCreateExpenseModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateExpense} className="space-y-3">
-              {canViewFinance && (
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Expense Classification *</label>
-                  <select
-                    value={expenseForm.expenseType}
-                    onChange={(e) =>
-                      setExpenseForm({
-                        ...expenseForm,
-                        expenseType: e.target.value as "studio" | "personal",
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  >
-                    <option value="studio">🏢 Studio Operational Expense (Deducted from Profit)</option>
-                    <option value="personal">👤 Personal Expense (Reimbursable to Member)</option>
-                  </select>
-                </div>
-              )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Phone</label>
+            <input
+              type="text"
+              value={inquiryForm.phone}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Service *</label>
+            <input
+              type="text"
+              required
+              value={inquiryForm.service}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, service: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            />
+          </div>
+        </div>
 
-              {expenseForm.expenseType === "personal" && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
-                    <select
-                      value={expenseForm.memberId}
-                      onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Budget</label>
+            <input
+              type="text"
+              value={inquiryForm.budget}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, budget: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+              placeholder="e.g. ₹50,000 - ₹1,00,000"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-[#14141A]">Status *</label>
+            <select
+              value={inquiryForm.status}
+              onChange={(e) => setInquiryForm({ ...inquiryForm, status: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+            >
+              <option value="Unread">Unread</option>
+              <option value="Contacted">Contacted</option>
+              <option value="Converted">Converted</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-bold text-[#14141A]">Message *</label>
+          <textarea
+            required
+            rows={3}
+            value={inquiryForm.message}
+            onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+          />
+        </div>
+      </AdminModal>
+              {/* MODAL: CREATE EXPENSE */}
+              <AdminModal
+                isOpen={createExpenseModalOpen}
+                onClose={() => setCreateExpenseModalOpen(false)}
+                title={`Record ${expenseForm.expenseType === "studio" ? "Studio" : "Personal"} Expense`}
+                onSubmit={handleCreateExpense}
+                maxWidth="md"
+                footer={
+                  <div className="flex gap-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => setCreateExpenseModalOpen(false)}
+                      className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
                     >
-                      <option value="">Select Member</option>
-                      {teamMembers.map((tm) => (
-                        <option key={tm.id} value={tm.userId || tm.id}>
-                          {tm.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-[#14141A]">Project Selection *</label>
-                    <select
-                      required
-                      value={expenseForm.selectedProjectId}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "custom") {
-                          setExpenseForm({
-                            ...expenseForm,
-                            selectedProjectId: "custom",
-                            title: "",
-                            totalBudgetRupees: "20000",
-                            memberCount: "4",
-                            allocatedAmountRupees: "5000",
-                          });
-                        } else if (!val) {
-                          setExpenseForm({
-                            ...expenseForm,
-                            selectedProjectId: "",
-                            title: "",
-                            totalBudgetRupees: "0",
-                            memberCount: "1",
-                            allocatedAmountRupees: "0",
-                          });
-                        } else {
-                          const selProj = projects.find((p) => p.id === val);
-                          if (selProj) {
-                            const budgetRupees = paiseToRupees(selProj.quotedAmountPaise);
-                            const count = selProj.assignees?.length || 4;
-                            const alloc = Math.floor(budgetRupees / Math.max(1, count));
-                            setExpenseForm({
-                              ...expenseForm,
-                              selectedProjectId: selProj.id,
-                              title: selProj.title || selProj.name || "",
-                              totalBudgetRupees: String(budgetRupees),
-                              memberCount: String(count),
-                              allocatedAmountRupees: String(alloc),
-                            });
-                          }
-                        }
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                    >
-                      <option value="">-- Choose Existing CRM Project --</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.title || p.name} (Budget: ₹{paiseToRupees(p.quotedAmountPaise).toLocaleString("en-IN")})
-                        </option>
-                      ))}
-                      <option value="custom">-- Custom / Other Project --</option>
-                    </select>
-                  </div>
-
-                  {expenseForm.selectedProjectId === "custom" && (
-                    <div>
-                      <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Website Redesign or Saathi"
-                        value={expenseForm.title}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                  )}
-
-                  {/* PROJECT BUDGET & MEMBER DIVISION */}
-                  <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-[#F5F6FC] border border-black/10">
-                    <div>
-                      <label className="text-[11px] font-bold text-[#14141A]">Total Project Budget (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={expenseForm.totalBudgetRupees}
-                        onChange={(e) => {
-                          const newBudget = e.target.value;
-                          const count = Math.max(1, Number(expenseForm.memberCount) || 1);
-                          const alloc = Math.floor((Number(newBudget) || 0) / count);
-                          setExpenseForm({
-                            ...expenseForm,
-                            totalBudgetRupees: newBudget,
-                            allocatedAmountRupees: String(alloc),
-                          });
-                        }}
-                        className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-[#14141A]">Divide Among Members</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={expenseForm.memberCount}
-                        onChange={(e) => {
-                          const newCount = e.target.value;
-                          const budget = Number(expenseForm.totalBudgetRupees) || 0;
-                          const alloc = Math.floor(budget / Math.max(1, Number(newCount) || 1));
-                          setExpenseForm({
-                            ...expenseForm,
-                            memberCount: newCount,
-                            allocatedAmountRupees: String(alloc),
-                          });
-                        }}
-                        className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                    <div className="col-span-2 pt-1 text-[11px] text-[#2B2B38] flex items-center justify-between border-t border-black/5">
-                      <span>Individual Allocation:</span>
-                      <span className="font-mono font-bold text-[#374BFF]">
-                        ₹{Number(expenseForm.allocatedAmountRupees || 0).toLocaleString("en-IN")} per member
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-[#14141A]">Amount Paid (This Payment) (₹) *</label>
-                    <input
-                      type="number"
-                      min="1"
-                      required
-                      value={expenseForm.amountRupees}
-                      onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                    />
-                  </div>
-
-                  {/* SYSTEM-GENERATED READ-ONLY CALCULATION */}
-                  {(() => {
-                    const currentAllocRupees = Number(expenseForm.allocatedAmountRupees) || 0;
-                    const currentPaymentRupees = Number(expenseForm.amountRupees) || 0;
-                    const priorPaidPaise = expenses
-                      .filter((e) => {
-                        if (e.expenseType !== "personal") return false;
-                        if (e.memberId !== expenseForm.memberId) return false;
-                        if (expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom" && e.projectId) {
-                          return e.projectId === expenseForm.selectedProjectId;
-                        }
-                        return (
-                          e.title &&
-                          expenseForm.title &&
-                          e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
-                        );
-                      })
-                      .reduce((sum, e) => sum + e.amountPaise, 0);
-                    const priorPaidRupees = paiseToRupees(priorPaidPaise);
-                    const totalPaidRupees = priorPaidRupees + currentPaymentRupees;
-                    const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
-                    const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
-                    const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
-
-                    return (
-                      <div className="space-y-2">
-                        <div className="p-3.5 rounded-2xl bg-white border border-black/10 space-y-2">
-                          <span className="text-[11px] font-bold text-[#2B2B38] uppercase tracking-wider block">
-                            Automatic Balance Calculation
-                          </span>
-                          <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
-                              <span className="text-[10px] text-[#2B2B38] block">Allocated Amount</span>
-                              <span className="text-xs font-bold font-mono text-[#374BFF]">
-                                ₹{currentAllocRupees.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
-                              <span className="text-[10px] text-[#2B2B38] block">Total Paid</span>
-                              <span className="text-xs font-bold font-mono text-[#14141A]">
-                                ₹{totalPaidRupees.toLocaleString("en-IN")}
-                              </span>
-                              <span className="text-[9px] text-[#2B2B38] block">
-                                (Prior: ₹{priorPaidRupees.toLocaleString("en-IN")})
-                              </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
-                              <span className="text-[10px] text-[#2B2B38] block">Amount Left</span>
-                              <span
-                                className={`text-xs font-bold font-mono ${
-                                  amountLeftRupees === 0 ? "text-emerald-600 font-black" : "text-amber-700"
-                                }`}
-                              >
-                                ₹{amountLeftRupees.toLocaleString("en-IN")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* OVERPAYMENT GUARD */}
-                        {isOverpaid && (
-                          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                              <p className="text-xs text-red-800">
-                                <span className="font-bold">Overpayment detected:</span> Total paid (₹
-                                {totalPaidRupees.toLocaleString("en-IN")}) exceeds allocation (₹
-                                {currentAllocRupees.toLocaleString("en-IN")}) by ₹{excessRupees.toLocaleString("en-IN")}.
-                              </p>
-                            </div>
-                            {canViewFinance && (
-                              <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={expenseForm.allowOverpayment}
-                                  onChange={(e) =>
-                                    setExpenseForm({ ...expenseForm, allowOverpayment: e.target.checked })
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={
+                        savingExpense ||
+                        (expenseForm.expenseType === "personal" &&
+                          Number(expenseForm.allocatedAmountRupees || 0) > 0 &&
+                          (Number(expenseForm.amountRupees || 0) +
+                            paiseToRupees(
+                              expenses
+                                .filter((e) => {
+                                  if (e.expenseType !== "personal") return false;
+                                  if (e.memberId !== expenseForm.memberId) return false;
+                                  if (
+                                    expenseForm.selectedProjectId &&
+                                    expenseForm.selectedProjectId !== "custom" &&
+                                    e.projectId
+                                  ) {
+                                    return e.projectId === expenseForm.selectedProjectId;
                                   }
-                                  className="rounded text-[#374BFF]"
-                                />
-                                I am an authorized admin and approve this overpayment
-                              </label>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {expenseForm.expenseType === "studio" && (
-                <>
-                  <div>
-                    <label className="text-xs font-bold text-[#14141A]">Expense Title *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Domain Renewal or Client Lunch"
-                      value={expenseForm.title}
-                      onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                    />
+                                  return (
+                                    e.title &&
+                                    expenseForm.title &&
+                                    e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
+                                  );
+                                })
+                                .reduce((sum, e) => sum + e.amountPaise, 0)
+                            )) >
+                          Number(expenseForm.allocatedAmountRupees) &&
+                          !expenseForm.allowOverpayment)
+                      }
+                      className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Expense"}
+                    </button>
                   </div>
+                }
+              >
+                {canViewFinance && (
+                  <div>
+                    <label className="text-xs font-bold text-[#14141A]">Expense Classification *</label>
+                    <select
+                      value={expenseForm.expenseType}
+                      onChange={(e) =>
+                        setExpenseForm({
+                          ...expenseForm,
+                          expenseType: e.target.value as "studio" | "personal",
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    >
+                      <option value="studio">🏢 Studio Operational Expense (Deducted from Profit)</option>
+                      <option value="personal">👤 Personal Expense (Reimbursable to Member)</option>
+                    </select>
+                  </div>
+                )}
 
-                  <div className="grid grid-cols-2 gap-3">
+                {expenseForm.expenseType === "personal" && (
+                  <div className="space-y-3">
                     <div>
-                      <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                      <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
                       <select
-                        value={expenseForm.category}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                        value={expenseForm.memberId}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                       >
-                        <option value="tools">Tools / SaaS</option>
-                        <option value="hosting">Hosting & Cloud</option>
-                        <option value="domain">Domain</option>
-                        <option value="software">Software License</option>
-                        <option value="marketing">Marketing & Ads</option>
-                        <option value="travel">Travel</option>
-                        <option value="food">Food & Hospitality</option>
-                        <option value="other">Other</option>
+                        <option value="">Select Member</option>
+                        {teamMembers.map((tm) => (
+                          <option key={tm.id} value={tm.userId || tm.id}>
+                            {tm.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
+
                     <div>
-                      <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                      <label className="text-xs font-bold text-[#14141A]">Project Selection *</label>
+                      <select
+                        required
+                        value={expenseForm.selectedProjectId}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom") {
+                            setExpenseForm({
+                              ...expenseForm,
+                              selectedProjectId: "custom",
+                              title: "",
+                              totalBudgetRupees: "20000",
+                              memberCount: "4",
+                              allocatedAmountRupees: "5000",
+                            });
+                          } else if (!val) {
+                            setExpenseForm({
+                              ...expenseForm,
+                              selectedProjectId: "",
+                              title: "",
+                              totalBudgetRupees: "0",
+                              memberCount: "1",
+                              allocatedAmountRupees: "0",
+                            });
+                          } else {
+                            const selProj = projects.find((p) => p.id === val);
+                            if (selProj) {
+                              const budgetRupees = paiseToRupees(selProj.quotedAmountPaise);
+                              const count = selProj.assignees?.length || 4;
+                              const alloc = Math.floor(budgetRupees / Math.max(1, count));
+                              setExpenseForm({
+                                ...expenseForm,
+                                selectedProjectId: selProj.id,
+                                title: selProj.title || selProj.name || "",
+                                totalBudgetRupees: String(budgetRupees),
+                                memberCount: String(count),
+                                allocatedAmountRupees: String(alloc),
+                              });
+                            }
+                          }
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      >
+                        <option value="">-- Choose Existing CRM Project --</option>
+                        {projects.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.title || p.name} (Budget: ₹{paiseToRupees(p.quotedAmountPaise).toLocaleString("en-IN")})
+                          </option>
+                        ))}
+                        <option value="custom">-- Custom / Other Project --</option>
+                      </select>
+                    </div>
+
+                    {expenseForm.selectedProjectId === "custom" && (
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A]">Project Name *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Website Redesign or Saathi"
+                          value={expenseForm.title}
+                          onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                    )}
+
+                    {/* PROJECT BUDGET & MEMBER DIVISION */}
+                    <div className="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-[#F5F6FC] border border-black/10">
+                      <div>
+                        <label className="text-[11px] font-bold text-[#14141A]">Total Project Budget (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={expenseForm.totalBudgetRupees}
+                          onChange={(e) => {
+                            const newBudget = e.target.value;
+                            const count = Math.max(1, Number(expenseForm.memberCount) || 1);
+                            const alloc = Math.floor((Number(newBudget) || 0) / count);
+                            setExpenseForm({
+                              ...expenseForm,
+                              totalBudgetRupees: newBudget,
+                              allocatedAmountRupees: String(alloc),
+                            });
+                          }}
+                          className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-[#14141A]">Divide Among Members</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={expenseForm.memberCount}
+                          onChange={(e) => {
+                            const newCount = e.target.value;
+                            const budget = Number(expenseForm.totalBudgetRupees) || 0;
+                            const alloc = Math.floor(budget / Math.max(1, Number(newCount) || 1));
+                            setExpenseForm({
+                              ...expenseForm,
+                              memberCount: newCount,
+                              allocatedAmountRupees: String(alloc),
+                            });
+                          }}
+                          className="w-full mt-1 px-2.5 py-1.5 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                      <div className="col-span-2 pt-1 text-[11px] text-[#2B2B38] flex items-center justify-between border-t border-black/5">
+                        <span>Individual Allocation:</span>
+                        <span className="font-mono font-bold text-[#374BFF]">
+                          ₹{Number(expenseForm.allocatedAmountRupees || 0).toLocaleString("en-IN")} per member
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Amount Paid (This Payment) (₹) *</label>
                       <input
                         type="number"
                         min="1"
@@ -2950,310 +2835,306 @@ export function CrmTab({
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
                       />
                     </div>
+
+                    {/* SYSTEM-GENERATED READ-ONLY CALCULATION */}
+                    {(() => {
+                      const currentAllocRupees = Number(expenseForm.allocatedAmountRupees) || 0;
+                      const currentPaymentRupees = Number(expenseForm.amountRupees) || 0;
+                      const priorPaidPaise = expenses
+                        .filter((e) => {
+                          if (e.expenseType !== "personal") return false;
+                          if (e.memberId !== expenseForm.memberId) return false;
+                          if (expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom" && e.projectId) {
+                            return e.projectId === expenseForm.selectedProjectId;
+                          }
+                          return (
+                            e.title &&
+                            expenseForm.title &&
+                            e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
+                          );
+                        })
+                        .reduce((sum, e) => sum + e.amountPaise, 0);
+                      const priorPaidRupees = paiseToRupees(priorPaidPaise);
+                      const totalPaidRupees = priorPaidRupees + currentPaymentRupees;
+                      const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
+                      const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
+                      const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
+
+                      return (
+                        <div className="space-y-2">
+                          <div className="p-3.5 rounded-2xl bg-white border border-black/10 space-y-2">
+                            <span className="text-[11px] font-bold text-[#2B2B38] uppercase tracking-wider block">
+                              Automatic Balance Calculation
+                            </span>
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                                <span className="text-[10px] text-[#2B2B38] block">Allocated Amount</span>
+                                <span className="text-xs font-bold font-mono text-[#374BFF]">
+                                  ₹{currentAllocRupees.toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                                <span className="text-[10px] text-[#2B2B38] block">Total Paid</span>
+                                <span className="text-xs font-bold font-mono text-[#14141A]">
+                                  ₹{totalPaidRupees.toLocaleString("en-IN")}
+                                </span>
+                                <span className="text-[9px] text-[#2B2B38] block">
+                                  (Prior: ₹{priorPaidRupees.toLocaleString("en-IN")})
+                                </span>
+                              </div>
+                              <div className="p-2 rounded-xl bg-[#F5F6FC] border border-black/5">
+                                <span className="text-[10px] text-[#2B2B38] block">Amount Left</span>
+                                <span
+                                  className={`text-xs font-bold font-mono ${amountLeftRupees === 0 ? "text-emerald-600 font-black" : "text-amber-700"
+                                    }`}
+                                >
+                                  ₹{amountLeftRupees.toLocaleString("en-IN")}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* OVERPAYMENT GUARD */}
+                          {isOverpaid && (
+                            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-red-800">
+                                  <span className="font-bold">Overpayment detected:</span> Total paid (₹
+                                  {totalPaidRupees.toLocaleString("en-IN")}) exceeds allocation (₹
+                                  {currentAllocRupees.toLocaleString("en-IN")}) by ₹{excessRupees.toLocaleString("en-IN")}.
+                                </p>
+                              </div>
+                              {canViewFinance && (
+                                <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={expenseForm.allowOverpayment}
+                                    onChange={(e) =>
+                                      setExpenseForm({ ...expenseForm, allowOverpayment: e.target.checked })
+                                    }
+                                    className="rounded text-[#374BFF]"
+                                  />
+                                  I am an authorized admin and approve this overpayment
+                                </label>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
-                </>
-              )}
+                )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Date</label>
-                  <input
-                    type="date"
-                    value={expenseForm.date}
-                    onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Paid By</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Card / Cash / UPI"
-                    value={expenseForm.paidBy}
-                    onChange={(e) => setExpenseForm({ ...expenseForm, paidBy: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
+                {expenseForm.expenseType === "studio" && (
+                  <>
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Expense Title *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Domain Renewal or Client Lunch"
+                        value={expenseForm.title}
+                        onChange={(e) => setExpenseForm({ ...expenseForm, title: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
 
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Notes / Description</label>
-                <textarea
-                  rows={2}
-                  value={expenseForm.notes}
-                  onChange={(e) => setExpenseForm({ ...expenseForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  placeholder="Optional details..."
-                />
-              </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                        <select
+                          value={expenseForm.category}
+                          onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                        >
+                          <option value="tools">Tools / SaaS</option>
+                          <option value="hosting">Hosting & Cloud</option>
+                          <option value="domain">Domain</option>
+                          <option value="software">Software License</option>
+                          <option value="marketing">Marketing & Ads</option>
+                          <option value="travel">Travel</option>
+                          <option value="food">Food & Hospitality</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          value={expenseForm.amountRupees}
+                          onChange={(e) => setExpenseForm({ ...expenseForm, amountRupees: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setCreateExpenseModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={
-                    savingExpense ||
-                    (expenseForm.expenseType === "personal" &&
-                      Number(expenseForm.allocatedAmountRupees || 0) > 0 &&
-                      (Number(expenseForm.amountRupees || 0) +
-                        paiseToRupees(
-                          expenses
-                            .filter((e) => {
-                              if (e.expenseType !== "personal") return false;
-                              if (e.memberId !== expenseForm.memberId) return false;
-                              if (
-                                expenseForm.selectedProjectId &&
-                                expenseForm.selectedProjectId !== "custom" &&
-                                e.projectId
-                              ) {
-                                return e.projectId === expenseForm.selectedProjectId;
-                              }
-                              return (
-                                e.title &&
-                                expenseForm.title &&
-                                e.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase()
-                              );
-                            })
-                            .reduce((sum, e) => sum + e.amountPaise, 0)
-                        )) >
-                        Number(expenseForm.allocatedAmountRupees) &&
-                      !expenseForm.allowOverpayment)
-                  }
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Expense"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: EDIT EXPENSE */}
-      {editExpenseModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading text-lg font-bold text-[#14141A]">Edit Expense</h3>
-              <button onClick={() => setEditExpenseModalOpen(false)} className="text-[#2B2B38] hover:text-[#14141A]">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateExpense} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">
-                  {expenseEditForm.expenseType === "personal" ? "Project Name *" : "Title *"}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={expenseEditForm.title}
-                  onChange={(e) => setExpenseEditForm({ ...expenseEditForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-
-              {expenseEditForm.expenseType === "studio" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-[#14141A]">Category *</label>
-                    <select
-                      value={expenseEditForm.category}
-                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, category: e.target.value })}
+                    <label className="text-xs font-bold text-[#14141A]">Date</label>
+                    <input
+                      type="date"
+                      value={expenseForm.date}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                    >
-                      <option value="tools">Tools / SaaS</option>
-                      <option value="hosting">Hosting & Cloud</option>
-                      <option value="domain">Domain</option>
-                      <option value="software">Software License</option>
-                      <option value="marketing">Marketing & Ads</option>
-                      <option value="travel">Travel</option>
-                      <option value="food">Food & Hospitality</option>
-                      <option value="other">Other</option>
-                    </select>
+                    />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                    <label className="text-xs font-bold text-[#14141A]">Paid By</label>
                     <input
-                      type="number"
-                      min="1"
-                      required
-                      value={expenseEditForm.amountRupees}
-                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                      type="text"
+                      placeholder="e.g. Card / Bank"
+                      value={expenseForm.paidBy}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, paidBy: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-[#14141A]">Individual Allocation (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={expenseEditForm.allocatedAmountRupees}
-                        onChange={(e) =>
-                          setExpenseEditForm({ ...expenseEditForm, allocatedAmountRupees: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-[#14141A]">Amount Paid (₹) *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        required
-                        value={expenseEditForm.amountRupees}
-                        onChange={(e) =>
-                          setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })
-                        }
-                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
-                      />
-                    </div>
-                  </div>
 
-                  {(() => {
-                    const currentAllocRupees = Number(expenseEditForm.allocatedAmountRupees) || 0;
-                    const currentPaymentRupees = Number(expenseEditForm.amountRupees) || 0;
-                    const priorPaidOtherPaise = expenses
-                      .filter((e) => {
-                        if (e.id === expenseEditForm.id) return false;
-                        if (e.expenseType !== "personal") return false;
-                        if (e.memberId !== expenseEditForm.memberId) return false;
-                        if (expenseEditForm.projectId && e.projectId) {
-                          return e.projectId === expenseEditForm.projectId;
-                        }
-                        return (
-                          e.title &&
-                          expenseEditForm.title &&
-                          e.title.trim().toLowerCase() === expenseEditForm.title.trim().toLowerCase()
-                        );
-                      })
-                      .reduce((sum, e) => sum + e.amountPaise, 0);
-                    const priorPaidOtherRupees = paiseToRupees(priorPaidOtherPaise);
-                    const totalPaidRupees = priorPaidOtherRupees + currentPaymentRupees;
-                    const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
-                    const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
-                    const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
+                <div>
+                  <label className="text-xs font-bold text-[#14141A]">Notes / Description</label>
+                  <textarea
+                    rows={2}
+                    value={expenseForm.notes}
+                    onChange={(e) => setExpenseForm({ ...expenseForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    placeholder="e.g. Server hosting, client lunch, travel reimbursement"
+                  />
+                </div>
+      </AdminModal>
 
-                    return (
-                      <div className="space-y-2">
-                        <div className="p-3 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between text-xs font-bold">
-                          <span>Amount Left to Pay:</span>
-                          <span
-                            className={
-                              amountLeftRupees === 0
-                                ? "text-emerald-600 font-mono font-black"
-                                : "text-amber-700 font-mono"
-                            }
-                          >
-                            ₹{amountLeftRupees.toLocaleString("en-IN")}
-                          </span>
-                        </div>
-                        {isOverpaid && (
-                          <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                              <p className="text-xs text-red-800">
-                                <span className="font-bold">Overpayment detected:</span> Exceeds allocation by ₹
-                                {excessRupees.toLocaleString("en-IN")}.
-                              </p>
-                            </div>
-                            {canViewFinance && (
-                              <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={expenseEditForm.allowOverpayment}
-                                  onChange={(e) =>
-                                    setExpenseEditForm({
-                                      ...expenseEditForm,
-                                      allowOverpayment: e.target.checked,
+      {/* MODAL: EDIT EXPENSE */}
+      <AdminModal
+        isOpen={editExpenseModalOpen}
+                    onClose={() => setEditExpenseModalOpen(false)}
+                    title="Edit Expense"
+                    onSubmit={handleUpdateExpense}
+                    maxWidth="md"
+                    footer={
+                      <div className="flex gap-2 w-full">
+                        <button
+                          type="button"
+                          onClick={() => setEditExpenseModalOpen(false)}
+                          className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={
+                            savingExpense ||
+                            (expenseEditForm.expenseType === "personal" &&
+                              Number(expenseEditForm.allocatedAmountRupees || 0) > 0 &&
+                              (Number(expenseEditForm.amountRupees || 0) +
+                                paiseToRupees(
+                                  expenses
+                                    .filter((e) => {
+                                      if (e.id === expenseEditForm.id) return false;
+                                      if (e.expenseType !== "personal") return false;
+                                      if (e.memberId !== expenseEditForm.memberId) return false;
+                                      if (expenseEditForm.projectId && e.projectId) {
+                                        return e.projectId === expenseEditForm.projectId;
+                                      }
+                                      return (
+                                        e.title &&
+                                        expenseEditForm.title &&
+                                        e.title.trim().toLowerCase() === expenseEditForm.title.trim().toLowerCase()
+                                      );
                                     })
-                                  }
-                                  className="rounded text-[#374BFF]"
-                                />
-                                Authorize overpayment as admin
-                              </label>
-                            )}
-                          </div>
-                        )}
+                                    .reduce((sum, e) => sum + e.amountPaise, 0)
+                                )) >
+                              Number(expenseEditForm.allocatedAmountRupees) &&
+                              !expenseEditForm.allowOverpayment)
+                          }
+                          className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        >
+                          {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
+                        </button>
                       </div>
-                    );
-                  })()}
-                </div>
-              )}
+                    }
+                  >
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">
+                        {expenseEditForm.expenseType === "personal" ? "Project Name *" : "Title *"}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={expenseEditForm.title}
+                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, title: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Date</label>
-                  <input
-                    type="date"
-                    value={expenseEditForm.date}
-                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#14141A]">Paid By</label>
-                  <input
-                    type="text"
-                    value={expenseEditForm.paidBy}
-                    onChange={(e) => setExpenseEditForm({ ...expenseEditForm, paidBy: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                  />
-                </div>
-              </div>
+                    {expenseEditForm.expenseType === "studio" ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A]">Category *</label>
+                          <select
+                            value={expenseEditForm.category}
+                            onChange={(e) => setExpenseEditForm({ ...expenseEditForm, category: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                          >
+                            <option value="tools">Tools / SaaS</option>
+                            <option value="hosting">Hosting & Cloud</option>
+                            <option value="domain">Domain</option>
+                            <option value="software">Software License</option>
+                            <option value="marketing">Marketing & Ads</option>
+                            <option value="travel">Travel</option>
+                            <option value="food">Food & Hospitality</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A]">Amount (₹) *</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={expenseEditForm.amountRupees}
+                            onChange={(e) => setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })}
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-bold text-[#14141A]">Individual Allocation (₹)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={expenseEditForm.allocatedAmountRupees}
+                              onChange={(e) =>
+                                setExpenseEditForm({ ...expenseEditForm, allocatedAmountRupees: e.target.value })
+                              }
+                              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-[#14141A]">Amount Paid (₹) *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              required
+                              value={expenseEditForm.amountRupees}
+                              onChange={(e) =>
+                                setExpenseEditForm({ ...expenseEditForm, amountRupees: e.target.value })
+                              }
+                              className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold font-mono focus:outline-none focus:border-[#374BFF]"
+                            />
+                          </div>
+                        </div>
 
-              {expenseEditForm.expenseType === "personal" && canViewFinance && (
-                <div className="p-3 rounded-xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#14141A]">Reimbursement Cleared</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={expenseEditForm.isReimbursed}
-                      onChange={(e) => setExpenseEditForm({ ...expenseEditForm, isReimbursed: e.target.checked })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-                  </label>
-                </div>
-              )}
-
-              <div>
-                <label className="text-xs font-bold text-[#14141A]">Notes</label>
-                <textarea
-                  rows={2}
-                  value={expenseEditForm.notes}
-                  onChange={(e) => setExpenseEditForm({ ...expenseEditForm, notes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditExpenseModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={
-                    savingExpense ||
-                    (expenseEditForm.expenseType === "personal" &&
-                      Number(expenseEditForm.allocatedAmountRupees || 0) > 0 &&
-                      (Number(expenseEditForm.amountRupees || 0) +
-                        paiseToRupees(
-                          expenses
+                        {(() => {
+                          const currentAllocRupees = Number(expenseEditForm.allocatedAmountRupees) || 0;
+                          const currentPaymentRupees = Number(expenseEditForm.amountRupees) || 0;
+                          const priorPaidOtherPaise = expenses
                             .filter((e) => {
                               if (e.id === expenseEditForm.id) return false;
                               if (e.expenseType !== "personal") return false;
@@ -3267,69 +3148,156 @@ export function CrmTab({
                                 e.title.trim().toLowerCase() === expenseEditForm.title.trim().toLowerCase()
                               );
                             })
-                            .reduce((sum, e) => sum + e.amountPaise, 0)
-                        )) >
-                        Number(expenseEditForm.allocatedAmountRupees) &&
-                      !expenseEditForm.allowOverpayment)
-                  }
-                  className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                >
-                  {savingExpense ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                            .reduce((sum, e) => sum + e.amountPaise, 0);
+                          const priorPaidOtherRupees = paiseToRupees(priorPaidOtherPaise);
+                          const totalPaidRupees = priorPaidOtherRupees + currentPaymentRupees;
+                          const amountLeftRupees = Math.max(0, currentAllocRupees - totalPaidRupees);
+                          const isOverpaid = currentAllocRupees > 0 && totalPaidRupees > currentAllocRupees;
+                          const excessRupees = isOverpaid ? totalPaidRupees - currentAllocRupees : 0;
 
-      {/* REUSABLE CONFIRM DELETE DIALOG */}
-      {deleteConfirmOpen && deleteTarget && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="h-10 w-10 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-heading text-base font-bold text-[#14141A]">
-                  {deleteTarget.title}
-                </h3>
-                <p className="text-xs text-[#2B2B38] mt-0.5">
-                  {deleteTarget.description}
-                </p>
-              </div>
-            </div>
+                          return (
+                            <div className="space-y-2">
+                              <div className="p-3 rounded-2xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between text-xs font-bold">
+                                <span>Amount Left to Pay:</span>
+                                <span
+                                  className={
+                                    amountLeftRupees === 0
+                                      ? "text-emerald-600 font-mono font-black"
+                                      : "text-amber-700 font-mono"
+                                  }
+                                >
+                                  ₹{amountLeftRupees.toLocaleString("en-IN")}
+                                </span>
+                              </div>
 
-            {deleteTarget.destructiveWarning && (
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
-                {deleteTarget.destructiveWarning}
-              </div>
-            )}
+                              {isOverpaid && (
+                                <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+                                  <div className="flex items-start gap-2">
+                                    <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-red-800">
+                                      <span className="font-bold">Overpayment detected:</span> Exceeds allocation by ₹
+                                      {excessRupees.toLocaleString("en-IN")}.
+                                    </p>
+                                  </div>
+                                  {canViewFinance && (
+                                    <label className="flex items-center gap-2 pt-1 text-xs font-bold text-red-900 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={expenseEditForm.allowOverpayment}
+                                        onChange={(e) =>
+                                          setExpenseEditForm({
+                                            ...expenseEditForm,
+                                            allowOverpayment: e.target.checked,
+                                          })
+                                        }
+                                        className="rounded text-[#374BFF]"
+                                      />
+                                      Authorize overpayment as admin
+                                    </label>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
 
-            <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteConfirmOpen(false);
-                  setDeleteTarget(null);
-                }}
-                disabled={isDeleting}
-                className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleExecuteDelete}
-                disabled={isDeleting}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A]">Date</label>
+                        <input
+                          type="date"
+                          value={expenseEditForm.date}
+                          onChange={(e) => setExpenseEditForm({ ...expenseEditForm, date: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A]">Paid By</label>
+                        <input
+                          type="text"
+                          value={expenseEditForm.paidBy}
+                          onChange={(e) => setExpenseEditForm({ ...expenseEditForm, paidBy: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
+                    </div>
+
+                    {expenseEditForm.expenseType === "personal" && canViewFinance && (
+                      <div className="p-3 rounded-xl bg-[#F5F6FC] border border-black/10 flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#14141A]">Reimbursement Cleared</span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={expenseEditForm.isReimbursed}
+                            onChange={(e) => setExpenseEditForm({ ...expenseEditForm, isReimbursed: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs font-bold text-[#14141A]">Notes</label>
+                      <textarea
+                        rows={2}
+                        value={expenseEditForm.notes}
+                        onChange={(e) => setExpenseEditForm({ ...expenseEditForm, notes: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      />
+                    </div>
+                  </AdminModal>
+
+                  {/* REUSABLE CONFIRM DELETE DIALOG */}
+                  {deleteConfirmOpen && deleteTarget && (
+                    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-black/10 space-y-4 shadow-2xl">
+                        <div className="flex items-center gap-3 text-rose-600">
+                          <div className="h-10 w-10 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-heading text-base font-bold text-[#14141A]">
+                              {deleteTarget.title}
+                            </h3>
+                            <p className="text-xs text-[#2B2B38] mt-0.5">
+                              {deleteTarget.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {deleteTarget.destructiveWarning && (
+                          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+                            {deleteTarget.destructiveWarning}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteConfirmOpen(false);
+                              setDeleteTarget(null);
+                            }}
+                            disabled={isDeleting}
+                            className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC]"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleExecuteDelete}
+                            disabled={isDeleting}
+                            className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                          >
+                            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                );
 }
