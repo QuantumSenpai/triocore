@@ -13,9 +13,11 @@ export async function GET(req: NextRequest) {
   try {
     if (!db) return NextResponse.json({ payments: [] });
 
-    const allPayments = await db.select().from(payments).orderBy(desc(payments.createdAt));
-    const allProjects = await db.select().from(projects);
-    const allClients = await db.select().from(clients);
+    const [allPayments, allProjects, allClients] = await Promise.all([
+      db.select().from(payments).orderBy(desc(payments.createdAt)),
+      db.select().from(projects),
+      db.select().from(clients),
+    ]);
 
     const enriched = allPayments.map((p) => {
       const proj = allProjects.find((pr) => pr.id === p.projectId);

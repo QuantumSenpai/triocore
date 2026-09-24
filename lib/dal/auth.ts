@@ -6,6 +6,7 @@ import { isAdminEmail } from "@/lib/auth-whitelist";
 import { db } from "@/lib/db";
 import { adminMembers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { getAdminMemberWithCache, getSessionWithCache } from "@/lib/auth-cache";
 
 export interface AdminAuthResult {
   authorized: boolean;
@@ -34,32 +35,25 @@ export async function requireAdminPage(): Promise<{
 }> {
   try {
     const headerList = await headers();
-    const sessionRes = await auth.api.getSession({
-      headers: headerList,
-    });
+    const sessionRes = await getSessionWithCache(headerList);
 
     if (!sessionRes?.user || !isAdminEmail(sessionRes.user.email)) {
       redirect("/admin/login");
     }
 
-    // Check admin_members table
+    // Check admin_members table via deduplicated cache
     let role = "member";
     let canViewFinance = false;
 
     if (db) {
       try {
-        const member = await db
-          .select()
-          .from(adminMembers)
-          .where(eq(adminMembers.userId, sessionRes.user.id))
-          .limit(1);
-
-        if (member.length > 0) {
-          if (member[0].status === "disabled") {
+        const member = await getAdminMemberWithCache(sessionRes.user.id);
+        if (member) {
+          if (member.status === "disabled") {
             redirect("/admin/login?error=disabled");
           }
-          role = member[0].role;
-          canViewFinance = member[0].canViewFinance || member[0].role === "owner";
+          role = member.role;
+          canViewFinance = member.canViewFinance || member.role === "owner";
         }
       } catch {}
     }
@@ -98,9 +92,8 @@ export async function requireAdminPage(): Promise<{
 export async function requireAdmin(req?: NextRequest): Promise<AdminAuthResult> {
   try {
     const headerList = req ? req.headers : await headers();
-    const sessionRes = await auth.api.getSession({
-      headers: headerList,
-    });
+    const isMutation = req ? (req.method !== "GET" && req.method !== "HEAD") : false;
+    const sessionRes = await getSessionWithCache(headerList, isMutation);
 
     if (!sessionRes?.user || !isAdminEmail(sessionRes.user.email)) {
       return {
@@ -117,14 +110,11 @@ export async function requireAdmin(req?: NextRequest): Promise<AdminAuthResult> 
 
     if (db) {
       try {
-        const member = await db
-          .select()
-          .from(adminMembers)
-          .where(eq(adminMembers.userId, sessionRes.user.id))
-          .limit(1);
+        const isMutation = req ? (req.method !== "GET" && req.method !== "HEAD") : false;
+        const member = await getAdminMemberWithCache(sessionRes.user.id, isMutation);
 
-        if (member.length > 0) {
-          if (member[0].status === "disabled") {
+        if (member) {
+          if (member.status === "disabled") {
             return {
               authorized: false,
               response: NextResponse.json(
@@ -133,8 +123,8 @@ export async function requireAdmin(req?: NextRequest): Promise<AdminAuthResult> 
               ),
             };
           }
-          role = member[0].role;
-          canViewFinance = member[0].canViewFinance || member[0].role === "owner";
+          role = member.role;
+          canViewFinance = member.canViewFinance || member.role === "owner";
         }
       } catch {}
     }

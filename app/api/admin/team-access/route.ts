@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { adminMembers, user, auditLogs, session } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdminRole } from "@/lib/dal/auth";
+import { invalidateAdminMemberCache } from "@/lib/auth-cache";
 
 export async function GET(req: NextRequest) {
   const authCheck = await requireAdminRole("owner", req);
@@ -51,6 +52,8 @@ export async function PUT(req: NextRequest) {
       status: status !== undefined ? status : undefined,
       updatedAt: new Date(),
     }).where(eq(adminMembers.userId, userId)).returning();
+
+    invalidateAdminMemberCache(userId);
 
     if (status === "disabled") {
       await db.delete(session).where(eq(session.userId, userId));

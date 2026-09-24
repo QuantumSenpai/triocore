@@ -29,6 +29,7 @@ import { OverviewTab } from "./components/overview-tab";
 import { CrmTab } from "./components/crm-tab";
 import { OperationsTab } from "./components/operations-tab";
 import { CmsTab } from "./components/cms-tab";
+import { DashboardSkeleton } from "./components/dashboard-skeleton";
 import type {
   AdminInquiry,
   AdminClient,
@@ -132,89 +133,78 @@ export default function AdminDashboardPage() {
 
   const loadAllData = useCallback(async () => {
     try {
-      // Inquiries
-      const inqRes = await fetch("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] }));
+      // Stage 1: Load essential Overview tab data concurrently
+      const [inqRes, projRes, payRes, expRes, setRes, fbRes] = await Promise.all([
+        fetch("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
+        fetch("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+        fetch("/api/admin/payments").then((r) => {
+          if (r.status === 403) setCanViewFinance(false);
+          return r.ok ? r.json() : { payments: [] };
+        }),
+        fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] })),
+        fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : { settings: {} })),
+        fetch("/api/admin/feedback").then((r) => (r.ok ? r.json() : { reports: [], unreadCount: 0 })),
+      ]);
+
       setInquiries(inqRes.inquiries || []);
-
-      // Clients
-      const clientRes = await fetch("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] }));
-      setClients(clientRes.clients || []);
-
-      // Business Projects
-      const projRes = await fetch("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] }));
       setBusinessProjects(projRes.projects || []);
-
-      // Payments
-      const payRes = await fetch("/api/admin/payments").then((r) => {
-        if (r.status === 403) setCanViewFinance(false);
-        return r.ok ? r.json() : { payments: [] };
-      });
       setPayments(payRes.payments || []);
-
-      // Expenses
-      const expRes = await fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] }));
       setExpenses(expRes.expenses || []);
-
-      // Team
-      const teamRes = await fetch("/api/admin/team").then((r) => (r.ok ? r.json() : { members: [] }));
-      setTeamMembers(teamRes.members || teamRes.team || []);
-
-      // Employees
-      const empRes = await fetch("/api/admin/employees").then((r) => (r.ok ? r.json() : { employees: [] }));
-      setEmployees(empRes.employees || []);
-
-      // Stats
-      const statRes = await fetch("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] }));
-      setStats(statRes.stats || []);
-
-      // Services
-      const servRes = await fetch("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] }));
-      setServices(servRes.services || []);
-
-      // Pricing
-      const priceRes = await fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] }));
-      setPricing(priceRes.plans || []);
-
-      // Showcase Projects
-      const showRes = await fetch("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] }));
-      setShowcaseProjects(showRes.projects || []);
-
-      // FAQs & Categories
-      const faqRes = await fetch("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] }));
-      setFaqs(faqRes.faqs || []);
-
-      const faqCatRes = await fetch("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] }));
-      setFaqCategories(faqCatRes.categories || []);
-
-      // Legal
-      const legalRes = await fetch("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] }));
-      setLegalDocs(legalRes.documents || []);
-
-      // Notes
-      const notesRes = await fetch("/api/admin/notes").then((r) => (r.ok ? r.json() : { notes: [] }));
-      setNotes(notesRes.notes || []);
-
-      // Feedback
-      const fbRes = await fetch("/api/admin/feedback").then((r) => (r.ok ? r.json() : { reports: [], unreadCount: 0 }));
       setFeedbackReports(fbRes.reports || []);
       setUnreadFeedbackCount(fbRes.unreadCount || 0);
-
-      // Site Settings
-      const setRes = await fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : { settings: {} }));
       if (setRes.settings?.monthly_goal_paise) {
         setMonthlyGoalPaise(Number(setRes.settings.monthly_goal_paise));
       }
+      // Unlock Overview screen immediately as soon as Stage 1 completes
+      setLoading(false);
 
-      // Site Content
-      const contRes = await fetch("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] }));
+      // Stage 2: Stream remaining tab data in parallel background batch
+      const [
+        clientRes,
+        teamRes,
+        empRes,
+        statRes,
+        servRes,
+        priceRes,
+        showRes,
+        faqRes,
+        faqCatRes,
+        legalRes,
+        notesRes,
+        contRes,
+        accessRes,
+      ] = await Promise.all([
+        fetch("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
+        fetch("/api/admin/team").then((r) => (r.ok ? r.json() : { members: [] })),
+        fetch("/api/admin/employees").then((r) => (r.ok ? r.json() : { employees: [] })),
+        fetch("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
+        fetch("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
+        fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
+        fetch("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+        fetch("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
+        fetch("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
+        fetch("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] })),
+        fetch("/api/admin/notes").then((r) => (r.ok ? r.json() : { notes: [] })),
+        fetch("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] })),
+        fetch("/api/admin/team-access").then((r) => {
+          if (r.status === 403) setUserRole("member");
+          return r.ok ? r.json() : { members: [] };
+        }),
+      ]);
+
+      setClients(clientRes.clients || []);
+      setTeamMembers(teamRes.members || teamRes.team || []);
+      setEmployees(empRes.employees || []);
+      setStats(statRes.stats || []);
+      setServices(servRes.services || []);
+      setPricing(priceRes.plans || []);
+      setShowcaseProjects(showRes.projects || []);
+      setFaqs(faqRes.faqs || []);
+      setFaqCategories(faqCatRes.categories || []);
+      setLegalDocs(legalRes.documents || []);
+      setNotes(notesRes.notes || []);
       setSiteContent(contRes.content || []);
-
-      // Team Access (Owner only)
-      const accessRes = await fetch("/api/admin/team-access").then((r) => {
-        if (r.status === 403) setUserRole("member");
-        return r.ok ? r.json() : { members: [] };
-      });
-      if (accessRes.members) {
+      if (accessRes.members && accessRes.members.length > 0) {
         setUserRole("owner");
       }
     } catch (err) {
@@ -352,12 +342,7 @@ export default function AdminDashboardPage() {
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#374BFF] border-t-transparent" />
-            <p className="font-heading text-sm font-bold text-[#14141A]">
-              Connecting to Neon dev cluster...
-            </p>
-          </div>
+          <DashboardSkeleton />
         ) : (
           <>
             {activeTab === "overview" && (

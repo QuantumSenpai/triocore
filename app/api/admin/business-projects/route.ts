@@ -12,22 +12,12 @@ export async function GET(req: NextRequest) {
   try {
     if (!db) return NextResponse.json({ projects: [] });
 
-    const allProjects = await db.select().from(projects).orderBy(desc(projects.createdAt));
-    const allClients = await db.select().from(clients);
-    const allMilestones = await db.select().from(milestones);
-    const allPayments = await db.select().from(payments);
-
-    let allProjectMembers: {
-      id: string;
-      projectId: string;
-      userId: string;
-      role: string | null;
-      userName: string | null;
-      userEmail: string | null;
-    }[] = [];
-
-    try {
-      allProjectMembers = await db
+    const [allProjects, allClients, allMilestones, allPayments, allProjectMembers] = await Promise.all([
+      db.select().from(projects).orderBy(desc(projects.createdAt)),
+      db.select().from(clients),
+      db.select().from(milestones),
+      db.select().from(payments),
+      db
         .select({
           id: projectMembers.id,
           projectId: projectMembers.projectId,
@@ -37,8 +27,16 @@ export async function GET(req: NextRequest) {
           userEmail: user.email,
         })
         .from(projectMembers)
-        .leftJoin(user, eq(projectMembers.userId, user.id));
-    } catch {}
+        .leftJoin(user, eq(projectMembers.userId, user.id))
+        .catch(() => [] as {
+          id: string;
+          projectId: string;
+          userId: string;
+          role: string | null;
+          userName: string | null;
+          userEmail: string | null;
+        }[]),
+    ]);
 
     const now = Date.now();
 

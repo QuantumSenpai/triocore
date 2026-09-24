@@ -26,11 +26,10 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
       options.requireOwner === true;
 
     const shouldBypassCache =
-      options.bypassCache === true || isDestructive || isFinanceRoute || isRoleChangingRoute;
+      options.bypassCache === true || isDestructive;
 
-    const session = await auth.api.getSession({
-      headers: req.headers,
-    });
+    const { getSessionWithCache, getAdminMemberWithCache } = await import("@/lib/auth-cache");
+    const session = await getSessionWithCache(req.headers, isDestructive);
 
     if (!session || !session.user || !isAdminEmail(session.user.email)) {
       return {
@@ -46,11 +45,11 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
     }
 
     const { db } = await import("@/lib/db");
-    const { adminMembers, session: sessionTable } = await import("@/lib/db/schema");
+    const { session: sessionTable } = await import("@/lib/db/schema");
     const { eq, and, gt } = await import("drizzle-orm");
 
     if (db) {
-      // 1. If bypassing cache, verify the session actually exists and is active in the database
+      // 1. If bypassing cache (destructive mutations), verify the session actually exists and is active in the database
       if (shouldBypassCache && session.session?.id) {
         const activeDbSessions = await db
           .select()
@@ -77,14 +76,10 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
         }
       }
 
-      // 2. Always verify admin_members directly against the DB for disabled flag and role
-      const memberRows = await db
-        .select()
-        .from(adminMembers)
-        .where(eq(adminMembers.userId, session.user.id))
-        .limit(1);
+      // 2. Verify admin_members directly or via deduplicated in-memory cache
+      const member = await getAdminMemberWithCache(session.user.id, isDestructive);
 
-      if (memberRows.length === 0) {
+      if (!member) {
         return {
           authorized: false,
           user: null,
@@ -96,8 +91,6 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
           ),
         };
       }
-
-      const member = memberRows[0];
 
       // Instant rejection if account was disabled
       if (member.status === "disabled") {

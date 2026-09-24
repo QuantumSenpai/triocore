@@ -102,8 +102,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const data = await db.select().from(expenses).orderBy(desc(expenses.createdAt));
-    const allUsers = await db.select({ id: user.id, name: user.name, email: user.email }).from(user);
+    const [data, allUsers] = await Promise.all([
+      db.select().from(expenses).orderBy(desc(expenses.createdAt)),
+      db.select({ id: user.id, name: user.name, email: user.email }).from(user),
+    ]);
     const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
     let filtered = data;
