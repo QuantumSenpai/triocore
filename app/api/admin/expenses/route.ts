@@ -6,6 +6,81 @@ import { requireAdmin } from "@/lib/dal/auth";
 import { formatPaise, paiseToRupees } from "@/lib/money";
 import { expenseCreateSchema, expenseEditSchema } from "@/lib/validations/crm";
 
+/**
+ * Recomputes chronological running balances for all personal expenses belonging to
+ * a specific (memberId, project) group.
+ *
+ * Each row stores its OWN snapshot of `amountLeftPaise` after that payment was made:
+ *   Amount Left (row i) = Total Project Budget - (sum of payments 1..i in chronological order)
+ */
+export async function syncRunningBalances(
+  memberId: string | null | undefined,
+  projectId: string | null | undefined,
+  title: string | null | undefined,
+  budgetOverridePaise?: number
+) {
+  if (!db || !memberId) return;
+
+  const allMemberExpenses = await db
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, memberId)));
+
+  const projectExpenses = allMemberExpenses.filter((e) => {
+    if (projectId && e.projectId && e.projectId === projectId) return true;
+    if (title && e.title && e.title.trim().toLowerCase() === title.trim().toLowerCase()) return true;
+    return false;
+  });
+
+  if (projectExpenses.length === 0) return;
+
+  // Determine canonical budget (allocatedAmountPaise)
+  let canonicalBudgetPaise = budgetOverridePaise && budgetOverridePaise > 0 ? budgetOverridePaise : 0;
+  if (canonicalBudgetPaise <= 0) {
+    const existingWithBudget = projectExpenses.find((e) => (e.allocatedAmountPaise || 0) > 0);
+    if (existingWithBudget) {
+      canonicalBudgetPaise = existingWithBudget.allocatedAmountPaise || 0;
+    }
+  }
+
+  // Sort chronologically (oldest to newest)
+  projectExpenses.sort((a, b) => {
+    const dateA = a.date || "";
+    const dateB = b.date || "";
+    if (dateA !== dateB) return dateA.localeCompare(dateB);
+    const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    if (createdA !== createdB) return createdA - createdB;
+    return a.id.localeCompare(b.id);
+  });
+
+  let cumulativePaid = 0;
+  for (const exp of projectExpenses) {
+    cumulativePaid += exp.amountPaise;
+    const amountLeftPaise = canonicalBudgetPaise > 0 ? Math.max(0, canonicalBudgetPaise - cumulativePaid) : 0;
+    const isReimbursed = canonicalBudgetPaise > 0 ? amountLeftPaise === 0 : exp.isReimbursed;
+
+    if (
+      exp.amountLeftPaise !== amountLeftPaise ||
+      (canonicalBudgetPaise > 0 && exp.allocatedAmountPaise !== canonicalBudgetPaise) ||
+      (canonicalBudgetPaise > 0 && exp.isReimbursed !== isReimbursed)
+    ) {
+      await db
+        .update(expenses)
+        .set({
+          amountLeftPaise,
+          allocatedAmountPaise: canonicalBudgetPaise > 0 ? canonicalBudgetPaise : exp.allocatedAmountPaise,
+          isReimbursed,
+          updatedAt: new Date(),
+        })
+        .where(eq(expenses.id, exp.id));
+      exp.amountLeftPaise = amountLeftPaise;
+      if (canonicalBudgetPaise > 0) exp.allocatedAmountPaise = canonicalBudgetPaise;
+      exp.isReimbursed = isReimbursed;
+    }
+  }
+}
+
 export async function GET(req: NextRequest) {
   const authCheck = await requireAdmin(req);
   if (!authCheck.authorized) return authCheck.response!;
@@ -58,19 +133,67 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const enriched = filtered.map((e) => ({
-      ...e,
-      formattedAmount: formatPaise(e.amountPaise),
-      amountRupees: paiseToRupees(e.amountPaise),
-      amountLeftPaise: e.amountLeftPaise || 0,
-      amountLeftRupees: paiseToRupees(e.amountLeftPaise || 0),
-      formattedAmountLeft: formatPaise(e.amountLeftPaise || 0),
-      allocatedAmountPaise: e.allocatedAmountPaise || 0,
-      allocatedAmountRupees: paiseToRupees(e.allocatedAmountPaise || 0),
-      formattedAllocatedAmount: formatPaise(e.allocatedAmountPaise || 0),
-      memberName: (e.memberId && userMap.get(e.memberId)?.name) || e.paidBy || "Team Member",
-      paidAt: e.date || (e.createdAt ? new Date(e.createdAt).toISOString() : ""),
-    }));
+    // Calculate chronological running balances per (memberId, project) group
+    const personalRowsByGroup = new Map<string, typeof data>();
+    for (const e of filtered) {
+      if (e.expenseType === "personal" && e.memberId) {
+        const pKey = (e.projectId || e.title || "general").trim().toLowerCase();
+        const key = `${e.memberId}::${pKey}`;
+        if (!personalRowsByGroup.has(key)) {
+          personalRowsByGroup.set(key, []);
+        }
+        personalRowsByGroup.get(key)!.push(e);
+      }
+    }
+
+    const runningBalanceMap = new Map<
+      string,
+      { amountLeftPaise: number; allocatedAmountPaise: number; isReimbursed: boolean }
+    >();
+    for (const [, groupRows] of personalRowsByGroup) {
+      const canonicalBudget = groupRows.find((e) => (e.allocatedAmountPaise || 0) > 0)?.allocatedAmountPaise || 0;
+      const sorted = [...groupRows].sort((a, b) => {
+        const dateA = a.date || "";
+        const dateB = b.date || "";
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (createdA !== createdB) return createdA - createdB;
+        return a.id.localeCompare(b.id);
+      });
+
+      let cumPaid = 0;
+      for (const row of sorted) {
+        cumPaid += row.amountPaise;
+        const left = canonicalBudget > 0 ? Math.max(0, canonicalBudget - cumPaid) : (row.amountLeftPaise || 0);
+        runningBalanceMap.set(row.id, {
+          amountLeftPaise: left,
+          allocatedAmountPaise: canonicalBudget > 0 ? canonicalBudget : (row.allocatedAmountPaise || 0),
+          isReimbursed: canonicalBudget > 0 ? left === 0 : row.isReimbursed,
+        });
+      }
+    }
+
+    const enriched = filtered.map((e) => {
+      const running = runningBalanceMap.get(e.id);
+      const allocatedPaise = running ? running.allocatedAmountPaise : (e.allocatedAmountPaise || 0);
+      const leftPaise = running ? running.amountLeftPaise : (e.amountLeftPaise || 0);
+      const reimbursed = running ? running.isReimbursed : e.isReimbursed;
+      return {
+        ...e,
+        isReimbursed: reimbursed,
+        formattedAmount: formatPaise(e.amountPaise),
+        amountRupees: paiseToRupees(e.amountPaise),
+        amountLeftPaise: leftPaise,
+        amountLeftRupees: paiseToRupees(leftPaise),
+        formattedAmountLeft: formatPaise(leftPaise),
+        allocatedAmountPaise: allocatedPaise,
+        allocatedAmountRupees: paiseToRupees(allocatedPaise),
+        formattedAllocatedAmount: formatPaise(allocatedPaise),
+        memberName: (e.memberId && userMap.get(e.memberId)?.name) || e.paidBy || "Team Member",
+        paidAt: e.date || (e.createdAt ? new Date(e.createdAt).toISOString() : ""),
+      };
+    });
 
     if (searchParams.get("format") === "csv") {
       if (typeParam === "personal") {
@@ -260,18 +383,9 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // Synchronize prior personal expense records for this member and project to the updated balance
-    if (expenseType === "personal" && targetMemberId && priorForProject.length > 0) {
-      const priorIds = priorForProject.map((e) => e.id);
-      await db
-        .update(expenses)
-        .set({
-          amountLeftPaise: calculatedAmountLeftPaise,
-          allocatedAmountPaise: finalAllocatedAmountPaise > 0 ? finalAllocatedAmountPaise : undefined,
-          isReimbursed: calculatedAmountLeftPaise === 0 ? true : undefined,
-          updatedAt: new Date(),
-        })
-        .where(inArray(expenses.id, priorIds));
+    // Recompute and synchronize chronological running balances for ALL records in this member+project group
+    if (expenseType === "personal" && targetMemberId) {
+      await syncRunningBalances(targetMemberId, safeProjectId, title, finalAllocatedAmountPaise);
     }
 
     try {
@@ -468,18 +582,22 @@ export async function PUT(req: NextRequest) {
       .where(eq(expenses.id, id))
       .returning();
 
-    // Synchronize other personal expense records for this member and project to the updated balance
-    if (isPersonal && safeMemberId && otherExpensesForProject.length > 0) {
-      const otherIds = otherExpensesForProject.map((e) => e.id);
-      await db
-        .update(expenses)
-        .set({
-          amountLeftPaise: finalAmountLeftPaise,
-          allocatedAmountPaise: finalAllocatedPaise > 0 ? finalAllocatedPaise : undefined,
-          isReimbursed: finalAmountLeftPaise === 0 ? true : undefined,
-          updatedAt: new Date(),
-        })
-        .where(inArray(expenses.id, otherIds));
+    // Recompute and synchronize chronological running balances for all personal expenses in this member+project group
+    if (isPersonal && safeMemberId) {
+      await syncRunningBalances(
+        safeMemberId,
+        safeProjectId,
+        title !== undefined ? title : existing.title,
+        finalAllocatedPaise
+      );
+
+      // If project or member changed, also resync the old group
+      const oldTitle = existing.title;
+      const oldProjId = existing.projectId;
+      const oldMemberId = existing.memberId;
+      if (oldMemberId !== safeMemberId || oldProjId !== safeProjectId || oldTitle !== (title || existing.title)) {
+        await syncRunningBalances(oldMemberId, oldProjId, oldTitle);
+      }
     }
 
     try {
@@ -537,38 +655,9 @@ export async function DELETE(req: NextRequest) {
 
     await db.delete(expenses).where(eq(expenses.id, id));
 
-    // Recalculate remaining balance for other personal expenses of the same member and project
+    // Recalculate chronological running balances for remaining personal expenses of the same member and project
     if (existing.expenseType === "personal" && existing.memberId) {
-      const remainingForMember = await db
-        .select()
-        .from(expenses)
-        .where(and(eq(expenses.expenseType, "personal"), eq(expenses.memberId, existing.memberId)));
-
-      const sameProjectRemaining = remainingForMember.filter((e) => {
-        if (existing.projectId && e.projectId === existing.projectId) return true;
-        if (e.title && existing.title && e.title.trim().toLowerCase() === existing.title.trim().toLowerCase()) return true;
-        return false;
-      });
-
-      const totalAllocatedPaise = sameProjectRemaining.reduce(
-        (max, e) => Math.max(max, e.allocatedAmountPaise || 0),
-        existing.allocatedAmountPaise || 0
-      );
-      const totalPaidRemaining = sameProjectRemaining.reduce((sum, e) => sum + e.amountPaise, 0);
-      const newAmountLeftPaise = Math.max(0, totalAllocatedPaise - totalPaidRemaining);
-      const newIsReimbursed = newAmountLeftPaise === 0;
-
-      const remainingIds = sameProjectRemaining.map((e) => e.id);
-      if (remainingIds.length > 0 && totalAllocatedPaise > 0) {
-        await db
-          .update(expenses)
-          .set({
-            amountLeftPaise: newAmountLeftPaise,
-            isReimbursed: newIsReimbursed ? true : undefined,
-            updatedAt: new Date(),
-          })
-          .where(inArray(expenses.id, remainingIds));
-      }
+      await syncRunningBalances(existing.memberId, existing.projectId, existing.title);
     }
 
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Users,
   FolderGit2,
@@ -187,6 +187,94 @@ export function CrmTab({
     isReimbursed: false,
     allowOverpayment: false,
   });
+
+  // Group personal expenses by (member, project) with chronological running balance snapshots
+  const personalExpenseGroups = useMemo(() => {
+    const filtered = expenses.filter((e) => {
+      if (e.expenseType !== "personal") return false;
+      if (expenseMemberFilter !== "all") {
+        const selectedMember = teamMembers.find(
+          (m) => m.id === expenseMemberFilter || m.userId === expenseMemberFilter
+        );
+        const matches =
+          e.memberId === expenseMemberFilter ||
+          (selectedMember &&
+            (e.memberId === selectedMember.id ||
+              (selectedMember.userId && e.memberId === selectedMember.userId)));
+        if (!matches) return false;
+      }
+      return true;
+    });
+
+    const groupsMap = new Map<
+      string,
+      {
+        key: string;
+        memberId?: string;
+        memberName: string;
+        projectTitle: string;
+        projectId?: string | null;
+        totalBudgetPaise: number;
+        totalPaidPaise: number;
+        amountLeftPaise: number;
+        payments: AdminExpense[];
+      }
+    >();
+
+    for (const exp of filtered) {
+      const mId = exp.memberId || exp.paidBy || "unknown";
+      const pKey = (exp.projectId || exp.title || "general").trim().toLowerCase();
+      const groupKey = `${mId}::${pKey}`;
+
+      if (!groupsMap.has(groupKey)) {
+        groupsMap.set(groupKey, {
+          key: groupKey,
+          memberId: exp.memberId || undefined,
+          memberName: exp.memberName || exp.paidBy || "Team Member",
+          projectTitle: exp.title || "Project",
+          projectId: exp.projectId,
+          totalBudgetPaise: exp.allocatedAmountPaise || 0,
+          totalPaidPaise: 0,
+          amountLeftPaise: 0,
+          payments: [],
+        });
+      }
+
+      const g = groupsMap.get(groupKey)!;
+      if (exp.allocatedAmountPaise && exp.allocatedAmountPaise > g.totalBudgetPaise) {
+        g.totalBudgetPaise = exp.allocatedAmountPaise;
+      }
+      g.payments.push(exp);
+    }
+
+    const groups = Array.from(groupsMap.values());
+    for (const g of groups) {
+      // Sort payments chronologically (oldest to newest)
+      g.payments.sort((a, b) => {
+        const dateA = a.date || (a.paidAt ? new Date(a.paidAt).toISOString().slice(0, 10) : "");
+        const dateB = b.date || (b.paidAt ? new Date(b.paidAt).toISOString().slice(0, 10) : "");
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        const cA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const cB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (cA !== cB) return cA - cB;
+        return a.id.localeCompare(b.id);
+      });
+
+      let cumPaid = 0;
+      for (const p of g.payments) {
+        cumPaid += p.amountPaise;
+        if (g.totalBudgetPaise > 0) {
+          p.amountLeftPaise = Math.max(0, g.totalBudgetPaise - cumPaid);
+          p.allocatedAmountPaise = g.totalBudgetPaise;
+        }
+      }
+      g.totalPaidPaise = cumPaid;
+      g.amountLeftPaise = g.totalBudgetPaise > 0 ? Math.max(0, g.totalBudgetPaise - cumPaid) : 0;
+    }
+
+    return groups;
+  }, [expenses, expenseMemberFilter, teamMembers]);
+
 
   // Receipt Modal
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -1415,9 +1503,25 @@ export function CrmTab({
               <button
                 onClick={() => {
                   const defaultProj = projects[0];
-                  const defaultBudget = defaultProj ? paiseToRupees(defaultProj.quotedAmountPaise) : 20000;
+                  const defaultMember = teamMembers[0]?.userId || teamMembers[0]?.id || "";
+                  const existingAlloc = expenses.find(
+                    (e) =>
+                      e.expenseType === "personal" &&
+                      e.memberId === defaultMember &&
+                      defaultProj &&
+                      (e.projectId === defaultProj.id ||
+                        (e.title && defaultProj.title && e.title.trim().toLowerCase() === defaultProj.title.trim().toLowerCase())) &&
+                      (e.allocatedAmountPaise || 0) > 0
+                  );
+                  const defaultBudget = existingAlloc
+                    ? paiseToRupees(existingAlloc.allocatedAmountPaise || 0)
+                    : defaultProj
+                    ? paiseToRupees(defaultProj.quotedAmountPaise)
+                    : 20000;
                   const defaultMembers = defaultProj?.assignees?.length || 4;
-                  const defaultAlloc = Math.floor(defaultBudget / defaultMembers);
+                  const defaultAlloc = existingAlloc
+                    ? paiseToRupees(existingAlloc.allocatedAmountPaise || 0)
+                    : Math.floor(defaultBudget / defaultMembers);
 
                   setExpenseForm({
                     title: defaultProj?.title || defaultProj?.name || "",
@@ -1425,12 +1529,12 @@ export function CrmTab({
                     amountRupees: "2000",
                     amountLeftRupees: "0",
                     allocatedAmountRupees: String(defaultAlloc),
-                    totalBudgetRupees: String(defaultBudget),
-                    memberCount: String(defaultMembers),
+                    totalBudgetRupees: String(existingAlloc ? defaultAlloc : defaultBudget),
+                    memberCount: String(existingAlloc ? 1 : defaultMembers),
                     selectedProjectId: defaultProj ? defaultProj.id : "custom",
                     date: new Date().toISOString().slice(0, 10),
                     paidBy: "",
-                    memberId: teamMembers[0]?.userId || teamMembers[0]?.id || "",
+                    memberId: defaultMember,
                     expenseType: expenseTab,
                     notes: "",
                     allowOverpayment: false,
@@ -1652,93 +1756,128 @@ export function CrmTab({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black/5">
-                      {expenses
-                        .filter((e) => {
-                          if (e.expenseType !== "personal") return false;
-                          if (expenseMemberFilter !== "all") {
-                            const selectedMember = teamMembers.find(
-                              (m) => m.id === expenseMemberFilter || m.userId === expenseMemberFilter
-                            );
-                            const matches =
-                              e.memberId === expenseMemberFilter ||
-                              (selectedMember &&
-                                (e.memberId === selectedMember.id ||
-                                  (selectedMember.userId && e.memberId === selectedMember.userId)));
-                            if (!matches) return false;
-                          }
-                          return true;
-                        })
-                        .map((e) => (
-                          <tr key={e.id} className="hover:bg-[#F5F6FC]">
-                            <td className="py-3 px-3">
-                              {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
-                            </td>
-                            <td className="py-3 px-3 font-medium text-[#14141A]">
-                              {e.memberName || e.paidBy || "Team Member"}
-                            </td>
-                            <td className="py-3 px-3 font-bold text-[#14141A]">
-                              {e.title}
-                              {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
-                            </td>
-                            <td className="py-3 px-3 font-mono font-bold text-[#374BFF]">
-                              {e.allocatedAmountPaise ? formatPaise(e.allocatedAmountPaise) : "—"}
-                            </td>
-                            <td className="py-3 px-3 font-mono font-bold text-red-600">
-                              {formatPaise(e.amountPaise)}
-                            </td>
-                            <td className="py-3 px-3 font-mono font-bold text-amber-700">
-                              {formatPaise(e.amountLeftPaise || 0)}
-                            </td>
-                            <td className="py-3 px-3">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${(e.amountLeftPaise === 0 || e.isReimbursed)
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : "bg-amber-100 text-amber-800"
-                                  }`}
-                              >
-                                {(e.amountLeftPaise === 0 || e.isReimbursed) ? "✓ Cleared" : "⏳ Pending"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                {canViewFinance && (
-                                  <button
-                                    onClick={() => handleToggleReimbursed(e)}
-                                    title={e.isReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${e.isReimbursed
-                                        ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
-                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                      {personalExpenseGroups.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-xs text-[#2B2B38]">
+                            No personal expenses recorded yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        personalExpenseGroups.map((group) => (
+                          <React.Fragment key={group.key}>
+                            {/* GROUP SUMMARY HEADER ROW */}
+                            <tr className="bg-[#F5F6FC] border-y border-black/10">
+                              <td colSpan={8} className="py-2.5 px-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-[#14141A]">👤 {group.memberName}</span>
+                                    <span className="text-black/30">•</span>
+                                    <span className="font-bold text-[#374BFF]">{group.projectTitle}</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-white border border-black/10 text-[10px] font-medium text-[#2B2B38]">
+                                      {group.payments.length} payment{group.payments.length === 1 ? "" : "s"}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
+                                    <div>
+                                      <span className="text-[#2B2B38] mr-1.5">Total Budget:</span>
+                                      <span className="font-mono font-bold text-[#14141A]">
+                                        {group.totalBudgetPaise > 0 ? formatPaise(group.totalBudgetPaise) : "—"}
+                                      </span>
+                                    </div>
+                                    <span className="text-black/20">|</span>
+                                    <div>
+                                      <span className="text-[#2B2B38] mr-1.5">Total Paid So Far:</span>
+                                      <span className="font-mono font-bold text-red-600">
+                                        {formatPaise(group.totalPaidPaise)}
+                                      </span>
+                                    </div>
+                                    <span className="text-black/20">|</span>
+                                    <div>
+                                      <span className="text-[#2B2B38] mr-1.5">Amount Left:</span>
+                                      <span className="font-mono font-bold text-amber-700">
+                                        {formatPaise(group.amountLeftPaise)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+
+                            {/* INDIVIDUAL PAYMENT ROWS */}
+                            {group.payments.map((e) => (
+                              <tr key={e.id} className="hover:bg-[#F5F6FC]">
+                                <td className="py-3 px-3">
+                                  {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
+                                </td>
+                                <td className="py-3 px-3 font-medium text-[#14141A]">
+                                  {e.memberName || e.paidBy || "Team Member"}
+                                </td>
+                                <td className="py-3 px-3 font-bold text-[#14141A]">
+                                  {e.title}
+                                  {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
+                                </td>
+                                <td className="py-3 px-3 font-mono font-bold text-[#374BFF]">
+                                  {e.allocatedAmountPaise ? formatPaise(e.allocatedAmountPaise) : "—"}
+                                </td>
+                                <td className="py-3 px-3 font-mono font-bold text-red-600">
+                                  {formatPaise(e.amountPaise)}
+                                </td>
+                                <td className="py-3 px-3 font-mono font-bold text-amber-700">
+                                  {formatPaise(e.amountLeftPaise || 0)}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${(e.amountLeftPaise === 0 || e.isReimbursed)
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-amber-100 text-amber-800"
                                       }`}
                                   >
-                                    {e.isReimbursed ? (
-                                      <>
-                                        <RotateCcw className="h-3 w-3" /> Revert
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Check className="h-3 w-3" /> Reimburse
-                                      </>
+                                    {(e.amountLeftPaise === 0 || e.isReimbursed) ? "✓ Cleared" : "⏳ Pending"}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    {canViewFinance && (
+                                      <button
+                                        onClick={() => handleToggleReimbursed(e)}
+                                        title={e.isReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${e.isReimbursed
+                                            ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
+                                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                          }`}
+                                      >
+                                        {e.isReimbursed ? (
+                                          <>
+                                            <RotateCcw className="h-3 w-3" /> Revert
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Check className="h-3 w-3" /> Reimburse
+                                          </>
+                                        )}
+                                      </button>
                                     )}
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => handleOpenEditExpense(e)}
-                                  title="Edit Expense"
-                                  className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteExpenseConfirm(e)}
-                                  title="Delete Expense"
-                                  className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                    <button
+                                      onClick={() => handleOpenEditExpense(e)}
+                                      title="Edit Expense"
+                                      className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteExpenseConfirm(e)}
+                                      title="Delete Expense"
+                                      className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -2696,7 +2835,34 @@ export function CrmTab({
                       <label className="text-xs font-bold text-[#14141A]">Team Member *</label>
                       <select
                         value={expenseForm.memberId}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, memberId: e.target.value })}
+                        onChange={(e) => {
+                          const newMemberId = e.target.value;
+                          let nextAlloc = expenseForm.allocatedAmountRupees;
+                          let nextBudget = expenseForm.totalBudgetRupees;
+                          let nextCount = expenseForm.memberCount;
+                          if (newMemberId && expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom") {
+                            const existingAlloc = expenses.find(
+                              (exp) =>
+                                exp.expenseType === "personal" &&
+                                exp.memberId === newMemberId &&
+                                (exp.projectId === expenseForm.selectedProjectId ||
+                                  (exp.title && expenseForm.title && exp.title.trim().toLowerCase() === expenseForm.title.trim().toLowerCase())) &&
+                                (exp.allocatedAmountPaise || 0) > 0
+                            );
+                            if (existingAlloc) {
+                              nextAlloc = String(paiseToRupees(existingAlloc.allocatedAmountPaise || 0));
+                              nextBudget = nextAlloc;
+                              nextCount = "1";
+                            }
+                          }
+                          setExpenseForm({
+                            ...expenseForm,
+                            memberId: newMemberId,
+                            allocatedAmountRupees: nextAlloc,
+                            totalBudgetRupees: nextBudget,
+                            memberCount: nextCount,
+                          });
+                        }}
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                       >
                         <option value="">Select Member</option>
@@ -2736,15 +2902,27 @@ export function CrmTab({
                           } else {
                             const selProj = projects.find((p) => p.id === val);
                             if (selProj) {
-                              const budgetRupees = paiseToRupees(selProj.quotedAmountPaise);
+                              const existingAlloc = expenses.find(
+                                (exp) =>
+                                  exp.expenseType === "personal" &&
+                                  exp.memberId === expenseForm.memberId &&
+                                  (exp.projectId === selProj.id ||
+                                    (exp.title && selProj.title && exp.title.trim().toLowerCase() === selProj.title.trim().toLowerCase())) &&
+                                  (exp.allocatedAmountPaise || 0) > 0
+                              );
+                              const budgetRupees = existingAlloc
+                                ? paiseToRupees(existingAlloc.allocatedAmountPaise || 0)
+                                : paiseToRupees(selProj.quotedAmountPaise);
                               const count = selProj.assignees?.length || 4;
-                              const alloc = Math.floor(budgetRupees / Math.max(1, count));
+                              const alloc = existingAlloc
+                                ? paiseToRupees(existingAlloc.allocatedAmountPaise || 0)
+                                : Math.floor(budgetRupees / Math.max(1, count));
                               setExpenseForm({
                                 ...expenseForm,
                                 selectedProjectId: selProj.id,
                                 title: selProj.title || selProj.name || "",
-                                totalBudgetRupees: String(budgetRupees),
-                                memberCount: String(count),
+                                totalBudgetRupees: String(existingAlloc ? alloc : budgetRupees),
+                                memberCount: String(existingAlloc ? 1 : count),
                                 allocatedAmountRupees: String(alloc),
                               });
                             }
