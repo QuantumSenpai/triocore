@@ -40,7 +40,18 @@ import type {
   AdminMilestone,
 } from "@/types/admin";
 
-interface CrmTabProps {
+export type RefreshScope =
+  | "all"
+  | "crm"
+  | "expenses"
+  | "payments"
+  | "projects"
+  | "inquiries"
+  | "clients"
+  | "operations"
+  | "cms";
+
+export interface CrmTabProps {
   inquiries: AdminInquiry[];
   clients: AdminClient[];
   projects: AdminProject[];
@@ -49,7 +60,7 @@ interface CrmTabProps {
   teamMembers: AdminTeamMember[];
   canViewFinance: boolean;
   isOwner?: boolean;
-  onRefresh: () => Promise<void>;
+  onRefresh: (scope?: RefreshScope) => Promise<void>;
 }
 
 export function CrmTab({
@@ -336,7 +347,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update inquiry");
       toast.success("Inquiry updated successfully!");
       setEditInquiryModalOpen(false);
-      await onRefresh();
+      await onRefresh("inquiries");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -381,9 +392,22 @@ export function CrmTab({
 
       const entityName = deleteTarget.type.charAt(0).toUpperCase() + deleteTarget.type.slice(1);
       toast.success(`${entityName} deleted successfully!`);
+      const target = deleteTarget;
       setDeleteConfirmOpen(false);
       setDeleteTarget(null);
-      await onRefresh();
+      if (target.type === "expense") {
+        await onRefresh("expenses");
+      } else if (target.type === "payment") {
+        await onRefresh("payments");
+      } else if (target.type === "project" || target.type === "milestone") {
+        await onRefresh("projects");
+      } else if (target.type === "inquiry") {
+        await onRefresh("inquiries");
+      } else if (target.type === "client") {
+        await onRefresh("clients");
+      } else {
+        await onRefresh();
+      }
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -399,7 +423,7 @@ export function CrmTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to convert inquiry");
       toast.success("Inquiry converted to client successfully!");
-      await onRefresh();
+      await onRefresh("inquiries");
       setSubTab("clients");
     } catch (err) {
       toast.error((err as Error).message);
@@ -422,7 +446,7 @@ export function CrmTab({
       toast.success("Client created!");
       setClientModalOpen(false);
       setClientForm({ name: "", email: "", phone: "", company: "", notes: "" });
-      await onRefresh();
+      await onRefresh("clients");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -456,7 +480,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update client");
       toast.success("Client updated successfully!");
       setEditClientModalOpen(false);
-      await onRefresh();
+      await onRefresh("clients");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -498,7 +522,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to create project");
       toast.success("Project created with quoted amount in integer paise!");
       setProjectModalOpen(false);
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -543,7 +567,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update project");
       toast.success("Project updated successfully!");
       setEditProjectModalOpen(false);
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -590,7 +614,7 @@ export function CrmTab({
       });
       if (!res.ok) throw new Error("Failed to unassign member");
       toast.success("Team member unassigned!");
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -615,7 +639,7 @@ export function CrmTab({
       toast.success("Milestone added!");
       setMilestoneModalOpen(false);
       setMilestoneForm({ title: "", description: "", dueDate: "" });
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -654,7 +678,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update milestone");
       toast.success("Milestone updated!");
       setEditMilestoneModalOpen(false);
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -691,7 +715,7 @@ export function CrmTab({
       if (!res.ok) throw new Error("Failed to update milestone");
       const label = nextStatus === "completed" ? "Done" : nextStatus === "in_progress" ? "In Progress" : "Pending";
       toast.success(`Milestone set to ${label}!`);
-      await onRefresh();
+      await onRefresh("projects");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -718,7 +742,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to record payment");
       toast.success("Payment recorded and ledger updated!");
       setPaymentModalOpen(false);
-      await onRefresh();
+      await onRefresh("payments");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -774,7 +798,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update payment");
       toast.success("Payment updated and project financials synced!");
       setEditPaymentModalOpen(false);
-      await onRefresh();
+      await onRefresh("payments");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -844,7 +868,7 @@ export function CrmTab({
         notes: "",
         allowOverpayment: false,
       });
-      await onRefresh();
+      await onRefresh("expenses");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -906,7 +930,7 @@ export function CrmTab({
       if (!res.ok) throw new Error(data.error || "Failed to update expense");
       toast.success("Expense updated!");
       setEditExpenseModalOpen(false);
-      await onRefresh();
+      await onRefresh("expenses");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -929,7 +953,7 @@ export function CrmTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update reimbursement");
       toast.success(nextState ? "Marked as reimbursed!" : "Reimbursement reverted to pending!");
-      await onRefresh();
+      await onRefresh("expenses");
     } catch (err) {
       toast.error((err as Error).message);
     }

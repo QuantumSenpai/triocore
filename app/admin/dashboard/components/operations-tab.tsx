@@ -25,6 +25,8 @@ import type {
   AdminInvite,
 } from "@/types/admin";
 
+import type { RefreshScope } from "./crm-tab";
+
 interface OperationsTabProps {
   reports: AdminFeedbackReport[];
   unreadCount: number;
@@ -32,7 +34,7 @@ interface OperationsTabProps {
   teamMembers: AdminTeamMember[];
   adminInvites: AdminInvite[];
   isOwner: boolean;
-  onRefresh: () => Promise<void>;
+  onRefresh: (scope?: RefreshScope) => Promise<void>;
 }
 
 export function OperationsTab({
@@ -78,7 +80,7 @@ export function OperationsTab({
       });
       if (!res.ok) throw new Error("Failed to update status");
       toast.success(`Report marked as ${newStatus}!`);
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -95,7 +97,7 @@ export function OperationsTab({
       if (!res.ok) throw new Error("Failed to save note");
       toast.success("Internal note saved!");
       setActiveReportId(null);
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -115,7 +117,7 @@ export function OperationsTab({
       toast.success("Note saved (sanitized against scripts)!");
       setNoteModalOpen(false);
       setNoteForm({ title: "", content: "", isPinned: false });
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -127,7 +129,7 @@ export function OperationsTab({
       const res = await fetch(`/api/admin/notes?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete note");
       toast.success("Note deleted");
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -143,7 +145,7 @@ export function OperationsTab({
       });
       if (!res.ok) throw new Error("Failed to update note");
       toast.success(isPinned ? "Note unpinned" : "Note pinned to top!");
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -162,7 +164,7 @@ export function OperationsTab({
       if (!res.ok) throw new Error(data.error || "Failed to create invite");
       setCreatedInviteUrl(data.inviteUrl);
       toast.success("Single-use 48h invitation link generated!");
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -178,7 +180,7 @@ export function OperationsTab({
       });
       if (!res.ok) throw new Error("Failed to update member access");
       toast.success("Member access updated!");
-      await onRefresh();
+      await onRefresh("operations");
     } catch (err) {
       toast.error((err as Error).message);
     }

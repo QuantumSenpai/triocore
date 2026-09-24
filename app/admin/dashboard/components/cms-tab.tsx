@@ -36,6 +36,8 @@ import type {
 
 type CmsSection = "hero" | "services" | "pricing" | "stats" | "projects" | "team-emp" | "faqs" | "legal" | "seo";
 
+import type { RefreshScope } from "./crm-tab";
+
 interface CmsTabProps {
   initialContent: AdminSiteContent[];
   services: AdminService[];
@@ -47,7 +49,7 @@ interface CmsTabProps {
   faqs: AdminFaq[];
   faqCategories: AdminFaqCategory[];
   legalDocs: AdminLegalDoc[];
-  onRefresh: () => Promise<void>;
+  onRefresh: (scope?: RefreshScope) => Promise<void>;
 }
 
 export function CmsTab({
@@ -111,7 +113,7 @@ export function CmsTab({
         body: JSON.stringify({ key: "hero_subtext", value: subtext, section: "hero", label: "Hero Subtext" }),
       });
       showSavedLive("/#", "Hero Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -131,7 +133,7 @@ export function CmsTab({
         body: JSON.stringify({ key: "seo_description", value: metaDesc, section: "seo", label: "SEO Description" }),
       });
       showSavedLive("/#", "Home Page SEO");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -149,7 +151,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to save service");
       setServiceModal(null);
       showSavedLive("/#services", "Services Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -176,7 +178,7 @@ export function CmsTab({
       }
       setPricingModal(null);
       showSavedLive("/#pricing", "Pricing Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -189,7 +191,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to delete pricing plan");
       setPricingModal(null);
       showSavedLive("/#pricing", "Pricing Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -204,7 +206,7 @@ export function CmsTab({
         body: JSON.stringify({ ...plan, order: newOrder }),
       });
       showSavedLive("/#pricing", "Pricing Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -222,7 +224,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to save stat");
       setStatModal(null);
       showSavedLive("/#", "Stats Counter");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -249,7 +251,7 @@ export function CmsTab({
       }
       setProjectModal(null);
       showSavedLive("/#showcase", "Showcase Projects");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -262,7 +264,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to delete project");
       setProjectModal(null);
       showSavedLive("/#showcase", "Showcase Projects");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -276,7 +278,7 @@ export function CmsTab({
         body: JSON.stringify({ ...proj, status: newStatus }),
       });
       showSavedLive("/#showcase", "Showcase Projects");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -291,7 +293,7 @@ export function CmsTab({
         body: JSON.stringify({ ...proj, order: newOrder }),
       });
       showSavedLive("/#showcase", "Showcase Projects");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -318,7 +320,7 @@ export function CmsTab({
       }
       setTeamModal(null);
       showSavedLive("/#team", "Team Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -331,7 +333,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to delete team member");
       setTeamModal(null);
       showSavedLive("/#team", "Team Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -346,7 +348,7 @@ export function CmsTab({
         body: JSON.stringify({ ...member, order: newOrder }),
       });
       showSavedLive("/#team", "Team Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -364,7 +366,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to save employee");
       setEmployeeModal(null);
       showSavedLive("/#team", "Employees Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -374,7 +376,7 @@ export function CmsTab({
     try {
       await fetch(`/api/admin/employees?id=${id}`, { method: "DELETE" });
       showSavedLive("/#team", "Employees Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -392,7 +394,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to save FAQ");
       setFaqModal(null);
       showSavedLive("/#faq", "FAQ Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -402,7 +404,7 @@ export function CmsTab({
     try {
       await fetch(`/api/admin/faqs?id=${id}`, { method: "DELETE" });
       showSavedLive("/#faq", "FAQ Section");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -424,7 +426,7 @@ export function CmsTab({
       setCategoryModal(null);
       toast.success("FAQ category saved");
       showSavedLive("/faq", "FAQ Categories");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -440,7 +442,7 @@ export function CmsTab({
       }
       toast.success("FAQ category deleted");
       showSavedLive("/faq", "FAQ Categories");
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -457,7 +459,7 @@ export function CmsTab({
       if (!res.ok) throw new Error("Failed to save document");
       setLegalModal(null);
       showSavedLive(`/${legalData.slug}`, `${legalData.slug} Page`);
-      await onRefresh();
+      await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
     }

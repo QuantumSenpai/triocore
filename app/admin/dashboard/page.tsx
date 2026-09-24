@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
 import { validatePassword } from "@/lib/password-rules";
 import { OverviewTab } from "./components/overview-tab";
-import { CrmTab } from "./components/crm-tab";
+import { CrmTab, type RefreshScope } from "./components/crm-tab";
 import { OperationsTab } from "./components/operations-tab";
 import { CmsTab } from "./components/cms-tab";
 import { DashboardSkeleton } from "./components/dashboard-skeleton";
@@ -183,8 +183,10 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const loadAllData = useCallback(async () => {
-    setLoading(true);
+  const loadAllData = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setLoading(true);
+    }
     setLoadError(null);
     try {
       // Stage 1: Load essential Overview tab data concurrently with retry
@@ -210,7 +212,9 @@ export default function AdminDashboardPage() {
         setMonthlyGoalPaise(Number(setRes.settings.monthly_goal_paise));
       }
       // Unlock Overview screen immediately as soon as Stage 1 completes
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
 
       // Stage 2: Stream remaining tab data in parallel background batch
       const [
@@ -263,14 +267,114 @@ export default function AdminDashboardPage() {
       }
     } catch (err: unknown) {
       console.error("[AdminOS] Dashboard data fetch failed:", err);
-      setLoadError("Unable to establish connection to the database cluster. Please try again.");
+      if (isInitial) {
+        setLoadError("Unable to establish connection to the database cluster. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   }, []);
 
+  const refreshData = useCallback(async (scope: RefreshScope = "all") => {
+    try {
+      if (scope === "expenses") {
+        const expRes = await fetchWithRetry("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] }));
+        setExpenses(expRes.expenses || []);
+        return;
+      }
+      if (scope === "payments") {
+        const [payRes, projRes] = await Promise.all([
+          fetchWithRetry("/api/admin/payments").then((r) => {
+            if (r.status === 403) setCanViewFinance(false);
+            return r.ok ? r.json() : { payments: [] };
+          }),
+          fetchWithRetry("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+        ]);
+        setPayments(payRes.payments || []);
+        setBusinessProjects(projRes.projects || []);
+        return;
+      }
+      if (scope === "projects") {
+        const projRes = await fetchWithRetry("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] }));
+        setBusinessProjects(projRes.projects || []);
+        return;
+      }
+      if (scope === "clients") {
+        const clientRes = await fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] }));
+        setClients(clientRes.clients || []);
+        return;
+      }
+      if (scope === "inquiries") {
+        const [inqRes, clientRes] = await Promise.all([
+          fetchWithRetry("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
+          fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
+        ]);
+        setInquiries(inqRes.inquiries || []);
+        setClients(clientRes.clients || []);
+        return;
+      }
+      if (scope === "operations") {
+        const [fbRes, notesRes, accessRes] = await Promise.all([
+          fetchWithRetry("/api/admin/feedback").then((r) => (r.ok ? r.json() : { reports: [], unreadCount: 0 })),
+          fetchWithRetry("/api/admin/notes").then((r) => (r.ok ? r.json() : { notes: [] })),
+          fetchWithRetry("/api/admin/team-access").then((r) => (r.ok ? r.json() : { members: [] })),
+        ]);
+        setFeedbackReports(fbRes.reports || []);
+        setUnreadFeedbackCount(fbRes.unreadCount || 0);
+        setNotes(notesRes.notes || []);
+        return;
+      }
+      if (scope === "cms") {
+        const [contRes, servRes, priceRes, statRes, showRes, faqRes, faqCatRes, legalRes] = await Promise.all([
+          fetchWithRetry("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] })),
+          fetchWithRetry("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
+          fetchWithRetry("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
+          fetchWithRetry("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
+          fetchWithRetry("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+          fetchWithRetry("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
+          fetchWithRetry("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
+          fetchWithRetry("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] })),
+        ]);
+        setSiteContent(contRes.content || []);
+        setServices(servRes.services || []);
+        setPricing(priceRes.plans || []);
+        setStats(statRes.stats || []);
+        setShowcaseProjects(showRes.projects || []);
+        setFaqs(faqRes.faqs || []);
+        setFaqCategories(faqCatRes.categories || []);
+        setLegalDocs(legalRes.documents || []);
+        return;
+      }
+      if (scope === "crm") {
+        const [inqRes, projRes, payRes, expRes, clientRes] = await Promise.all([
+          fetchWithRetry("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
+          fetchWithRetry("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+          fetchWithRetry("/api/admin/payments").then((r) => {
+            if (r.status === 403) setCanViewFinance(false);
+            return r.ok ? r.json() : { payments: [] };
+          }),
+          fetchWithRetry("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] })),
+          fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
+        ]);
+        setInquiries(inqRes.inquiries || []);
+        setBusinessProjects(projRes.projects || []);
+        setPayments(payRes.payments || []);
+        setExpenses(expRes.expenses || []);
+        setClients(clientRes.clients || []);
+        return;
+      }
+
+      // Default "all": silent background fetch, NEVER sets loading = true
+      await loadAllData(false);
+    } catch (err) {
+      console.error("[AdminOS] Scoped data refresh error:", err);
+    }
+  }, [loadAllData]);
+
   useEffect(() => {
-    loadAllData();
+    loadAllData(true);
   }, [loadAllData]);
 
   // Aggregate Metrics in Paise
@@ -408,7 +512,7 @@ export default function AdminDashboardPage() {
               {loadError}
             </p>
             <button
-              onClick={() => loadAllData()}
+              onClick={() => loadAllData(true)}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all shadow-sm shadow-[#374BFF]/20 cursor-pointer"
             >
               <RotateCcw className="h-4 w-4" />
@@ -441,7 +545,7 @@ export default function AdminDashboardPage() {
                 teamMembers={teamMembers}
                 canViewFinance={canViewFinance}
                 isOwner={userRole === "owner"}
-                onRefresh={loadAllData}
+                onRefresh={refreshData}
               />
             )}
 
@@ -453,7 +557,7 @@ export default function AdminDashboardPage() {
                 teamMembers={teamMembers}
                 adminInvites={adminInvites}
                 isOwner={userRole === "owner"}
-                onRefresh={loadAllData}
+                onRefresh={refreshData}
               />
             )}
 
@@ -469,7 +573,7 @@ export default function AdminDashboardPage() {
                 faqs={faqs}
                 faqCategories={faqCategories}
                 legalDocs={legalDocs}
-                onRefresh={loadAllData}
+                onRefresh={refreshData}
               />
             )}
           </>
