@@ -34,8 +34,8 @@ export function extractSessionToken(headers: Headers): string | null {
 }
 
 /**
- * Deduplicates and caches auth.api.getSession calls across parallel API routes.
- * Prevents 19 separate database roundtrips to Neon on every page load.
+ * Deduplicates and caches auth.api.getSession calls across parallel API routes
+ * with automatic cold-start retry to handle initial Neon compute wake-up pauses.
  */
 export async function getSessionWithCache(headers: Headers, forceFresh = false) {
   const token = extractSessionToken(headers);
@@ -54,19 +54,27 @@ export async function getSessionWithCache(headers: Headers, forceFresh = false) 
   }
 
   const fetchPromise = (async () => {
-    try {
-      const session = await auth.api.getSession({ headers });
-      if (token && session) {
-        sessionCache.set(token, { session, expiresAt: Date.now() + 60_000 });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const session = await auth.api.getSession({ headers });
+        if (token && session) {
+          sessionCache.set(token, { session, expiresAt: Date.now() + 60_000 });
+        }
+        return session;
+      } catch (err) {
+        if (attempt === 0) {
+          console.warn("[auth-cache] First session lookup failed during cold start, retrying in 800ms...");
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+        console.error("[auth-cache] Error getting session after retry:", err);
+        return null;
       }
-      return session;
-    } catch (err) {
-      console.error("[auth-cache] Error getting session:", err);
-      return null;
-    } finally {
-      if (token) inFlightSession.delete(token);
     }
-  })();
+    return null;
+  })().finally(() => {
+    if (token) inFlightSession.delete(token);
+  });
 
   if (token && !forceFresh) {
     inFlightSession.set(token, fetchPromise);
@@ -89,9 +97,8 @@ export function invalidateSessionCache(token?: string) {
 }
 
 /**
- * Retrieves an admin member record with in-memory caching (30s TTL)
- * and in-flight request deduplication to prevent connection thundering herds
- * when multiple parallel API requests hit the server simultaneously.
+ * Retrieves an admin member record with in-memory caching (30s TTL),
+ * in-flight request deduplication, and automatic cold-start retry.
  */
 export async function getAdminMemberWithCache(
   userId: string,
@@ -115,26 +122,34 @@ export async function getAdminMemberWithCache(
   if (!db) return null;
 
   const fetchPromise = (async () => {
-    try {
-      const memberRows = await db
-        .select()
-        .from(adminMembers)
-        .where(eq(adminMembers.userId, userId))
-        .limit(1);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const memberRows = await db
+          .select()
+          .from(adminMembers)
+          .where(eq(adminMembers.userId, userId))
+          .limit(1);
 
-      if (memberRows.length > 0) {
-        const member = memberRows[0];
-        memberCache.set(userId, { member, expiresAt: Date.now() + 30_000 });
-        return member;
+        if (memberRows.length > 0) {
+          const member = memberRows[0];
+          memberCache.set(userId, { member, expiresAt: Date.now() + 30_000 });
+          return member;
+        }
+        return null;
+      } catch (err) {
+        if (attempt === 0) {
+          console.warn("[auth-cache] First admin_members query failed during cold start, retrying in 800ms...");
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
+        console.error("[auth-cache] Error querying admin member after retry:", err);
+        return null;
       }
-      return null;
-    } catch (err) {
-      console.error("[auth-cache] Error querying admin member:", err);
-      return null;
-    } finally {
-      inFlightMember.delete(userId);
     }
-  })();
+    return null;
+  })().finally(() => {
+    inFlightMember.delete(userId);
+  });
 
   if (!forceFresh) {
     inFlightMember.set(userId, fetchPromise);

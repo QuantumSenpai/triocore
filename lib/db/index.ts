@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 config();
 
-import { neon } from "@neondatabase/serverless";
+import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
 import { 
@@ -19,6 +19,37 @@ import {
 } from "@/lib/data/site-content";
 
 const databaseUrl = process.env.DATABASE_URL;
+
+// Cold-start retry wrapper for Neon serverless HTTP queries:
+// Absorbs transient compute wake-up timeouts, connection drops, and 5xx responses.
+if (typeof neonConfig !== "undefined") {
+  const originalFetch = neonConfig.fetchFunction || globalThis.fetch;
+  neonConfig.fetchFunction = async (input: RequestInfo | URL, init?: RequestInit) => {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await originalFetch(input, init);
+        // Retry transient serverless cluster wake-up errors (500, 502, 503, 504, 408)
+        if (!res.ok && (res.status >= 500 || res.status === 408) && attempt < 2) {
+          const delay = attempt === 0 ? 1200 : 2500;
+          console.warn(`[Neon Driver] Transient HTTP ${res.status} during cold start, retrying in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        return res;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 2) {
+          const delay = attempt === 0 ? 1200 : 2500;
+          console.warn(`[Neon Driver] Connection dropped during cold start (${(err as Error)?.message || "fetch failed"}), retrying in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+      }
+    }
+    throw lastErr;
+  };
+}
 
 export const db = databaseUrl ? drizzle(neon(databaseUrl), { schema }) : null;
 

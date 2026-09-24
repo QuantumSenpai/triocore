@@ -20,6 +20,8 @@ import {
   X,
   Lock,
   Loader2,
+  AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { toast } from "sonner";
@@ -53,12 +55,62 @@ import type {
 
 type MainTab = "overview" | "crm" | "operations" | "cms";
 
+/**
+ * Fetch wrapper with configurable timeout and retry with exponential backoff.
+ * Gracefully handles transient 500/503/504 errors and network timeouts during Neon serverless cold starts.
+ */
+async function fetchWithRetry(
+  url: string,
+  options?: RequestInit,
+  config: { retries?: number; backoffMs?: number; timeoutMs?: number } = {}
+): Promise<Response> {
+  const { retries = 2, backoffMs = 1500, timeoutMs = 8500 } = config;
+
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      // Transient 5xx or timeout HTTP status during Neon cold start
+      if (!res.ok && (res.status >= 500 || res.status === 408) && attempt < retries) {
+        console.warn(`[AdminOS] Transient HTTP ${res.status} on ${url}, retrying in ${backoffMs * (attempt + 1)}ms...`);
+        await new Promise((r) => setTimeout(r, backoffMs * (attempt + 1)));
+        continue;
+      }
+
+      return res;
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      const isAbort = (err as Error)?.name === "AbortError";
+      lastError = new Error(
+        isAbort ? `Request to ${url} timed out after ${timeoutMs}ms` : (err as Error)?.message || "Network error"
+      );
+
+      if (attempt < retries) {
+        const delay = backoffMs * (attempt + 1);
+        console.warn(`[AdminOS] Fetch failed for ${url} (attempt ${attempt + 1}/${retries + 1}): ${lastError.message}. Retrying in ${delay}ms...`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+
+  throw lastError || new Error(`Failed to fetch ${url} after ${retries} retries`);
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { data: _sessionData, isPending: _sessionPending } = useSession();
 
   const [activeTab, setActiveTab] = useState<MainTab>("overview");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Core Data States
   const [inquiries, setInquiries] = useState<AdminInquiry[]>([]);
@@ -132,18 +184,20 @@ export default function AdminDashboardPage() {
   };
 
   const loadAllData = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
-      // Stage 1: Load essential Overview tab data concurrently
+      // Stage 1: Load essential Overview tab data concurrently with retry
       const [inqRes, projRes, payRes, expRes, setRes, fbRes] = await Promise.all([
-        fetch("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
-        fetch("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
-        fetch("/api/admin/payments").then((r) => {
+        fetchWithRetry("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
+        fetchWithRetry("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+        fetchWithRetry("/api/admin/payments").then((r) => {
           if (r.status === 403) setCanViewFinance(false);
           return r.ok ? r.json() : { payments: [] };
         }),
-        fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] })),
-        fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : { settings: {} })),
-        fetch("/api/admin/feedback").then((r) => (r.ok ? r.json() : { reports: [], unreadCount: 0 })),
+        fetchWithRetry("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] })),
+        fetchWithRetry("/api/admin/settings").then((r) => (r.ok ? r.json() : { settings: {} })),
+        fetchWithRetry("/api/admin/feedback").then((r) => (r.ok ? r.json() : { reports: [], unreadCount: 0 })),
       ]);
 
       setInquiries(inqRes.inquiries || []);
@@ -174,19 +228,19 @@ export default function AdminDashboardPage() {
         contRes,
         accessRes,
       ] = await Promise.all([
-        fetch("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
-        fetch("/api/admin/team").then((r) => (r.ok ? r.json() : { members: [] })),
-        fetch("/api/admin/employees").then((r) => (r.ok ? r.json() : { employees: [] })),
-        fetch("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
-        fetch("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
-        fetch("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
-        fetch("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
-        fetch("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
-        fetch("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
-        fetch("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] })),
-        fetch("/api/admin/notes").then((r) => (r.ok ? r.json() : { notes: [] })),
-        fetch("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] })),
-        fetch("/api/admin/team-access").then((r) => {
+        fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
+        fetchWithRetry("/api/admin/team").then((r) => (r.ok ? r.json() : { members: [] })),
+        fetchWithRetry("/api/admin/employees").then((r) => (r.ok ? r.json() : { employees: [] })),
+        fetchWithRetry("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
+        fetchWithRetry("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
+        fetchWithRetry("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
+        fetchWithRetry("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
+        fetchWithRetry("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
+        fetchWithRetry("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
+        fetchWithRetry("/api/admin/legal").then((r) => (r.ok ? r.json() : { documents: [] })),
+        fetchWithRetry("/api/admin/notes").then((r) => (r.ok ? r.json() : { notes: [] })),
+        fetchWithRetry("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] })),
+        fetchWithRetry("/api/admin/team-access").then((r) => {
           if (r.status === 403) setUserRole("member");
           return r.ok ? r.json() : { members: [] };
         }),
@@ -207,8 +261,9 @@ export default function AdminDashboardPage() {
       if (accessRes.members && accessRes.members.length > 0) {
         setUserRole("owner");
       }
-    } catch (err) {
-      console.error("Dashboard data fetch warning:", err);
+    } catch (err: unknown) {
+      console.error("[AdminOS] Dashboard data fetch failed:", err);
+      setLoadError("Unable to establish connection to the database cluster. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -343,6 +398,23 @@ export default function AdminDashboardPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <DashboardSkeleton />
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 border border-amber-500/20">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <h3 className="font-heading font-black text-xl text-[#14141A] mb-2">Couldn&apos;t load data</h3>
+            <p className="text-xs text-[#2B2B38] max-w-md mb-6 font-medium leading-relaxed">
+              {loadError}
+            </p>
+            <button
+              onClick={() => loadAllData()}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all shadow-sm shadow-[#374BFF]/20 cursor-pointer"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Retry</span>
+            </button>
+          </div>
         ) : (
           <>
             {activeTab === "overview" && (
