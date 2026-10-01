@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { payments, projects, clients } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { formatPaise } from "@/lib/money";
-import { Printer, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { PrintReceiptButton } from "./print-button";
 
 interface ReceiptPageProps {
   params: Promise<{ id: string }>;
@@ -73,14 +74,7 @@ export default async function ReceiptPage({ params }: ReceiptPageProps) {
             Back to Dashboard
           </Link>
 
-          <button
-            onClick={undefined}
-            data-action="print"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-sm"
-          >
-            <Printer className="h-4 w-4" />
-            Print Receipt
-          </button>
+          <PrintReceiptButton />
         </div>
 
         {/* Printable Receipt Card */}

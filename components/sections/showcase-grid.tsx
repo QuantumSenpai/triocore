@@ -154,9 +154,9 @@ export function ShowcaseGridSection({
  <span className="text-xs font-bold text-[#14141A] flex items-center gap-1.5">
  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> In Active Development
  </span>
- ) : (
+ ) : project.liveUrl && project.liveUrl !== "#" ? (
  <a
- href={project.liveUrl || "#"}
+ href={project.liveUrl}
  target="_blank"
  rel="noreferrer"
  className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#374BFF] group-hover:underline"
@@ -164,6 +164,10 @@ export function ShowcaseGridSection({
  <span>View Live Demo</span>
  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
  </a>
+ ) : (
+ <span className="text-xs font-bold text-[#2B2B38]/60 flex items-center gap-1">
+ Private Client Deployment
+ </span>
  )}
  <span className="text-xs font-heading font-black text-stroke-blue">
  0{index + 1}

@@ -61,7 +61,7 @@ export function RoadmapSection() {
  <motion.div
  whileHover={{ scale: 1.05 }}
  transition={{ type: "spring", stiffness: 300, damping: 20 }}
- className={`relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl bg-white ${node.nodeBorder} mb-6 sm:mb-8 cursor-pointer transition-all shadow-md`}
+ className={`relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-3xl bg-white ${node.nodeBorder} mb-6 sm:mb-8 transition-all shadow-md`}
  >
  <span className={`font-heading text-xl sm:text-2xl tracking-tight ${isActive ? "font-black text-[#374BFF]" : "font-bold text-[#14141A]"}`}>
  {node.year}
