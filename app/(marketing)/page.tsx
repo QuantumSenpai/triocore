@@ -18,6 +18,7 @@ import {
   getTeamContent,
   getEmployeesContent,
   getPricingContent,
+  getPricingCategories,
   getFaqContent,
   getWhyUsStats,
   getFaqCategories,
@@ -35,6 +36,7 @@ export default async function MarketingPage() {
     team,
     employees,
     pricing,
+    pricingCategories,
     faqs,
     whyUsStats,
     faqCategories,
@@ -46,6 +48,7 @@ export default async function MarketingPage() {
     getTeamContent(),
     getEmployeesContent(),
     getPricingContent(),
+    getPricingCategories(),
     getFaqContent(),
     getWhyUsStats(),
     getFaqCategories(),
@@ -58,7 +61,11 @@ export default async function MarketingPage() {
       <AboutSection />
       <TeamBentoSection initialTeam={team} initialEmployees={employees} />
       <ServicesBentoSection initialServices={services} />
-      <PricingSection initialPlans={pricing} initialLaunchOffer={launchOffer} />
+      <PricingSection
+        initialPlans={pricing}
+        initialCategories={pricingCategories}
+        initialLaunchOffer={launchOffer}
+      />
       <InnovationLabSection />
       <ShowcaseGridSection initialProjects={showcase} />
       <WhyUsSection initialStats={whyUsStats} />

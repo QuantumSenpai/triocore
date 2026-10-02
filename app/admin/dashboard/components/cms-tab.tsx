@@ -28,6 +28,7 @@ import type {
   AdminSiteContent,
   AdminService,
   AdminPricingPlan,
+  AdminPricingCategory,
   AdminStat,
   AdminShowcaseProject,
   AdminTeamMember,
@@ -45,6 +46,7 @@ interface CmsTabProps {
   initialContent: AdminSiteContent[];
   services: AdminService[];
   pricing: AdminPricingPlan[];
+  pricingCategories?: AdminPricingCategory[];
   stats: AdminStat[];
   projects: AdminShowcaseProject[];
   team: AdminTeamMember[];
@@ -59,6 +61,7 @@ export function CmsTab({
   initialContent,
   services,
   pricing,
+  pricingCategories: initialPricingCategories = [],
   stats,
   projects,
   team,
@@ -90,6 +93,23 @@ export function CmsTab({
   const [pricingModal, setPricingModal] = useState<AdminPricingPlan | Partial<AdminPricingPlan> | null>(null);
   const [pricingCategoryFilter, setPricingCategoryFilter] = useState<string>("all");
   const [expandedPlanIds, setExpandedPlanIds] = useState<Set<string>>(new Set());
+
+  const [categories, setCategories] = useState<AdminPricingCategory[]>(initialPricingCategories);
+  const [manageCategoriesModal, setManageCategoriesModal] = useState(false);
+  const [pricingCategoryModal, setPricingCategoryModal] = useState<Partial<AdminPricingCategory> | null>(null);
+
+  useEffect(() => {
+    if (initialPricingCategories.length > 0) {
+      setCategories(initialPricingCategories);
+    } else {
+      fetch("/api/admin/pricing-categories")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.categories) setCategories(data.categories);
+        })
+        .catch((e) => console.error("Failed to load pricing categories:", e));
+    }
+  }, [initialPricingCategories]);
 
   const togglePlanExpand = (id: string) => {
     setExpandedPlanIds((prev) => {
@@ -262,6 +282,88 @@ export function CmsTab({
       await onRefresh("cms");
     } catch (err) {
       toast.error((err as Error).message);
+    }
+  };
+
+  const handleTogglePublishPricing = async (plan: AdminPricingPlan) => {
+    try {
+      const nextPublished = plan.isPublished === false;
+      const res = await fetch("/api/admin/pricing", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: plan.id, isPublished: nextPublished }),
+      });
+      if (!res.ok) throw new Error("Failed to update plan visibility");
+      showSavedLive("/#pricing", "Pricing Section");
+      toast.success(nextPublished ? "Plan published live!" : "Plan hidden from public site!");
+      await onRefresh("cms");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleSavePricingCategory = async (catData: Partial<AdminPricingCategory>) => {
+    try {
+      const isEdit = Boolean(catData.id);
+      const res = await fetch("/api/admin/pricing-categories", {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(catData),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to save category");
+      }
+      const data = await res.json();
+      if (isEdit) {
+        setCategories((prev) => prev.map((c) => (c.id === data.category.id ? data.category : c)));
+      } else {
+        setCategories((prev) => [...prev, data.category]);
+      }
+      setPricingCategoryModal(null);
+      showSavedLive("/#pricing", "Pricing Categories");
+      toast.success(isEdit ? "Category updated!" : "Category created!");
+      await onRefresh("cms");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save category");
+    }
+  };
+
+  const handleDeletePricingCategory = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this category tab? Pricing plans under this category won't be deleted, but the tab will be removed.")) return;
+    try {
+      const res = await fetch(`/api/admin/pricing-categories?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to delete category");
+      }
+      setCategories((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Category tab deleted!");
+      showSavedLive("/#pricing", "Pricing Categories");
+      await onRefresh("cms");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete category");
+    }
+  };
+
+  const handleReorderPricingCategory = async (cat: AdminPricingCategory, delta: number) => {
+    try {
+      const newOrder = Math.max(0, cat.order + delta);
+      const res = await fetch("/api/admin/pricing-categories", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: cat.id, order: newOrder }),
+      });
+      if (!res.ok) throw new Error("Failed to reorder category");
+      setCategories((prev) =>
+        prev
+          .map((c) => (c.id === cat.id ? { ...c, order: newOrder } : c))
+          .sort((a, b) => a.order - b.order)
+      );
+      showSavedLive("/#pricing", "Pricing Categories");
+      await onRefresh("cms");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to reorder category");
     }
   };
 
@@ -847,25 +949,48 @@ export function CmsTab({
             </button>
           </div>
 
-          {/* Category Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#F5F6FC] border border-black/5">
-            {["all", "websites", "local", "ecommerce", "combos", "apps", "design-seo", "maintenance"].map((cat) => {
-              const count = cat === "all" ? pricing.length : pricing.filter(p => (p.category || "websites") === cat).length;
-              if (count === 0 && cat !== "all") return null;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setPricingCategoryFilter(cat)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    pricingCategoryFilter === cat
-                      ? "bg-white text-[#374BFF] shadow-xs"
-                      : "text-[#2B2B38] hover:text-[#14141A]"
-                  }`}
-                >
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)} ({count})
-                </button>
-              );
-            })}
+          {/* Category Filter Tabs & Management */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[#F5F6FC] border border-black/5 flex-1">
+              {[
+                { id: "all", slug: "all", label: "All" },
+                ...(categories.length > 0
+                  ? categories
+                  : [
+                      { id: "websites", slug: "websites", label: "Web Development", order: 0 },
+                      { id: "local", slug: "local", label: "Local Business", order: 1 },
+                      { id: "ecommerce", slug: "ecommerce", label: "E-Commerce", order: 2 },
+                      { id: "combos", slug: "combos", label: "Combo Packages", order: 3 },
+                      { id: "apps", slug: "apps", label: "Web Apps & SaaS", order: 4 },
+                      { id: "design-seo", slug: "design-seo", label: "Design & SEO", order: 5 },
+                      { id: "maintenance", slug: "maintenance", label: "Maintenance", order: 6 },
+                      { id: "addons", slug: "addons", label: "Modular Add-Ons", order: 7 },
+                    ]),
+              ].map((cat) => {
+                const count = cat.slug === "all" ? pricing.length : pricing.filter((p) => (p.category || "websites") === cat.slug).length;
+                if (count === 0 && cat.slug !== "all") return null;
+                return (
+                  <button
+                    key={cat.slug}
+                    onClick={() => setPricingCategoryFilter(cat.slug)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      pricingCategoryFilter === cat.slug
+                        ? "bg-white text-[#374BFF] shadow-xs"
+                        : "text-[#2B2B38] hover:text-[#14141A]"
+                    }`}
+                  >
+                    {cat.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setManageCategoriesModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-black/10 bg-white text-xs font-bold text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer shadow-xs shrink-0"
+            >
+              <Layers className="h-3.5 w-3.5 text-[#374BFF]" />
+              <span>Category Tabs ({categories.length})</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -879,6 +1004,16 @@ export function CmsTab({
                         <span className="text-[10px] font-bold text-[#374BFF] uppercase tracking-wider bg-white px-2 py-0.5 rounded-md border border-black/5">
                           {p.category || "websites"}
                         </span>
+                        {p.priceType === "starting_from" && (
+                          <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/50">
+                            Starting From
+                          </span>
+                        )}
+                        {p.isPublished === false && (
+                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/50">
+                            Hidden
+                          </span>
+                        )}
                         {p.badge && (
                           <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
                             {p.badge}
@@ -916,7 +1051,9 @@ export function CmsTab({
                     <div className="mt-1">
                       <h4 className="font-heading text-base font-bold text-[#14141A]">{p.name}</h4>
                       <div className="flex items-baseline gap-2 mt-1">
-                        <span className="font-mono text-lg font-bold text-[#14141A]">{p.price}</span>
+                        <span className="font-mono text-lg font-bold text-[#14141A]">
+                          {p.priceType === "starting_from" && !p.price.includes("+") ? `${p.price}+` : p.price}
+                        </span>
                         {p.period && <span className="text-xs text-[#2B2B38]">{p.period}</span>}
                         {p.originalPrice && (
                           <span className="text-xs text-[#2B2B38]/60 line-through font-mono">
@@ -956,13 +1093,26 @@ export function CmsTab({
                   </div>
 
                   <div className="pt-3 border-t border-black/5 mt-4 flex items-center justify-between">
-                    <button
-                      onClick={() => handleDeletePricing(p.id)}
-                      className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
-                      title="Delete Plan"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDeletePricing(p.id)}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
+                        title="Delete Plan"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleTogglePublishPricing(p)}
+                        className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          p.isPublished === false
+                            ? "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"
+                            : "text-emerald-600 hover:text-rose-600 hover:bg-rose-50"
+                        }`}
+                        title={p.isPublished === false ? "Hidden · Click to Publish" : "Published · Click to Hide"}
+                      >
+                        {p.isPublished === false ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
                     <button
                       onClick={() => setPricingModal(p)}
                       className="px-3 py-1.5 rounded-xl bg-white border border-black/10 hover:border-[#374BFF] text-[#374BFF] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
@@ -1733,13 +1883,23 @@ export function CmsTab({
                     onChange={(e) => setPricingModal({ ...pricingModal, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
                   >
-                    <option value="websites">Websites</option>
-                    <option value="local">Local Business</option>
-                    <option value="ecommerce">E-Commerce</option>
-                    <option value="combos">Combo Packages</option>
-                    <option value="apps">Web Apps & Custom</option>
-                    <option value="design-seo">Design & SEO</option>
-                    <option value="maintenance">Maintenance</option>
+                    {(categories.length > 0
+                      ? categories
+                      : [
+                          { id: "websites", slug: "websites", label: "Web Development" },
+                          { id: "local", slug: "local", label: "Local Business" },
+                          { id: "ecommerce", slug: "ecommerce", label: "E-Commerce" },
+                          { id: "combos", slug: "combos", label: "Combo Packages" },
+                          { id: "apps", slug: "apps", label: "Web Apps & SaaS" },
+                          { id: "design-seo", slug: "design-seo", label: "Design & SEO" },
+                          { id: "maintenance", slug: "maintenance", label: "Maintenance" },
+                          { id: "addons", slug: "addons", label: "Modular Add-Ons" },
+                        ]
+                    ).map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.label} ({c.slug})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1753,8 +1913,8 @@ export function CmsTab({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-1">
                   <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Price *</label>
                   <input
                     type="text"
@@ -1764,7 +1924,18 @@ export function CmsTab({
                     className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono font-bold text-[#14141A]"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
+                  <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Price Type</label>
+                  <select
+                    value={pricingModal.priceType || "flat"}
+                    onChange={(e) => setPricingModal({ ...pricingModal, priceType: e.target.value as "flat" | "starting_from" })}
+                    className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                  >
+                    <option value="flat">Flat Price</option>
+                    <option value="starting_from">Starting From (₹... +)</option>
+                  </select>
+                </div>
+                <div className="col-span-1">
                   <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Billing Period</label>
                   <input
                     type="text"
@@ -1832,7 +2003,16 @@ export function CmsTab({
                 />
               </div>
 
-              <div className="flex gap-4 pt-1">
+              <div className="flex flex-wrap gap-4 pt-1">
+                <label className="flex items-center gap-2 text-xs font-medium text-[#14141A] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={pricingModal.isPublished !== false}
+                    onChange={(e) => setPricingModal({ ...pricingModal, isPublished: e.target.checked })}
+                    className="rounded text-[#374BFF]"
+                  />
+                  Published (Live on Website)
+                </label>
                 <label className="flex items-center gap-2 text-xs font-medium text-[#14141A] cursor-pointer">
                   <input
                     type="checkbox"
@@ -1881,6 +2061,164 @@ export function CmsTab({
                   Save Plan
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: MANAGE PRICING CATEGORY TABS */}
+      {manageCategoriesModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-black/10 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+              <div>
+                <h4 className="font-heading text-lg font-bold text-[#14141A]">
+                  Manage Pricing Category Tabs
+                </h4>
+                <p className="text-xs text-[#2B2B38]">
+                  Add, rename, reorder, or remove category tabs shown on the public site
+                </p>
+              </div>
+              <button onClick={() => setManageCategoriesModal(false)} className="p-1 rounded-lg text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {categories.map((cat, idx) => (
+                <div key={cat.id} className="p-3 rounded-2xl border border-black/10 bg-[#F5F6FC] flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-mono text-xs font-bold text-[#374BFF] bg-white px-2 py-0.5 rounded-md border border-black/5">
+                      #{idx + 1}
+                    </span>
+                    <div>
+                      <div className="text-xs font-bold text-[#14141A]">{cat.label}</div>
+                      <div className="text-[10px] font-mono text-[#2B2B38]">slug: {cat.slug}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleReorderPricingCategory(cat, -1)}
+                      className="p-1 rounded-md border border-black/10 bg-white hover:bg-[#F5F6FC] text-[#14141A] cursor-pointer"
+                      title="Move up"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleReorderPricingCategory(cat, 1)}
+                      className="p-1 rounded-md border border-black/10 bg-white hover:bg-[#F5F6FC] text-[#14141A] cursor-pointer"
+                      title="Move down"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => setPricingCategoryModal(cat)}
+                      className="p-1 rounded-md border border-black/10 bg-white hover:bg-[#F5F6FC] text-[#374BFF] cursor-pointer"
+                      title="Edit Category"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDeletePricingCategory(cat.id)}
+                      className="p-1 rounded-md border border-black/10 bg-white hover:bg-red-50 text-red-500 cursor-pointer"
+                      title="Delete Category"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-black/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPricingCategoryModal({ label: "", slug: "", order: categories.length, isPublished: true })}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="h-4 w-4" /> Add Category Tab
+              </button>
+              <button
+                type="button"
+                onClick={() => setManageCategoriesModal(false)}
+                className="px-4 py-2 rounded-xl border border-black/15 bg-white text-xs font-bold text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD / EDIT PRICING CATEGORY */}
+      {pricingCategoryModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full border border-black/10 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-black/5 pb-3">
+              <h4 className="font-heading text-base font-bold text-[#14141A]">
+                {pricingCategoryModal.id ? "Edit Category Tab" : "Add Category Tab"}
+              </h4>
+              <button onClick={() => setPricingCategoryModal(null)} className="p-1 rounded-lg text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Tab Label *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. AI Services"
+                  value={pricingCategoryModal.label || ""}
+                  onChange={(e) => {
+                    const label = e.target.value;
+                    const autoSlug = !pricingCategoryModal.id
+                      ? label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+                      : pricingCategoryModal.slug;
+                    setPricingCategoryModal({ ...pricingCategoryModal, label, slug: autoSlug });
+                  }}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold text-[#14141A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">URL Slug *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. ai-services"
+                  value={pricingCategoryModal.slug || ""}
+                  onChange={(e) => setPricingCategoryModal({ ...pricingCategoryModal, slug: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono text-[#14141A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-[#2B2B38] mb-1">Display Order</label>
+                <input
+                  type="number"
+                  value={pricingCategoryModal.order ?? 0}
+                  onChange={(e) => setPricingCategoryModal({ ...pricingCategoryModal, order: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono text-[#14141A]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-black/5">
+              <button
+                type="button"
+                onClick={() => setPricingCategoryModal(null)}
+                className="px-4 py-2 rounded-xl border border-black/15 bg-white text-xs font-bold text-[#2B2B38] hover:bg-[#F5F6FC] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSavePricingCategory(pricingCategoryModal)}
+                disabled={!pricingCategoryModal.label || !pricingCategoryModal.slug}
+                className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer"
+              >
+                Save Tab
+              </button>
             </div>
           </div>
         </div>

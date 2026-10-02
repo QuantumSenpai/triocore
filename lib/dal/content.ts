@@ -3,6 +3,7 @@ import {
   siteContent,
   services,
   pricingPlans,
+  pricingCategories,
   showcaseProjects,
   teamMembers,
   employees,
@@ -308,11 +309,49 @@ export async function getFaqCategories() {
   }
 }
 
+export interface PricingCategoryItem {
+  id: string;
+  slug: string;
+  label: string;
+  order: number;
+  isPublished: boolean;
+}
+
+export const fallbackPricingCategories: PricingCategoryItem[] = [
+  { id: "cat-websites", slug: "websites", label: "Web Development", order: 0, isPublished: true },
+  { id: "cat-local", slug: "local", label: "Local Business", order: 1, isPublished: true },
+  { id: "cat-ecommerce", slug: "ecommerce", label: "E-Commerce", order: 2, isPublished: true },
+  { id: "cat-combos", slug: "combos", label: "Combo Packages", order: 3, isPublished: true },
+  { id: "cat-apps", slug: "apps", label: "Web Apps & SaaS", order: 4, isPublished: true },
+  { id: "cat-design-seo", slug: "design-seo", label: "Design & SEO", order: 5, isPublished: true },
+  { id: "cat-maintenance", slug: "maintenance", label: "Maintenance", order: 6, isPublished: true },
+  { id: "cat-addons", slug: "addons", label: "Modular Add-Ons", order: 7, isPublished: true },
+];
+
+export async function getPricingCategories(): Promise<PricingCategoryItem[]> {
+  if (!db) return fallbackPricingCategories;
+  try {
+    const rows = await db
+      .select()
+      .from(pricingCategories)
+      .where(eq(pricingCategories.isPublished, true))
+      .orderBy(asc(pricingCategories.order));
+    if (rows.length === 0) return fallbackPricingCategories;
+    return rows;
+  } catch {
+    return fallbackPricingCategories;
+  }
+}
+
 export async function getPricingContent() {
   if (!db) return [];
 
   try {
-    return await db.select().from(pricingPlans).orderBy(asc(pricingPlans.order));
+    return await db
+      .select()
+      .from(pricingPlans)
+      .where(eq(pricingPlans.isPublished, true))
+      .orderBy(asc(pricingPlans.order));
   } catch {
     return [];
   }

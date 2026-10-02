@@ -43,6 +43,7 @@ import type {
   AdminStat,
   AdminService,
   AdminPricingPlan,
+  AdminPricingCategory,
   AdminShowcaseProject,
   AdminFaq,
   AdminFaqCategory,
@@ -123,6 +124,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStat[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
   const [pricing, setPricing] = useState<AdminPricingPlan[]>([]);
+  const [pricingCategories, setPricingCategories] = useState<AdminPricingCategory[]>([]);
   const [showcaseProjects, setShowcaseProjects] = useState<AdminShowcaseProject[]>([]);
   const [faqs, setFaqs] = useState<AdminFaq[]>([]);
   const [faqCategories, setFaqCategories] = useState<AdminFaqCategory[]>([]);
@@ -224,6 +226,7 @@ export default function AdminDashboardPage() {
         statRes,
         servRes,
         priceRes,
+        priceCatRes,
         showRes,
         faqRes,
         faqCatRes,
@@ -238,6 +241,7 @@ export default function AdminDashboardPage() {
         fetchWithRetry("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
         fetchWithRetry("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
         fetchWithRetry("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
+        fetchWithRetry("/api/admin/pricing-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
         fetchWithRetry("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
         fetchWithRetry("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
         fetchWithRetry("/api/admin/faq-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
@@ -256,6 +260,7 @@ export default function AdminDashboardPage() {
       setStats(statRes.stats || []);
       setServices(servRes.services || []);
       setPricing(priceRes.plans || []);
+      setPricingCategories(priceCatRes.categories || []);
       setShowcaseProjects(showRes.projects || []);
       setFaqs(faqRes.faqs || []);
       setFaqCategories(faqCatRes.categories || []);
@@ -327,10 +332,11 @@ export default function AdminDashboardPage() {
         return;
       }
       if (scope === "cms") {
-        const [contRes, servRes, priceRes, statRes, showRes, faqRes, faqCatRes, legalRes] = await Promise.all([
+        const [contRes, servRes, priceRes, priceCatRes, statRes, showRes, faqRes, faqCatRes, legalRes] = await Promise.all([
           fetchWithRetry("/api/admin/content").then((r) => (r.ok ? r.json() : { content: [] })),
           fetchWithRetry("/api/admin/services").then((r) => (r.ok ? r.json() : { services: [] })),
           fetchWithRetry("/api/admin/pricing").then((r) => (r.ok ? r.json() : { plans: [] })),
+          fetchWithRetry("/api/admin/pricing-categories").then((r) => (r.ok ? r.json() : { categories: [] })),
           fetchWithRetry("/api/admin/stats").then((r) => (r.ok ? r.json() : { stats: [] })),
           fetchWithRetry("/api/admin/projects").then((r) => (r.ok ? r.json() : { projects: [] })),
           fetchWithRetry("/api/admin/faqs").then((r) => (r.ok ? r.json() : { faqs: [] })),
@@ -340,6 +346,7 @@ export default function AdminDashboardPage() {
         setSiteContent(contRes.content || []);
         setServices(servRes.services || []);
         setPricing(priceRes.plans || []);
+        setPricingCategories(priceCatRes.categories || []);
         setStats(statRes.stats || []);
         setShowcaseProjects(showRes.projects || []);
         setFaqs(faqRes.faqs || []);
@@ -566,6 +573,7 @@ export default function AdminDashboardPage() {
                 initialContent={siteContent}
                 services={services}
                 pricing={pricing}
+                pricingCategories={pricingCategories}
                 stats={stats}
                 projects={showcaseProjects}
                 team={teamMembers}

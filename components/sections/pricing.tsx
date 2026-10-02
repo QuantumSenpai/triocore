@@ -30,21 +30,13 @@ import {
 } from "@/lib/data/site-content";
 import { cn } from "@/lib/utils";
 import { formatPaise } from "@/lib/money";
-import type { LaunchOfferConfig } from "@/lib/dal/content";
-
-type PricingCategory = 
- | "websites" 
- | "local" 
- | "ecommerce" 
- | "combos"
- | "apps" 
- | "design-seo" 
- | "maintenance";
+import type { LaunchOfferConfig, PricingCategoryItem } from "@/lib/dal/content";
 
 export interface PlanItem {
   id: string;
   name: string;
   price: string;
+  priceType?: string | null;
   originalPrice?: string | null;
   savings?: string | null;
   period?: string | null;
@@ -59,6 +51,7 @@ export interface PlanItem {
 
 export interface PricingSectionProps {
   initialPlans?: PlanItem[];
+  initialCategories?: PricingCategoryItem[];
   initialLaunchOffer?: LaunchOfferConfig;
 }
 
@@ -196,8 +189,22 @@ function PricingPlanCard({
   );
 }
 
-export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSectionProps) {
-  const [activeCategory, setActiveCategory] = useState<PricingCategory>("websites");
+export function PricingSection({ initialPlans, initialCategories, initialLaunchOffer }: PricingSectionProps) {
+  const defaultCategories: PricingCategoryItem[] = [
+    { id: "websites", slug: "websites", label: "Web Development", order: 0, isPublished: true },
+    { id: "local", slug: "local", label: "Local Business", order: 1, isPublished: true },
+    { id: "ecommerce", slug: "ecommerce", label: "E-Commerce", order: 2, isPublished: true },
+    { id: "combos", slug: "combos", label: "Combo Packages", order: 3, isPublished: true },
+    { id: "apps", slug: "apps", label: "Web Apps & SaaS", order: 4, isPublished: true },
+    { id: "design-seo", slug: "design-seo", label: "Design & SEO", order: 5, isPublished: true },
+    { id: "maintenance", slug: "maintenance", label: "Maintenance", order: 6, isPublished: true },
+  ];
+
+  const categories = (initialCategories && initialCategories.length > 0)
+    ? initialCategories.filter((c) => c.slug !== "addons")
+    : defaultCategories;
+
+  const [activeCategory, setActiveCategory] = useState<string>("websites");
   const [showTerms, setShowTerms] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
 
@@ -216,8 +223,9 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
   const ecomFromProp = list.filter((p: PlanItem) => p.category === "ecommerce");
   const comboFromProp = list.filter((p: PlanItem) => p.category === "combos");
   const appsFromProp = list.filter((p: PlanItem) => p.category === "apps");
-  const designFromProp = list.filter((p: PlanItem) => p.category === "design-seo");
+  const designSeoFromProp = list.filter((p: PlanItem) => p.category === "design-seo" || p.category === "design" || p.category === "seo");
   const mainFromProp = list.filter((p: PlanItem) => p.category === "maintenance");
+  const addonsFromProp = list.filter((p: PlanItem) => p.category === "addons");
 
   const websitePlans = webFromProp.length > 0 ? webFromProp : staticWebsitePlans;
   const localPlans = locFromProp.length > 0 ? locFromProp : staticLocalPlans;
@@ -234,6 +242,48 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
         category: "combos",
       }));
   const maintenanceList = mainFromProp.length > 0 ? mainFromProp : maintenancePlans;
+
+  const appsList = appsFromProp.length > 0
+    ? appsFromProp
+    : webAppServices.map((srv, idx) => ({
+        id: `app-${idx}`,
+        name: srv.name,
+        price: srv.price,
+        category: "apps",
+        priceType: "flat",
+      }));
+
+  const designList = designSeoFromProp.filter((p) => p.category === "design" || p.badge === "Design").length > 0
+    ? designSeoFromProp.filter((p) => p.category === "design" || p.badge === "Design")
+    : designServices.map((srv, idx) => ({
+        id: `design-${idx}`,
+        name: srv.name,
+        price: srv.price,
+        category: "design-seo",
+        badge: "Design",
+        priceType: "flat",
+      }));
+
+  const seoList = designSeoFromProp.filter((p) => p.category === "seo" || p.badge === "SEO").length > 0
+    ? designSeoFromProp.filter((p) => p.category === "seo" || p.badge === "SEO")
+    : seoServices.map((srv, idx) => ({
+        id: `seo-${idx}`,
+        name: srv.name,
+        price: srv.price,
+        category: "design-seo",
+        badge: "SEO",
+        priceType: "flat",
+      }));
+
+  const addonsList = addonsFromProp.length > 0
+    ? addonsFromProp
+    : addOns.map((addon, idx) => ({
+        id: `addon-${idx}`,
+        name: addon.name,
+        price: addon.price,
+        category: "addons",
+        priceType: "flat",
+      }));
 
  return (
  <section id="pricing" className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">
@@ -322,23 +372,13 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
 
  <Reveal direction="down">
  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
- {(
- [
- { id: "websites", label: "Web Development" },
- { id: "local", label: "Local Business" },
- { id: "ecommerce", label: "E-Commerce" },
- { id: "combos", label: "Combo Packages" },
- { id: "apps", label: "Web Apps & SaaS" },
- { id: "design-seo", label: "Design & SEO" },
- { id: "maintenance", label: "Maintenance" },
- ] as { id: PricingCategory; label: string }[]
- ).map((tab) => (
+ {categories.map((tab) => (
  <button
- key={tab.id}
- onClick={() => setActiveCategory(tab.id)}
+ key={tab.slug}
+ onClick={() => setActiveCategory(tab.slug)}
  className={cn(
  "px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer",
- activeCategory === tab.id
+ activeCategory === tab.slug
  ? "bg-[#374BFF] text-white shadow-lg shadow-[#374BFF] scale-105"
  : "border border-[#14141A] bg-white text-[#2B2B38]  hover:border-[#374BFF]"
  )}
@@ -423,23 +463,6 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
 
         {activeCategory === "apps" && (
           <div className="space-y-8">
-            {appsFromProp.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {appsFromProp.map((plan, idx) => {
-                  const planId = plan.id || plan.name;
-                  return (
-                    <PricingPlanCard
-                      key={planId}
-                      plan={plan}
-                      delay={idx * 0.06}
-                      expanded={expandedPlans.has(planId)}
-                      onToggleExpand={() => togglePlan(planId)}
-                      ctaText="Build Web App"
-                    />
-                  );
-                })}
-              </div>
-            )}
             <div className="glass-card rounded-3xl p-6 sm:p-8">
               <div className="mb-6">
                 <h3 className="font-heading text-xl font-bold text-[#14141A]">
@@ -451,19 +474,24 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {webAppServices.map((srv) => (
-                  <div
-                    key={srv.name}
-                    className="flex items-center justify-between p-3.5 rounded-2xl border border-[#14141A]/10 bg-[#F5F6FC]"
-                  >
-                    <span className="text-xs font-bold text-[#14141A]">
-                      {srv.name}
-                    </span>
-                    <span className="font-heading text-sm font-black text-[#374BFF] ml-2 shrink-0">
-                      {srv.price}
-                    </span>
-                  </div>
-                ))}
+                {appsList.map((srv) => {
+                  const displayPrice = srv.priceType === "starting_from" && !srv.price.includes("+")
+                    ? `${srv.price}+`
+                    : srv.price;
+                  return (
+                    <div
+                      key={srv.id || srv.name}
+                      className="flex items-center justify-between p-3.5 rounded-2xl border border-[#14141A]/10 bg-[#F5F6FC]"
+                    >
+                      <span className="text-xs font-bold text-[#14141A]">
+                        {srv.name}
+                      </span>
+                      <span className="font-heading text-sm font-black text-[#374BFF] ml-2 shrink-0">
+                        {displayPrice}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="mt-6 pt-6 border-t border-[#14141A]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -484,24 +512,6 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
 
         {activeCategory === "design-seo" && (
           <div className="space-y-8">
-            {designFromProp.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {designFromProp.map((plan, idx) => {
-                  const planId = plan.id || plan.name;
-                  return (
-                    <PricingPlanCard
-                      key={planId}
-                      plan={plan}
-                      delay={idx * 0.06}
-                      expanded={expandedPlans.has(planId)}
-                      onToggleExpand={() => togglePlan(planId)}
-                      ctaText="Inquire Plan"
-                    />
-                  );
-                })}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
                 <div className="space-y-4">
@@ -515,15 +525,20 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
                   </div>
 
                   <div className="space-y-2.5">
-                    {designServices.map((item) => (
-                      <div
-                        key={item.name}
-                        className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
-                      >
-                        <span className="font-bold text-[#14141A]">{item.name}</span>
-                        <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
-                      </div>
-                    ))}
+                    {designList.map((item) => {
+                      const displayPrice = item.priceType === "starting_from" && !item.price.includes("+")
+                        ? `${item.price}+`
+                        : item.price;
+                      return (
+                        <div
+                          key={item.id || item.name}
+                          className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
+                        >
+                          <span className="font-bold text-[#14141A]">{item.name}</span>
+                          <span className="font-heading font-black text-[#374BFF]">{displayPrice}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -550,15 +565,20 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
                   </div>
 
                   <div className="space-y-2.5">
-                    {seoServices.map((item) => (
-                      <div
-                        key={item.name}
-                        className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
-                      >
-                        <span className="font-bold text-[#14141A]">{item.name}</span>
-                        <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
-                      </div>
-                    ))}
+                    {seoList.map((item) => {
+                      const displayPrice = item.priceType === "starting_from" && !item.price.includes("+")
+                        ? `${item.price}+`
+                        : item.price;
+                      return (
+                        <div
+                          key={item.id || item.name}
+                          className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
+                        >
+                          <span className="font-bold text-[#14141A]">{item.name}</span>
+                          <span className="font-heading font-black text-[#374BFF]">{displayPrice}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -597,6 +617,24 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
           </div>
         )}
 
+        {!["websites", "local", "ecommerce", "combos", "apps", "design-seo", "maintenance"].includes(activeCategory) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {list.filter((p) => p.category === activeCategory).map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={plan}
+                  delay={idx * 0.06}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText="Inquire Plan"
+                />
+              );
+            })}
+          </div>
+        )}
+
  <Reveal direction="up" delay={0.1}>
  <div className="mt-16 sm:mt-20 glass-card rounded-3xl p-6 sm:p-8">
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#14141A] ">
@@ -615,19 +653,24 @@ export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSect
  </div>
 
  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
- {addOns.map((addon) => (
- <div
- key={addon.name}
- className="p-4 rounded-2xl border border-[#14141A]/10 bg-white flex items-center justify-between gap-3 shadow-xs"
- >
- <span className="text-xs font-bold text-[#14141A]">
- {addon.name}
- </span>
- <span className="text-xs font-bold text-[#374BFF] bg-[#374BFF]/10 px-2 py-0.5 rounded-md">
- {addon.price}
- </span>
- </div>
- ))}
+ {addonsList.map((addon) => {
+   const displayPrice = addon.priceType === "starting_from" && !addon.price.includes("+")
+     ? `${addon.price}+`
+     : addon.price;
+   return (
+     <div
+       key={addon.id || addon.name}
+       className="p-4 rounded-2xl border border-[#14141A]/10 bg-white flex items-center justify-between gap-3 shadow-xs"
+     >
+       <span className="text-xs font-bold text-[#14141A]">
+         {addon.name}
+       </span>
+       <span className="text-xs font-bold text-[#374BFF] bg-[#374BFF]/10 px-2 py-0.5 rounded-md">
+         {displayPrice}
+       </span>
+     </div>
+   );
+ })}
  </div>
  </div>
  </Reveal>

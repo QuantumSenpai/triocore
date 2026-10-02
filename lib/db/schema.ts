@@ -147,21 +147,51 @@ export const services = pgTable("services", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const pricingCategories = pgTable("pricing_categories", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  slug: text("slug").notNull().unique(), // e.g. "websites", "local", "ecommerce", "combos", "apps", "design-seo", "maintenance", "addons"
+  label: text("label").notNull(),
+  order: integer("order").default(0).notNull(),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const pricingPlans = pgTable("pricing_plans", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   price: text("price").notNull(),
+  priceType: text("price_type").notNull().default("flat"), // 'flat' | 'starting_from'
   originalPrice: text("original_price"),
   savings: text("savings"),
   period: text("period"),
   badge: text("badge"),
   isPopular: boolean("is_popular").notNull().default(false),
   isBestValue: boolean("is_best_value").notNull().default(false),
+  isPublished: boolean("is_published").notNull().default(true),
   desc: text("desc").notNull(),
   features: jsonb("features").$type<string[]>().notNull(),
   category: text("category").notNull().default("websites"),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const bills = pgTable("bills", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  orderId: text("order_id").notNull().unique(),
+  clientId: text("client_id").notNull(),
+  projectId: text("project_id"),
+  clientName: text("client_name"),
+  projectName: text("project_name"),
+  lineItems: jsonb("line_items").$type<Array<{ description: string; amountPaise: number }>>().notNull(),
+  subtotalPaise: integer("subtotal_paise").notNull(),
+  discountPaise: integer("discount_paise").notNull().default(0),
+  totalPaise: integer("total_paise").notNull(),
+  issuedDate: text("issued_date").notNull(),
+  status: text("status").notNull().default("draft"), // 'draft' | 'final' | 'void'
+  notes: text("notes"),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const showcaseProjects = pgTable("showcase_projects", {

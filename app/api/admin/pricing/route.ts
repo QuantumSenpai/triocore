@@ -1,9 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db, mockPricingPlans } from "@/lib/db";
 import { pricingPlans, auditLogs, contentRevisions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { verifyAdminSession } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
+
+const createPlanSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  price: z.string().min(1, "Price is required"),
+  priceType: z.enum(["flat", "starting_from"]).default("flat"),
+  originalPrice: z.string().optional(),
+  savings: z.string().optional(),
+  period: z.string().optional(),
+  badge: z.string().optional(),
+  isPopular: z.boolean().default(false),
+  isBestValue: z.boolean().default(false),
+  isPublished: z.boolean().default(true),
+  desc: z.string().default(""),
+  features: z.union([z.array(z.string()), z.string()]).default([]),
+  category: z.string().default("websites"),
+  order: z.number().int().default(0),
+});
+
+const updatePlanSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  name: z.string().min(1).optional(),
+  price: z.string().min(1).optional(),
+  priceType: z.enum(["flat", "starting_from"]).optional(),
+  originalPrice: z.string().optional(),
+  savings: z.string().optional(),
+  period: z.string().optional(),
+  badge: z.string().optional(),
+  isPopular: z.boolean().optional(),
+  isBestValue: z.boolean().optional(),
+  isPublished: z.boolean().optional(),
+  desc: z.string().optional(),
+  features: z.union([z.array(z.string()), z.string()]).optional(),
+  category: z.string().optional(),
+  order: z.number().int().optional(),
+});
 
 export async function GET(req: NextRequest) {
   const authCheck = await verifyAdminSession(req);
@@ -21,6 +57,8 @@ export async function GET(req: NextRequest) {
 
     const formattedData = data.map((plan) => ({
       ...plan,
+      priceType: plan.priceType || "flat",
+      isPublished: plan.isPublished !== false,
       originalPrice: plan.originalPrice || "",
       savings: plan.savings || "",
       period: plan.period || "",
@@ -43,12 +81,31 @@ export async function POST(req: NextRequest) {
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
-    const body = await req.json();
-    const { name, price, originalPrice, savings, period, badge, isPopular, isBestValue, desc, features, category, order } = body;
-
-    if (!name || !price || !desc) {
-      return NextResponse.json({ error: "Name, price, and description are required" }, { status: 400 });
+    const json = await req.json();
+    const parseResult = createPlanSchema.safeParse(json);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
     }
+
+    const {
+      name,
+      price,
+      priceType,
+      originalPrice,
+      savings,
+      period,
+      badge,
+      isPopular,
+      isBestValue,
+      isPublished,
+      desc,
+      features,
+      category,
+      order,
+    } = parseResult.data;
 
     if (!db) {
       return NextResponse.json({ success: true, message: "Database not connected" });
@@ -63,13 +120,15 @@ export async function POST(req: NextRequest) {
     const newPlan = await db.insert(pricingPlans).values({
       name,
       price,
+      priceType: priceType || (price.includes("+") ? "starting_from" : "flat"),
       originalPrice: originalPrice || "",
       savings: savings || "",
       period: period || "",
       badge: badge || "",
       isPopular: Boolean(isPopular),
       isBestValue: Boolean(isBestValue),
-      desc,
+      isPublished: isPublished !== false,
+      desc: desc || "",
       features: featuresArray,
       category: category || "websites",
       order: Number(order) || 0,
@@ -82,7 +141,7 @@ export async function POST(req: NextRequest) {
         action: "CREATE_PRICING_PLAN",
         entityType: "pricing_plans",
         entityId: newPlan[0].id,
-        details: { name, price },
+        details: newPlan[0],
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
@@ -93,9 +152,8 @@ export async function POST(req: NextRequest) {
       });
     } catch {}
 
-    revalidatePath("/", "layout");
-    revalidatePath("/(marketing)", "layout");
     revalidatePath("/");
+    revalidatePath("/pricing");
 
     return NextResponse.json({ success: true, plan: newPlan[0] });
   } catch (error) {
@@ -108,12 +166,16 @@ export async function PUT(req: NextRequest) {
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
-    const body = await req.json();
-    const { id, name, price, originalPrice, savings, period, badge, isPopular, isBestValue, desc, features, category, order } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "Missing plan ID" }, { status: 400 });
+    const json = await req.json();
+    const parseResult = updatePlanSchema.safeParse(json);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
     }
+
+    const { id, features, ...fields } = parseResult.data;
 
     if (!db) {
       return NextResponse.json({ success: true, message: "Database not connected" });
@@ -133,18 +195,8 @@ export async function PUT(req: NextRequest) {
       : existing[0].features;
 
     const updated = await db.update(pricingPlans).set({
-      name: name !== undefined ? name : existing[0].name,
-      price: price !== undefined ? price : existing[0].price,
-      originalPrice: originalPrice !== undefined ? originalPrice : existing[0].originalPrice,
-      savings: savings !== undefined ? savings : existing[0].savings,
-      period: period !== undefined ? period : existing[0].period,
-      badge: badge !== undefined ? badge : existing[0].badge,
-      isPopular: isPopular !== undefined ? Boolean(isPopular) : existing[0].isPopular,
-      isBestValue: isBestValue !== undefined ? Boolean(isBestValue) : existing[0].isBestValue,
-      desc: desc !== undefined ? desc : existing[0].desc,
-      features: featuresArray,
-      category: category !== undefined ? category : existing[0].category,
-      order: order !== undefined ? Number(order) : existing[0].order,
+      ...fields,
+      ...(features !== undefined ? { features: featuresArray } : {}),
     }).where(eq(pricingPlans.id, id)).returning();
 
     const now = new Date();
@@ -154,7 +206,7 @@ export async function PUT(req: NextRequest) {
         action: "UPDATE_PRICING_PLAN",
         entityType: "pricing_plans",
         entityId: id,
-        details: { name, price },
+        details: { before: existing[0], after: updated[0] },
         createdAt: now,
       });
       await db.insert(contentRevisions).values({
@@ -165,9 +217,8 @@ export async function PUT(req: NextRequest) {
       });
     } catch {}
 
-    revalidatePath("/", "layout");
-    revalidatePath("/(marketing)", "layout");
     revalidatePath("/");
+    revalidatePath("/pricing");
 
     return NextResponse.json({ success: true, plan: updated[0] });
   } catch (error) {
@@ -180,15 +231,25 @@ export async function DELETE(req: NextRequest) {
   if (!authCheck.authorized) return authCheck.response!;
 
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+    let id = req.nextUrl.searchParams.get("id");
+    if (!id) {
+      try {
+        const json = await req.json();
+        id = json?.id;
+      } catch {}
+    }
 
     if (!id) {
       return NextResponse.json({ error: "Missing plan ID" }, { status: 400 });
     }
 
     if (!db) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, message: "Database not connected" });
+    }
+
+    const existing = await db.select().from(pricingPlans).where(eq(pricingPlans.id, id)).limit(1);
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
     }
 
     await db.delete(pricingPlans).where(eq(pricingPlans.id, id));
@@ -200,16 +261,21 @@ export async function DELETE(req: NextRequest) {
         action: "DELETE_PRICING_PLAN",
         entityType: "pricing_plans",
         entityId: id,
-        details: { id },
+        details: existing[0],
+        createdAt: now,
+      });
+      await db.insert(contentRevisions).values({
+        section: "pricing",
+        data: { id, deleted: true, prev: existing[0] },
+        createdBy: authCheck.user?.email || "admin",
         createdAt: now,
       });
     } catch {}
 
-    revalidatePath("/", "layout");
-    revalidatePath("/(marketing)", "layout");
     revalidatePath("/");
+    revalidatePath("/pricing");
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }

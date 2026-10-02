@@ -181,6 +181,16 @@ export interface AdminPricingPlan {
   features: string[];
   category?: string;
   order?: number;
+  priceType?: "flat" | "starting_from";
+  isPublished?: boolean;
+}
+
+export interface AdminPricingCategory {
+  id: string;
+  slug: string;
+  label: string;
+  order: number;
+  isPublished?: boolean;
 }
 
 export interface AdminShowcaseProject {
