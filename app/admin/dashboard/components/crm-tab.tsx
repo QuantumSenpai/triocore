@@ -135,6 +135,17 @@ export function CrmTab({
     status: "pending",
   });
   const [savingMilestone, setSavingMilestone] = useState(false);
+  const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(new Set());
+
+  const toggleMilestoneDesc = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedMilestones((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Payment Modal
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -1339,24 +1350,44 @@ export function CrmTab({
                     {p.milestones?.map((m: AdminMilestone) => (
                       <div
                         key={m.id}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${m.status === "completed"
+                        className={`p-2.5 rounded-xl border flex items-start justify-between text-xs transition-all gap-2 ${
+                          m.status === "completed"
                             ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
                             : m.status === "in_progress"
                               ? "bg-blue-50/70 border-blue-200 text-blue-900"
                               : "bg-white border-black/10 text-[#14141A]"
-                          }`}
+                        }`}
                       >
-                        <div
-                          onClick={() => handleToggleMilestone(m.id, m.status)}
-                          className="flex-1 cursor-pointer pr-2 truncate"
-                          title="Click to cycle status: Pending -> In Progress -> Done"
-                        >
-                          <span className="font-medium truncate block">{m.title}</span>
-                          <span className="text-[10px] font-bold block mt-0.5">
-                            {m.status === "completed" ? "✓ Done" : m.status === "in_progress" ? "⏳ In Progress" : "○ Pending"}
-                          </span>
+                        <div className="flex-1 min-w-0 pr-1">
+                          <div
+                            onClick={() => handleToggleMilestone(m.id, m.status)}
+                            className="cursor-pointer"
+                            title="Click to cycle status: Pending -> In Progress -> Done"
+                          >
+                            <span className="font-medium block break-words">{m.title}</span>
+                            <span className="text-[10px] font-bold block mt-0.5">
+                              {m.status === "completed" ? "✓ Done" : m.status === "in_progress" ? "⏳ In Progress" : "○ Pending"}
+                            </span>
+                          </div>
+
+                          {m.description && m.description.trim() && (
+                            <div className="mt-1.5 pt-1.5 border-t border-black/5 text-[11px] text-[#2B2B38]/85 leading-relaxed">
+                              <p className={expandedMilestones.has(m.id) ? "whitespace-pre-wrap break-words" : "line-clamp-2 break-words"}>
+                                {m.description}
+                              </p>
+                              {m.description.length > 70 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => toggleMilestoneDesc(m.id, e)}
+                                  className="text-[10px] font-bold text-[#374BFF] hover:underline cursor-pointer pt-0.5 inline-block"
+                                >
+                                  {expandedMilestones.has(m.id) ? "Show less" : "Show more"}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0 pt-0.5">
                           <button
                             onClick={() => handleOpenEditMilestone(m)}
                             className="p-1 rounded hover:bg-black/5 text-[#2B2B38] hover:text-[#14141A] cursor-pointer"
