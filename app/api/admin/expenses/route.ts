@@ -58,7 +58,7 @@ export async function syncRunningBalances(
   for (const exp of projectExpenses) {
     cumulativePaid += exp.amountPaise;
     const amountLeftPaise = canonicalBudgetPaise > 0 ? Math.max(0, canonicalBudgetPaise - cumulativePaid) : 0;
-    const isReimbursed = canonicalBudgetPaise > 0 ? amountLeftPaise === 0 : exp.isReimbursed;
+    const isReimbursed = exp.isReimbursed || (canonicalBudgetPaise > 0 && amountLeftPaise === 0);
 
     if (
       exp.amountLeftPaise !== amountLeftPaise ||
@@ -171,7 +171,7 @@ export async function GET(req: NextRequest) {
         runningBalanceMap.set(row.id, {
           amountLeftPaise: left,
           allocatedAmountPaise: canonicalBudget > 0 ? canonicalBudget : (row.allocatedAmountPaise || 0),
-          isReimbursed: canonicalBudget > 0 ? left === 0 : row.isReimbursed,
+          isReimbursed: row.isReimbursed || (canonicalBudget > 0 && left === 0),
         });
       }
     }
@@ -560,7 +560,9 @@ export async function PUT(req: NextRequest) {
         }
 
         finalAmountLeftPaise = Math.max(0, finalAllocatedPaise - totalPaidNow);
-        finalIsReimbursed = isFinance ? (isReimbursed !== undefined ? isReimbursed : finalAmountLeftPaise === 0) : finalAmountLeftPaise === 0;
+        finalIsReimbursed = isFinance
+          ? (isReimbursed !== undefined ? isReimbursed : (existing.isReimbursed || finalAmountLeftPaise === 0))
+          : (existing.isReimbursed || finalAmountLeftPaise === 0);
       }
     }
 

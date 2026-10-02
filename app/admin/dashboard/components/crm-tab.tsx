@@ -146,6 +146,7 @@ export function CrmTab({
       return next;
     });
   };
+  const [reimbursedOverrides, setReimbursedOverrides] = useState<Record<string, boolean>>({});
 
   // Payment Modal
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -951,8 +952,11 @@ export function CrmTab({
 
   // Toggle Reimbursed Status
   const handleToggleReimbursed = async (exp: AdminExpense) => {
+    const currentState = reimbursedOverrides[exp.id] !== undefined ? reimbursedOverrides[exp.id] : Boolean(exp.isReimbursed);
+    const nextState = !currentState;
+    setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: nextState }));
+
     try {
-      const nextState = !exp.isReimbursed;
       const res = await fetch("/api/admin/expenses", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -962,10 +966,19 @@ export function CrmTab({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update reimbursement");
+      if (!res.ok) {
+        setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: currentState }));
+        throw new Error(data.error || "Failed to update reimbursement");
+      }
       toast.success(nextState ? "Marked as reimbursed!" : "Reimbursement reverted to pending!");
       await onRefresh("expenses");
+      setReimbursedOverrides((prev) => {
+        const next = { ...prev };
+        delete next[exp.id];
+        return next;
+      });
     } catch (err) {
+      setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: currentState }));
       toast.error((err as Error).message);
     }
   };
@@ -1881,37 +1894,48 @@ export function CrmTab({
                                   {formatPaise(e.amountLeftPaise || 0)}
                                 </td>
                                 <td className="py-3 px-3">
-                                  <span
-                                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${(e.amountLeftPaise === 0 || e.isReimbursed)
-                                        ? "bg-emerald-100 text-emerald-800"
-                                        : "bg-amber-100 text-amber-800"
-                                      }`}
-                                  >
-                                    {(e.amountLeftPaise === 0 || e.isReimbursed) ? "✓ Cleared" : "⏳ Pending"}
-                                  </span>
+                                  {(() => {
+                                    const isRowReimbursed = reimbursedOverrides[e.id] !== undefined ? reimbursedOverrides[e.id] : e.isReimbursed;
+                                    const isRowCleared = isRowReimbursed || e.amountLeftPaise === 0;
+                                    return (
+                                      <span
+                                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                                          isRowCleared
+                                            ? "bg-emerald-100 text-emerald-800"
+                                            : "bg-amber-100 text-amber-800"
+                                        }`}
+                                      >
+                                        {isRowReimbursed ? "✓ Reimbursed" : isRowCleared ? "✓ Cleared" : "⏳ Pending"}
+                                      </span>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="py-3 px-3 text-right">
                                   <div className="flex items-center justify-end gap-1.5">
-                                    {canViewFinance && (
-                                      <button
-                                        onClick={() => handleToggleReimbursed(e)}
-                                        title={e.isReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${e.isReimbursed
-                                            ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
-                                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    {canViewFinance && (() => {
+                                      const isRowReimbursed = reimbursedOverrides[e.id] !== undefined ? reimbursedOverrides[e.id] : e.isReimbursed;
+                                      return (
+                                        <button
+                                          onClick={() => handleToggleReimbursed({ ...e, isReimbursed: isRowReimbursed })}
+                                          title={isRowReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
+                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
+                                            isRowReimbursed
+                                              ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
+                                              : "bg-emerald-600 text-white hover:bg-emerald-700"
                                           }`}
-                                      >
-                                        {e.isReimbursed ? (
-                                          <>
-                                            <RotateCcw className="h-3 w-3" /> Revert
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Check className="h-3 w-3" /> Reimburse
-                                          </>
-                                        )}
-                                      </button>
-                                    )}
+                                        >
+                                          {isRowReimbursed ? (
+                                            <>
+                                              <RotateCcw className="h-3 w-3" /> Revert
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Check className="h-3 w-3" /> Reimburse
+                                            </>
+                                          )}
+                                        </button>
+                                      );
+                                    })()}
                                     <button
                                       onClick={() => handleOpenEditExpense(e)}
                                       title="Edit Expense"
