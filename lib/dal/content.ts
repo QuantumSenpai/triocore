@@ -352,6 +352,61 @@ export async function getSiteSettings(key: string) {
   }
 }
 
+export interface LaunchOfferItem {
+  label: string;
+  original_price_paise: number;
+  offer_price_paise: number;
+  savings_label: string;
+  desc?: string;
+}
+
+export interface LaunchOfferConfig {
+  isActive: boolean;
+  headline: string;
+  subtext: string;
+  tag?: string;
+  items: LaunchOfferItem[];
+}
+
+export const defaultLaunchOffer: LaunchOfferConfig = {
+  isActive: true,
+  headline: "Lock In Special Early-Bird Discounts",
+  subtext: "Kickstart your digital presence at direct student-developer rates. Limited to the first 10 projects onboarded this season.",
+  tag: "Launch Offer — First 10 Clients Only 🎉",
+  items: [
+    { label: "Starter Website", original_price_paise: 149900, offer_price_paise: 99900, savings_label: "Save ₹500", desc: "1 page quick launch package" },
+    { label: "Business Website", original_price_paise: 299900, offer_price_paise: 199900, savings_label: "Save ₹1,000", desc: "Up to 4 custom pages with SEO" },
+    { label: "Premium Website", original_price_paise: 499900, offer_price_paise: 349900, savings_label: "Save ₹1,500", desc: "Up to 6 pages, full React/Next.js stack" },
+    { label: "E-Commerce System", original_price_paise: 999900, offer_price_paise: 799900, savings_label: "Save ₹2,000", desc: "Full product catalogue & checkout" },
+    { label: "Custom Web App", original_price_paise: 1299900, offer_price_paise: 999900, savings_label: "Save ₹3,000+", desc: "Custom database, auth & dashboard" },
+  ],
+};
+
+export async function getLaunchOfferContent(): Promise<LaunchOfferConfig> {
+  if (!db) return defaultLaunchOffer;
+  try {
+    const rows = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, "launch_offer"))
+      .limit(1);
+
+    if (rows.length > 0 && rows[0].value) {
+      const val = rows[0].value as Partial<LaunchOfferConfig>;
+      return {
+        isActive: val.isActive !== undefined ? Boolean(val.isActive) : defaultLaunchOffer.isActive,
+        headline: val.headline || defaultLaunchOffer.headline,
+        subtext: val.subtext || defaultLaunchOffer.subtext,
+        tag: val.tag || defaultLaunchOffer.tag,
+        items: Array.isArray(val.items) && val.items.length > 0 ? val.items : defaultLaunchOffer.items,
+      };
+    }
+    return defaultLaunchOffer;
+  } catch {
+    return defaultLaunchOffer;
+  }
+}
+
 export async function getWhyUsStats() {
   const fallback = [
     { value: 100, suffix: "%", label: "Client Code Ownership" },

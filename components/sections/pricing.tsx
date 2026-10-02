@@ -29,6 +29,8 @@ import {
  pricingTerms
 } from "@/lib/data/site-content";
 import { cn } from "@/lib/utils";
+import { formatPaise } from "@/lib/money";
+import type { LaunchOfferConfig } from "@/lib/dal/content";
 
 type PricingCategory = 
  | "websites" 
@@ -57,6 +59,7 @@ export interface PlanItem {
 
 export interface PricingSectionProps {
   initialPlans?: PlanItem[];
+  initialLaunchOffer?: LaunchOfferConfig;
 }
 
 function formatDisplayPrice(price?: string | null): string {
@@ -193,7 +196,7 @@ function PricingPlanCard({
   );
 }
 
-export function PricingSection({ initialPlans }: PricingSectionProps) {
+export function PricingSection({ initialPlans, initialLaunchOffer }: PricingSectionProps) {
   const [activeCategory, setActiveCategory] = useState<PricingCategory>("websites");
   const [showTerms, setShowTerms] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
@@ -258,8 +261,9 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  </Reveal>
  </div>
 
+ {initialLaunchOffer?.isActive !== false && (
  <Reveal direction="up" delay={0.2}>
- <div className="mb-12 sm:mb-16 rounded-3xl border-2 border-[#CFFF04] bg-gradient-to-br from-[#374BFF] via-[#FFFFFF] to-[#CFFF04] p-6 sm:p-8 shadow-xl relative overflow-hidden">
+ <div id="launch-offer-banner" className="mb-12 sm:mb-16 rounded-3xl border-2 border-[#CFFF04] bg-gradient-to-br from-[#374BFF] via-[#FFFFFF] to-[#CFFF04] p-6 sm:p-8 shadow-xl relative overflow-hidden">
  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
  <div className="space-y-2">
  <div className="flex items-center gap-2">
@@ -267,21 +271,29 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  <Flame className="h-4 w-4" />
  </span>
  <span className="text-xs font-black uppercase tracking-wider text-[#14141A] font-heading">
- Launch Offer — First 10 Clients Only 🎉
+ {initialLaunchOffer?.tag || "Launch Offer — First 10 Clients Only 🎉"}
  </span>
  </div>
  <h3 className="font-heading text-xl sm:text-2xl font-black text-[#14141A]">
- Lock In Special Early-Bird Discounts
+ {initialLaunchOffer?.headline || "Lock In Special Early-Bird Discounts"}
  </h3>
  <p className="text-xs sm:text-sm text-[#2B2B38] font-medium max-w-xl">
- Kickstart your digital presence at direct student-developer rates. Limited to the first 10 projects onboarded this season.
+ {initialLaunchOffer?.subtext || "Kickstart your digital presence at direct student-developer rates. Limited to the first 10 projects onboarded this season."}
  </p>
  </div>
 
  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
- {launchOffers.map((offer) => (
+ {(initialLaunchOffer?.items && initialLaunchOffer.items.length > 0
+   ? initialLaunchOffer.items.map((item) => ({
+       title: item.label,
+       originalPrice: formatPaise(item.original_price_paise),
+       launchPrice: formatPaise(item.offer_price_paise),
+       savings: item.savings_label,
+     }))
+   : launchOffers
+ ).map((offer, idx) => (
  <div
- key={offer.title}
+ key={offer.title + idx}
  className="rounded-2xl border border-[#14141A] bg-white p-3 sm:p-3.5 text-center shadow-sm"
  >
  <p className="text-[11px] font-bold text-[#14141A] truncate">
@@ -295,15 +307,18 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  {offer.launchPrice}
  </span>
  </div>
+ {offer.savings && (
  <span className="mt-1 inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 ">
  {offer.savings}
  </span>
+ )}
  </div>
  ))}
  </div>
  </div>
  </div>
  </Reveal>
+ )}
 
  <Reveal direction="down">
  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">

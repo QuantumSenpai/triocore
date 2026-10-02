@@ -21,6 +21,7 @@ import {
   getFaqContent,
   getWhyUsStats,
   getFaqCategories,
+  getLaunchOfferContent,
 } from "@/lib/dal/content";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function MarketingPage() {
     faqs,
     whyUsStats,
     faqCategories,
+    launchOffer,
   ] = await Promise.all([
     getHeroContent(),
     getServicesContent(),
@@ -47,6 +49,7 @@ export default async function MarketingPage() {
     getFaqContent(),
     getWhyUsStats(),
     getFaqCategories(),
+    getLaunchOfferContent(),
   ]);
 
   return (
@@ -55,7 +58,7 @@ export default async function MarketingPage() {
       <AboutSection />
       <TeamBentoSection initialTeam={team} initialEmployees={employees} />
       <ServicesBentoSection initialServices={services} />
-      <PricingSection initialPlans={pricing} />
+      <PricingSection initialPlans={pricing} initialLaunchOffer={launchOffer} />
       <InnovationLabSection />
       <ShowcaseGridSection initialProjects={showcase} />
       <WhyUsSection initialStats={whyUsStats} />

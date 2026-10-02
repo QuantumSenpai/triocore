@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sparkles, 
   ExternalLink, 
@@ -18,9 +18,12 @@ import {
   Layers,
   Image as ImageIcon,
   CircleUser,
-  Link2
+  Link2,
+  Flame,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { LaunchOfferConfig } from "@/lib/dal/content";
 import type {
   AdminSiteContent,
   AdminService,
@@ -95,6 +98,46 @@ export function CmsTab({
       else next.add(id);
       return next;
     });
+  };
+
+  const [launchOffer, setLaunchOffer] = useState<LaunchOfferConfig | null>(null);
+  const [launchOfferSaving, setLaunchOfferSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/launch-offer")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data?.offer) {
+          setLaunchOffer(data.offer);
+        }
+      })
+      .catch((err) => console.error("Failed to load launch offer:", err));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSaveLaunchOffer = async () => {
+    if (!launchOffer) return;
+    setLaunchOfferSaving(true);
+    try {
+      const res = await fetch("/api/admin/launch-offer", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(launchOffer),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update launch offer");
+      toast.success("Launch Offer updated! Changes are live on public site.");
+      setLaunchOffer(data.offer);
+      showSavedLive("/#pricing", "Launch Offer Banner");
+      await onRefresh("cms");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLaunchOfferSaving(false);
+    }
   };
   const [statModal, setStatModal] = useState<AdminStat | Partial<AdminStat> | null>(null);
   const [projectModal, setProjectModal] = useState<AdminShowcaseProject | Partial<AdminShowcaseProject> | null>(null);
@@ -601,8 +644,180 @@ export function CmsTab({
 
       {/* SECTION: PRICING */}
       {activeSection === "pricing" && (
-        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-6">
+          {/* LAUNCH OFFER BANNER MANAGEMENT CARD */}
+          <div className="rounded-2xl border-2 border-[#CFFF04] bg-gradient-to-br from-[#374BFF]/5 via-white to-[#CFFF04]/10 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/10">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-[#CFFF04] text-[#14141A] flex items-center justify-center font-bold shadow-xs">
+                  <Flame className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-heading text-base font-black text-[#14141A]">
+                      Launch Offer Banner
+                    </h4>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      launchOffer?.isActive
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : "bg-slate-100 text-slate-700 border border-slate-300"
+                    }`}>
+                      {launchOffer?.isActive ? "● Active on Site" : "○ Hidden from Site"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#2B2B38]">
+                    Prominent early-bird discount strip shown at the top of public pricing section.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!launchOffer) return;
+                    setLaunchOffer({ ...launchOffer, isActive: !launchOffer.isActive });
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                    launchOffer?.isActive
+                      ? "bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300"
+                      : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs"
+                  }`}
+                >
+                  {launchOffer?.isActive ? (
+                    <>
+                      <EyeOff className="h-3.5 w-3.5" /> Turn Offer OFF
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3.5 w-3.5" /> Turn Offer ON
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={launchOfferSaving}
+                  onClick={handleSaveLaunchOffer}
+                  className="px-4 py-1.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+                >
+                  {launchOfferSaving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-3.5 w-3.5" /> Save Offer
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {launchOffer && (
+              <div className="space-y-4 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#14141A] uppercase tracking-wider mb-1">
+                      Banner Headline
+                    </label>
+                    <input
+                      type="text"
+                      value={launchOffer.headline}
+                      onChange={(e) => setLaunchOffer({ ...launchOffer, headline: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-white text-xs text-[#14141A] focus:outline-none focus:border-[#374BFF]"
+                      placeholder="e.g. Lock In Special Early-Bird Discounts"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#14141A] uppercase tracking-wider mb-1">
+                      Banner Subtext
+                    </label>
+                    <input
+                      type="text"
+                      value={launchOffer.subtext}
+                      onChange={(e) => setLaunchOffer({ ...launchOffer, subtext: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-black/15 bg-white text-xs text-[#14141A] focus:outline-none focus:border-[#374BFF]"
+                      placeholder="e.g. Kickstart your digital presence at direct student-developer rates..."
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[#14141A] uppercase tracking-wider mb-2">
+                    Offer Price Cards ({launchOffer.items.length})
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {launchOffer.items.map((item, idx) => (
+                      <div key={idx} className="p-3 rounded-xl bg-white border border-black/10 shadow-xs space-y-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-[#2B2B38]">Card Label</label>
+                          <input
+                            type="text"
+                            value={item.label}
+                            onChange={(e) => {
+                              const newItems = [...launchOffer.items];
+                              newItems[idx] = { ...newItems[idx], label: e.target.value };
+                              setLaunchOffer({ ...launchOffer, items: newItems });
+                            }}
+                            className="w-full px-2 py-1 rounded-lg border border-black/15 text-xs font-bold text-[#14141A]"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-[#2B2B38]">Original ₹</label>
+                            <input
+                              type="number"
+                              value={Math.round(item.original_price_paise / 100)}
+                              onChange={(e) => {
+                                const newItems = [...launchOffer.items];
+                                const val = Number(e.target.value) || 0;
+                                newItems[idx] = { ...newItems[idx], original_price_paise: val * 100 };
+                                setLaunchOffer({ ...launchOffer, items: newItems });
+                              }}
+                              className="w-full px-2 py-1 rounded-lg border border-black/15 text-xs text-[#2B2B38]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-[#374BFF]">Offer ₹</label>
+                            <input
+                              type="number"
+                              value={Math.round(item.offer_price_paise / 100)}
+                              onChange={(e) => {
+                                const newItems = [...launchOffer.items];
+                                const val = Number(e.target.value) || 0;
+                                newItems[idx] = { ...newItems[idx], offer_price_paise: val * 100 };
+                                setLaunchOffer({ ...launchOffer, items: newItems });
+                              }}
+                              className="w-full px-2 py-1 rounded-lg border border-black/15 text-xs font-bold text-[#374BFF]"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-emerald-700">Savings Label</label>
+                          <input
+                            type="text"
+                            value={item.savings_label}
+                            onChange={(e) => {
+                              const newItems = [...launchOffer.items];
+                              newItems[idx] = { ...newItems[idx], savings_label: e.target.value };
+                              setLaunchOffer({ ...launchOffer, items: newItems });
+                            }}
+                            className="w-full px-2 py-1 rounded-lg border border-black/15 text-xs text-emerald-700 font-semibold"
+                            placeholder="e.g. Save ₹500"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div>
               <h3 className="font-heading text-lg font-bold text-[#14141A]">
                 Pricing Plans ({pricing.length})
