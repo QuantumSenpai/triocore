@@ -9,6 +9,7 @@ import {
  Flame, 
  HelpCircle, 
  ChevronDown, 
+ ChevronUp,
  ShieldCheck, 
  Tag, 
  Layers 
@@ -58,19 +59,177 @@ export interface PricingSectionProps {
   initialPlans?: PlanItem[];
 }
 
+function formatDisplayPrice(price?: string | null): string {
+  if (!price) return "";
+  const trimmed = price.trim();
+  if (trimmed.startsWith("₹") || trimmed.startsWith("$")) return trimmed;
+  if (/^[a-zA-Z\s]+$/.test(trimmed)) return trimmed;
+  const cleanNum = trimmed.replace(/[^\d.]/g, "");
+  const num = Number(cleanNum);
+  if (!isNaN(num) && cleanNum.length > 0) {
+    const hasPlus = trimmed.includes("+");
+    return `₹${num.toLocaleString("en-IN")}${hasPlus ? "+" : ""}`;
+  }
+  return `₹${trimmed}`;
+}
+
+interface PricingPlanCardProps {
+  plan: PlanItem;
+  delay?: number;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  ctaText?: string;
+}
+
+function PricingPlanCard({
+  plan,
+  delay = 0,
+  expanded,
+  onToggleExpand,
+  ctaText,
+}: PricingPlanCardProps) {
+  const features = plan.features || [];
+  const hasMore = features.length > 3;
+  const visibleFeatures = expanded || !hasMore ? features : features.slice(0, 3);
+
+  const formattedPrice = formatDisplayPrice(plan.price);
+  const formattedOriginalPrice = plan.originalPrice ? formatDisplayPrice(plan.originalPrice) : null;
+  const formattedPeriod = plan.period
+    ? (plan.period.startsWith("/") ? plan.period : `/${plan.period}`)
+    : null;
+
+  return (
+    <Reveal direction="up" delay={delay}>
+      <div
+        className={cn(
+          "glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group transition-all duration-300",
+          plan.isPopular && "border-2 border-[#374BFF] shadow-xl shadow-[#374BFF]/20",
+          plan.isBestValue && "border-2 border-[#CFFF04] shadow-xl shadow-[#CFFF04]/20"
+        )}
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h3 className="font-heading text-xl font-bold text-[#14141A]">
+              {plan.name}
+            </h3>
+            {plan.badge && (
+              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#CFFF04] text-[#14141A] shadow-sm">
+                {plan.badge}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
+              {formattedPrice}
+            </span>
+            {formattedOriginalPrice && (
+              <span className="text-xs sm:text-sm text-[#2B2B38] line-through font-medium">
+                {formattedOriginalPrice}
+              </span>
+            )}
+            {formattedPeriod && (
+              <span className="text-xs font-bold text-[#2B2B38] uppercase tracking-wider">
+                {formattedPeriod}
+              </span>
+            )}
+            {plan.savings && (
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-sans">
+                {plan.savings}
+              </span>
+            )}
+          </div>
+
+          {plan.desc && (
+            <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
+              {plan.desc}
+            </p>
+          )}
+
+          {features.length > 0 && (
+            <div className="space-y-2.5 pt-3 border-t border-[#14141A]/10">
+              {visibleFeatures.map((feat: string, fIdx: number) => (
+                <div key={fIdx} className="flex items-start gap-2.5 text-xs text-[#14141A] font-semibold">
+                  <Check className="h-4 w-4 text-[#374BFF] shrink-0 mt-0.5" />
+                  <span>{feat}</span>
+                </div>
+              ))}
+
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={onToggleExpand}
+                  className="text-xs font-bold text-[#374BFF] hover:underline cursor-pointer pt-1 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded"
+                  aria-expanded={expanded}
+                >
+                  {expanded ? (
+                    <>
+                      <span>Show less features</span>
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </>
+                  ) : (
+                    <>
+                      <span>+{features.length - 3} more features</span>
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="pt-6 mt-6 border-t border-[#14141A]/10">
+          <Link
+            href="#contact"
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF]/20 hover:bg-[#14141A] transition-all"
+          >
+            <span>{ctaText || `Choose ${plan.name}`}</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
 export function PricingSection({ initialPlans }: PricingSectionProps) {
   const [activeCategory, setActiveCategory] = useState<PricingCategory>("websites");
   const [showTerms, setShowTerms] = useState(false);
+  const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
+
+  const togglePlan = (id: string) => {
+    setExpandedPlans((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const list = (initialPlans && initialPlans.length > 0) ? initialPlans : [];
   const webFromProp = list.filter((p: PlanItem) => p.category === "websites");
   const locFromProp = list.filter((p: PlanItem) => p.category === "local");
   const ecomFromProp = list.filter((p: PlanItem) => p.category === "ecommerce");
+  const comboFromProp = list.filter((p: PlanItem) => p.category === "combos");
+  const appsFromProp = list.filter((p: PlanItem) => p.category === "apps");
+  const designFromProp = list.filter((p: PlanItem) => p.category === "design-seo");
   const mainFromProp = list.filter((p: PlanItem) => p.category === "maintenance");
 
   const websitePlans = webFromProp.length > 0 ? webFromProp : staticWebsitePlans;
   const localPlans = locFromProp.length > 0 ? locFromProp : staticLocalPlans;
   const ecomPlans = ecomFromProp.length > 0 ? ecomFromProp : staticEcommercePlans;
+  const comboList: PlanItem[] = comboFromProp.length > 0
+    ? comboFromProp
+    : comboPackages.map((combo, idx) => ({
+        id: `combo-${idx}`,
+        name: combo.title,
+        price: combo.comboPrice,
+        originalPrice: combo.originalPrice,
+        desc: combo.desc,
+        badge: "Combo Value",
+        category: "combos",
+      }));
   const maintenanceList = mainFromProp.length > 0 ? mainFromProp : maintenancePlans;
 
  return (
@@ -175,389 +334,253 @@ export function PricingSection({ initialPlans }: PricingSectionProps) {
  </div>
  </Reveal>
 
- {activeCategory === "websites" && (
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
- {websitePlans.map((plan, idx) => (
- <Reveal key={plan.id} direction="up" delay={idx * 0.06}>
- <div
- className={cn(
- "glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group",
- plan.isPopular && "border-2 border-[#374BFF] shadow-xl shadow-[#374BFF]",
- plan.isBestValue && "border-2 border-[#CFFF04] shadow-xl shadow-[#CFFF04]"
- )}
- >
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- {plan.name}
- </h3>
- {plan.badge && (
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#CFFF04] text-[#14141A] shadow-sm">
- {plan.badge}
- </span>
- )}
- </div>
+        {activeCategory === "websites" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {websitePlans.map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={plan}
+                  delay={idx * 0.06}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText={`Choose ${plan.name}`}
+                />
+              );
+            })}
+          </div>
+        )}
 
- <div>
- <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
- {plan.price}
- </span>
- </div>
+        {activeCategory === "local" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {localPlans.map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={plan}
+                  delay={idx * 0.08}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText={`Get ${plan.name}`}
+                />
+              );
+            })}
+          </div>
+        )}
 
- <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
- {plan.desc}
- </p>
+        {activeCategory === "ecommerce" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ecomPlans.map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={plan}
+                  delay={idx * 0.08}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText="Build Online Store"
+                />
+              );
+            })}
+          </div>
+        )}
 
- <div className="space-y-2.5 pt-3 border-t border-[#14141A] ">
- {(plan.features || []).map((feat: string) => (
- <div key={feat} className="flex items-start gap-2.5 text-xs text-[#14141A] font-semibold">
- <Check className="h-4 w-4 text-[#374BFF] shrink-0 mt-0.5" />
- <span>{feat}</span>
- </div>
- ))}
- </div>
- </div>
+        {activeCategory === "combos" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {comboList.map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={plan}
+                  delay={idx * 0.06}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText="Inquire Combo"
+                />
+              );
+            })}
+          </div>
+        )}
 
- <div className="pt-6 mt-6 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF] hover:bg-[#14141A] transition-all"
- >
- <span>Choose {plan.name}</span>
- <ArrowRight className="h-4 w-4" />
- </Link>
- </div>
- </div>
- </Reveal>
- ))}
- </div>
- )}
+        {activeCategory === "apps" && (
+          <div className="space-y-8">
+            {appsFromProp.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {appsFromProp.map((plan, idx) => {
+                  const planId = plan.id || plan.name;
+                  return (
+                    <PricingPlanCard
+                      key={planId}
+                      plan={plan}
+                      delay={idx * 0.06}
+                      expanded={expandedPlans.has(planId)}
+                      onToggleExpand={() => togglePlan(planId)}
+                      ctaText="Build Web App"
+                    />
+                  );
+                })}
+              </div>
+            )}
+            <div className="glass-card rounded-3xl p-6 sm:p-8">
+              <div className="mb-6">
+                <h3 className="font-heading text-xl font-bold text-[#14141A]">
+                  Web Applications & Custom Engineering Rates
+                </h3>
+                <p className="text-xs text-[#2B2B38] mt-1 font-medium">
+                  Modular software components, APIs, database architectures, and custom workflows.
+                </p>
+              </div>
 
- {activeCategory === "local" && (
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
- {localPlans.map((plan, idx) => (
- <Reveal key={plan.id} direction="up" delay={idx * 0.08}>
- <div
- className={cn(
- "glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group",
- plan.isPopular && "border-2 border-[#374BFF] shadow-xl shadow-[#374BFF]"
- )}
- >
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- {plan.name}
- </h3>
- {plan.badge && (
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#CFFF04] text-[#14141A] shadow-sm">
- {plan.badge}
- </span>
- )}
- </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {webAppServices.map((srv) => (
+                  <div
+                    key={srv.name}
+                    className="flex items-center justify-between p-3.5 rounded-2xl border border-[#14141A]/10 bg-[#F5F6FC]"
+                  >
+                    <span className="text-xs font-bold text-[#14141A]">
+                      {srv.name}
+                    </span>
+                    <span className="font-heading text-sm font-black text-[#374BFF] ml-2 shrink-0">
+                      {srv.price}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
- <div>
- <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
- {plan.price}
- </span>
- </div>
+              <div className="mt-6 pt-6 border-t border-[#14141A]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="text-xs text-[#2B2B38] font-semibold">
+                  Need a full custom enterprise platform? We provide detailed architectural scopes.
+                </span>
+                <Link
+                  href="#contact"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#374BFF] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
+                >
+                  <span>Request Custom Quote</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
- <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
- {plan.desc}
- </p>
+        {activeCategory === "design-seo" && (
+          <div className="space-y-8">
+            {designFromProp.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {designFromProp.map((plan, idx) => {
+                  const planId = plan.id || plan.name;
+                  return (
+                    <PricingPlanCard
+                      key={planId}
+                      plan={plan}
+                      delay={idx * 0.06}
+                      expanded={expandedPlans.has(planId)}
+                      onToggleExpand={() => togglePlan(planId)}
+                      ctaText="Inquire Plan"
+                    />
+                  );
+                })}
+              </div>
+            )}
 
- <div className="space-y-2.5 pt-3 border-t border-[#14141A] ">
- {(plan.features || []).map((feat: string) => (
- <div key={feat} className="flex items-start gap-2.5 text-xs text-[#14141A] font-semibold">
- <Check className="h-4 w-4 text-[#374BFF] shrink-0 mt-0.5" />
- <span>{feat}</span>
- </div>
- ))}
- </div>
- </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-heading text-xl font-bold text-[#14141A]">
+                      Design & Branding
+                    </h3>
+                    <p className="text-xs text-[#2B2B38] mt-1 font-medium">
+                      Visual identity assets, logos, and responsive Figma prototypes.
+                    </p>
+                  </div>
 
- <div className="pt-6 mt-6 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF] hover:bg-[#14141A] transition-all"
- >
- <span>Get {plan.name}</span>
- <ArrowRight className="h-4 w-4" />
- </Link>
- </div>
- </div>
- </Reveal>
- ))}
- </div>
- )}
+                  <div className="space-y-2.5">
+                    {designServices.map((item) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
+                      >
+                        <span className="font-bold text-[#14141A]">{item.name}</span>
+                        <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
- {activeCategory === "ecommerce" && (
- <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
- {ecomPlans.map((plan, idx) => (
- <Reveal key={plan.id} direction="up" delay={idx * 0.08}>
- <div
- className={cn(
- "glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group",
- plan.isPopular && "border-2 border-[#374BFF] shadow-xl shadow-[#374BFF]"
- )}
- >
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- {plan.name}
- </h3>
- {plan.badge && (
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#CFFF04] text-[#14141A] shadow-sm">
- {plan.badge}
- </span>
- )}
- </div>
+                <div className="pt-5 mt-5 border-t border-[#14141A]/10">
+                  <Link
+                    href="#contact"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#374BFF] py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
+                  >
+                    <span>Order Design Work</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
 
- <div>
- <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
- {plan.price}
- </span>
- </div>
+              <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-heading text-xl font-bold text-[#14141A]">
+                      SEO & Digital Setup
+                    </h3>
+                    <p className="text-xs text-[#2B2B38] mt-1 font-medium">
+                      Search engine indexing, Google Business verification, and Core Web Vitals speed tuning.
+                    </p>
+                  </div>
 
- <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
- {plan.desc}
- </p>
+                  <div className="space-y-2.5">
+                    {seoServices.map((item) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center justify-between p-3 rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-xs"
+                      >
+                        <span className="font-bold text-[#14141A]">{item.name}</span>
+                        <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
- <div className="space-y-2.5 pt-3 border-t border-[#14141A] ">
- {(plan.features || []).map((feat: string) => (
- <div key={feat} className="flex items-start gap-2.5 text-xs text-[#14141A] font-semibold">
- <Check className="h-4 w-4 text-[#374BFF] shrink-0 mt-0.5" />
- <span>{feat}</span>
- </div>
- ))}
- </div>
- </div>
+                <div className="pt-5 mt-5 border-t border-[#14141A]/10">
+                  <Link
+                    href="#contact"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#374BFF] py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
+                  >
+                    <span>Optimize Website SEO</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
- <div className="pt-6 mt-6 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF] hover:bg-[#14141A] transition-all"
- >
- <span>Build Online Store</span>
- <ArrowRight className="h-4 w-4" />
- </Link>
- </div>
- </div>
- </Reveal>
- ))}
- </div>
- )}
-
- {activeCategory === "combos" && (
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
- {comboPackages.map((combo, idx) => (
- <Reveal key={combo.title} direction="up" delay={idx * 0.06}>
- <div className="glass-card rounded-3xl p-6 sm:p-7 flex flex-col justify-between h-full relative group hover:border-[#374BFF]">
- <div className="space-y-3.5">
- <div className="flex items-center justify-between">
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-[#374BFF]/20 bg-[#374BFF]/10 text-[#374BFF]">
- Combo Value
- </span>
- <span className="text-xs text-[#14141A] line-through">
- {combo.originalPrice}
- </span>
- </div>
-
- <h3 className="font-heading text-lg font-bold text-[#14141A]">
- {combo.title}
- </h3>
-
- <div>
- <span className="font-heading text-3xl font-black text-[#374BFF]">
- {combo.comboPrice}
- </span>
- </div>
-
- <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
- {combo.desc}
- </p>
- </div>
-
- <div className="pt-5 mt-5 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#374BFF] py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
- >
- <span>Inquire Combo</span>
- <ArrowRight className="h-3.5 w-3.5" />
- </Link>
- </div>
- </div>
- </Reveal>
- ))}
- </div>
- )}
-
- {activeCategory === "apps" && (
- <div className="glass-card rounded-3xl p-6 sm:p-8">
- <div className="mb-6">
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- Web Applications & Custom Engineering Rates
- </h3>
- <p className="text-xs text-[#2B2B38] mt-1 font-medium">
- Modular software components, APIs, database architectures, and custom workflows.
- </p>
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
- {webAppServices.map((srv) => (
- <div
- key={srv.name}
- className="flex items-center justify-between p-3.5 rounded-2xl border border-[#14141A] bg-[#F5F6FC]"
- >
- <span className="text-xs font-bold text-[#14141A]">
- {srv.name}
- </span>
- <span className="font-heading text-sm font-black text-[#374BFF] ml-2 shrink-0">
- {srv.price}
- </span>
- </div>
- ))}
- </div>
-
- <div className="mt-6 pt-6 border-t border-[#14141A] flex flex-col sm:flex-row items-center justify-between gap-4">
- <span className="text-xs text-[#2B2B38] font-semibold">
- Need a full custom enterprise platform? We provide detailed architectural scopes.
- </span>
- <Link
- href="#contact"
- className="inline-flex items-center gap-1.5 rounded-xl bg-[#374BFF] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
- >
- <span>Request Custom Quote</span>
- <ArrowRight className="h-3.5 w-3.5" />
- </Link>
- </div>
- </div>
- )}
-
- {activeCategory === "design-seo" && (
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
- <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
- <div className="space-y-4">
- <div>
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- Design & Branding
- </h3>
- <p className="text-xs text-[#2B2B38] mt-1 font-medium">
- Visual identity assets, logos, and responsive Figma prototypes.
- </p>
- </div>
-
- <div className="space-y-2.5">
- {designServices.map((item) => (
- <div
- key={item.name}
- className="flex items-center justify-between p-3 rounded-xl border border-[#14141A] bg-[#F5F6FC] text-xs"
- >
- <span className="font-bold text-[#14141A]">{item.name}</span>
- <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
- </div>
- ))}
- </div>
- </div>
-
- <div className="pt-5 mt-5 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#374BFF] py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
- >
- <span>Order Design Work</span>
- <ArrowRight className="h-3.5 w-3.5" />
- </Link>
- </div>
- </div>
-
- <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
- <div className="space-y-4">
- <div>
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- SEO & Digital Setup
- </h3>
- <p className="text-xs text-[#2B2B38] mt-1 font-medium">
- Search engine indexing, Google Business verification, and Core Web Vitals speed tuning.
- </p>
- </div>
-
- <div className="space-y-2.5">
- {seoServices.map((item) => (
- <div
- key={item.name}
- className="flex items-center justify-between p-3 rounded-xl border border-[#14141A] bg-[#F5F6FC] text-xs"
- >
- <span className="font-bold text-[#14141A]">{item.name}</span>
- <span className="font-heading font-black text-[#374BFF]">{item.price}</span>
- </div>
- ))}
- </div>
- </div>
-
- <div className="pt-5 mt-5 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-[#374BFF] py-2.5 text-xs font-bold text-white hover:bg-[#14141A] transition-all"
- >
- <span>Optimize Website SEO</span>
- <ArrowRight className="h-3.5 w-3.5" />
- </Link>
- </div>
- </div>
- </div>
- )}
-
- {activeCategory === "maintenance" && (
- <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
- {maintenanceList.map((plan, idx) => (
- <Reveal key={plan.name} direction="up" delay={idx * 0.08}>
- <div className="glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full relative group">
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <h3 className="font-heading text-xl font-bold text-[#14141A]">
- {plan.name}
- </h3>
- <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-[#374BFF]/20 bg-[#374BFF]/10 text-[#374BFF]">
- Monthly Care
- </span>
- </div>
-
- <div>
- <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
- {plan.price}
- </span>
- <span className="text-xs text-[#14141A] ml-1">/ month</span>
- </div>
-
- <p className="text-xs text-[#2B2B38] font-medium leading-relaxed">
- {plan.desc}
- </p>
-
- <div className="space-y-2.5 pt-3 border-t border-[#14141A] ">
- {(plan.features || []).map((feat: string) => (
- <div key={feat} className="flex items-start gap-2.5 text-xs text-[#14141A] font-semibold">
- <Check className="h-4 w-4 text-[#374BFF] shrink-0 mt-0.5" />
- <span>{feat}</span>
- </div>
- ))}
- </div>
- </div>
-
- <div className="pt-6 mt-6 border-t border-[#14141A] ">
- <Link
- href="#contact"
- className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF] hover:bg-[#14141A] transition-all"
- >
- <span>Subscribe Plan</span>
- <ArrowRight className="h-4 w-4" />
- </Link>
- </div>
- </div>
- </Reveal>
- ))}
- </div>
- )}
+        {activeCategory === "maintenance" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {maintenanceList.map((plan, idx) => {
+              const planId = plan.id || plan.name;
+              return (
+                <PricingPlanCard
+                  key={planId}
+                  plan={{
+                    ...plan,
+                    period: plan.period || "/month",
+                  }}
+                  delay={idx * 0.08}
+                  expanded={expandedPlans.has(planId)}
+                  onToggleExpand={() => togglePlan(planId)}
+                  ctaText="Subscribe Plan"
+                />
+              );
+            })}
+          </div>
+        )}
 
  <Reveal direction="up" delay={0.1}>
  <div className="mt-16 sm:mt-20 glass-card rounded-3xl p-6 sm:p-8">

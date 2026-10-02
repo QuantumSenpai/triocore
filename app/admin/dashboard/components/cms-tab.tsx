@@ -86,6 +86,16 @@ export function CmsTab({
   const [serviceModal, setServiceModal] = useState<AdminService | Partial<AdminService> | null>(null);
   const [pricingModal, setPricingModal] = useState<AdminPricingPlan | Partial<AdminPricingPlan> | null>(null);
   const [pricingCategoryFilter, setPricingCategoryFilter] = useState<string>("all");
+  const [expandedPlanIds, setExpandedPlanIds] = useState<Set<string>>(new Set());
+
+  const togglePlanExpand = (id: string) => {
+    setExpandedPlanIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const [statModal, setStatModal] = useState<AdminStat | Partial<AdminStat> | null>(null);
   const [projectModal, setProjectModal] = useState<AdminShowcaseProject | Partial<AdminShowcaseProject> | null>(null);
   const [teamModal, setTeamModal] = useState<AdminTeamMember | Partial<AdminTeamMember> | null>(null);
@@ -710,16 +720,21 @@ export function CmsTab({
 
                     {Array.isArray(p.features) && p.features.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-black/5 space-y-1">
-                        {p.features.slice(0, 3).map((f, i) => (
+                        {(expandedPlanIds.has(p.id) ? p.features : p.features.slice(0, 3)).map((f, i) => (
                           <div key={i} className="flex items-center gap-1.5 text-[11px] text-[#2B2B38]">
                             <Check className="h-3 w-3 text-emerald-600 flex-shrink-0" />
                             <span className="truncate">{f}</span>
                           </div>
                         ))}
                         {p.features.length > 3 && (
-                          <span className="text-[10px] text-[#374BFF] font-medium block pt-0.5">
-                            +{p.features.length - 3} more features
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => togglePlanExpand(p.id)}
+                            className="text-[10px] text-[#374BFF] font-bold hover:underline cursor-pointer block pt-1 text-left"
+                            aria-expanded={expandedPlanIds.has(p.id)}
+                          >
+                            {expandedPlanIds.has(p.id) ? "Show less features ↑" : `+${p.features.length - 3} more features ↓`}
+                          </button>
                         )}
                       </div>
                     )}

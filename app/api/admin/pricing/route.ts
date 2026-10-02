@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
 
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, plan: newPlan[0] });
   } catch (error) {
@@ -166,6 +167,7 @@ export async function PUT(req: NextRequest) {
 
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, plan: updated[0] });
   } catch (error) {
@@ -205,6 +207,7 @@ export async function DELETE(req: NextRequest) {
 
     revalidatePath("/", "layout");
     revalidatePath("/(marketing)", "layout");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true });
   } catch (error) {
