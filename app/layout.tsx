@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { ScrollProgress } from "@/components/shared/scroll-progress";
 import { BackToTop } from "@/components/shared/back-to-top";
+import { CookieConsent } from "@/components/shared/cookie-consent";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/data/site-content";
 import "./globals.css";
@@ -101,6 +102,7 @@ export default function RootLayout({
         <ScrollProgress />
         {children}
         <BackToTop />
+        <CookieConsent />
         <Toaster
           position="bottom-right"
           toastOptions={{

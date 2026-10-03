@@ -3,6 +3,7 @@ import { Logo } from "./logo";
 import { GithubIcon } from "./icons";
 import { Mail, MapPin, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/lib/data/site-content";
+import { CookieSettingsButton } from "./cookie-settings-button";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -93,6 +94,9 @@ export function Footer() {
                 <Link href="/cookie-policy" className="text-[#14141A] hover:text-[#374BFF] transition-colors">
                   Cookie Policy
                 </Link>
+              </li>
+              <li>
+                <CookieSettingsButton />
               </li>
               <li>
                 <Link href="#feedback" className="text-[#14141A] hover:text-[#374BFF] transition-colors">
