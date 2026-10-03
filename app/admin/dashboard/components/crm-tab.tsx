@@ -25,7 +25,6 @@ import {
   AlertTriangle,
   Filter,
   Check,
-  RotateCcw,
   FileText,
   Ban,
   Search,
@@ -1106,11 +1105,9 @@ export function CrmTab({
     }
   };
 
-  // Toggle Reimbursed Status
-  const handleToggleReimbursed = async (exp: AdminExpense) => {
-    const currentState = reimbursedOverrides[exp.id] !== undefined ? reimbursedOverrides[exp.id] : Boolean(exp.isReimbursed);
-    const nextState = !currentState;
-    setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: nextState }));
+  // Mark Reimbursed Status
+  const handleMarkReimbursed = async (exp: AdminExpense) => {
+    setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: true }));
 
     try {
       const res = await fetch("/api/admin/expenses", {
@@ -1118,15 +1115,15 @@ export function CrmTab({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: exp.id,
-          isReimbursed: nextState,
+          isReimbursed: true,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: currentState }));
+        setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: false }));
         throw new Error(data.error || "Failed to update reimbursement");
       }
-      toast.success(nextState ? "Marked as reimbursed!" : "Reimbursement reverted to pending!");
+      toast.success("Marked as reimbursed!");
       await onRefresh("expenses");
       setReimbursedOverrides((prev) => {
         const next = { ...prev };
@@ -1134,7 +1131,7 @@ export function CrmTab({
         return next;
       });
     } catch (err) {
-      setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: currentState }));
+      setReimbursedOverrides((prev) => ({ ...prev, [exp.id]: false }));
       toast.error((err as Error).message);
     }
   };
@@ -2263,88 +2260,72 @@ export function CrmTab({
                             </tr>
 
                             {/* INDIVIDUAL PAYMENT ROWS */}
-                            {group.payments.map((e) => (
-                              <tr key={e.id} className="hover:bg-[#F5F6FC]">
-                                <td className="py-3 px-3">
-                                  {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
-                                </td>
-                                <td className="py-3 px-3 font-medium text-[#14141A]">
-                                  {e.memberName || e.paidBy || "Team Member"}
-                                </td>
-                                <td className="py-3 px-3 font-bold text-[#14141A]">
-                                  {e.title}
-                                  {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
-                                </td>
-                                <td className="py-3 px-3 font-mono font-bold text-[#374BFF]">
-                                  {e.allocatedAmountPaise ? formatPaise(e.allocatedAmountPaise) : "—"}
-                                </td>
-                                <td className="py-3 px-3 font-mono font-bold text-red-600">
-                                  {formatPaise(e.amountPaise)}
-                                </td>
-                                <td className="py-3 px-3 font-mono font-bold text-amber-700">
-                                  {formatPaise(e.amountLeftPaise || 0)}
-                                </td>
-                                <td className="py-3 px-3">
-                                  {(() => {
-                                    const isRowReimbursed = reimbursedOverrides[e.id] !== undefined ? reimbursedOverrides[e.id] : e.isReimbursed;
-                                    const isRowCleared = isRowReimbursed || e.amountLeftPaise === 0;
-                                    return (
-                                      <span
-                                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                                          isRowCleared
-                                            ? "bg-emerald-100 text-emerald-800"
-                                            : "bg-amber-100 text-amber-800"
-                                        }`}
-                                      >
-                                        {isRowReimbursed ? "✓ Reimbursed" : isRowCleared ? "✓ Cleared" : "⏳ Pending"}
-                                      </span>
-                                    );
-                                  })()}
-                                </td>
-                                <td className="py-3 px-3 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
-                                    {canViewFinance && (() => {
-                                      const isRowReimbursed = reimbursedOverrides[e.id] !== undefined ? reimbursedOverrides[e.id] : e.isReimbursed;
-                                      return (
+                            {group.payments.map((e) => {
+                              const isRowReimbursed = reimbursedOverrides[e.id] !== undefined ? reimbursedOverrides[e.id] : e.isReimbursed;
+                              const isRowCleared = isRowReimbursed || e.amountLeftPaise === 0;
+
+                              return (
+                                <tr key={e.id} className="hover:bg-[#F5F6FC]">
+                                  <td className="py-3 px-3">
+                                    {e.paidAt ? new Date(e.paidAt).toLocaleDateString("en-IN") : "N/A"}
+                                  </td>
+                                  <td className="py-3 px-3 font-medium text-[#14141A]">
+                                    {e.memberName || e.paidBy || "Team Member"}
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-[#14141A]">
+                                    {e.title}
+                                    {e.notes && <span className="block text-[11px] font-normal text-[#2B2B38]">{e.notes}</span>}
+                                  </td>
+                                  <td className="py-3 px-3 font-mono font-bold text-[#374BFF]">
+                                    {e.allocatedAmountPaise ? formatPaise(e.allocatedAmountPaise) : "—"}
+                                  </td>
+                                  <td className="py-3 px-3 font-mono font-bold text-red-600">
+                                    {formatPaise(e.amountPaise)}
+                                  </td>
+                                  <td className="py-3 px-3 font-mono font-bold text-amber-700">
+                                    {formatPaise(e.amountLeftPaise || 0)}
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <span
+                                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
+                                        isRowCleared
+                                          ? "bg-emerald-100 text-emerald-800"
+                                          : "bg-amber-100 text-amber-800"
+                                      }`}
+                                    >
+                                      {isRowReimbursed ? "✓ Reimbursed" : isRowCleared ? "✓ Cleared" : "⏳ Pending"}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-right">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      {canViewFinance && !isRowReimbursed && (
                                         <button
-                                          onClick={() => handleToggleReimbursed({ ...e, isReimbursed: isRowReimbursed })}
-                                          title={isRowReimbursed ? "Revert to Pending" : "Mark as Reimbursed"}
-                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 ${
-                                            isRowReimbursed
-                                              ? "border border-black/15 text-[#2B2B38] hover:bg-black/5"
-                                              : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                          }`}
+                                          onClick={() => handleMarkReimbursed(e)}
+                                          title="Mark as Reimbursed"
+                                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all cursor-pointer inline-flex items-center gap-1"
                                         >
-                                          {isRowReimbursed ? (
-                                            <>
-                                              <RotateCcw className="h-3 w-3" /> Revert
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Check className="h-3 w-3" /> Reimburse
-                                            </>
-                                          )}
+                                          <Check className="h-3 w-3" /> Reimburse
                                         </button>
-                                      );
-                                    })()}
-                                    <button
-                                      onClick={() => handleOpenEditExpense(e)}
-                                      title="Edit Expense"
-                                      className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteExpenseConfirm(e)}
-                                      title="Delete Expense"
-                                      className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
+                                      )}
+                                      <button
+                                        onClick={() => handleOpenEditExpense(e)}
+                                        title="Edit Expense"
+                                        className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteExpenseConfirm(e)}
+                                        title="Delete Expense"
+                                        className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </React.Fragment>
                         ))
                       )}
