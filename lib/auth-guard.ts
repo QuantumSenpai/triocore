@@ -19,6 +19,7 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
       pathname.includes("/payments") ||
       pathname.includes("/expenses") ||
       pathname.includes("/receipt") ||
+      pathname.includes("/bills") ||
       options.requireFinance === true;
     const isRoleChangingRoute =
       pathname.includes("/team-access") ||

@@ -89,6 +89,30 @@ export interface AdminPayment {
   createdAt?: string | Date;
 }
 
+export interface AdminBillLineItem {
+  description: string;
+  amountPaise: number;
+}
+
+export interface AdminBill {
+  id: string;
+  orderId: string;
+  clientId: string;
+  projectId?: string | null;
+  clientName?: string | null;
+  projectName?: string | null;
+  lineItems: AdminBillLineItem[];
+  subtotalPaise: number;
+  discountPaise: number;
+  totalPaise: number;
+  issuedDate: string;
+  status: "draft" | "final" | "void";
+  notes?: string | null;
+  createdBy?: string | null;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+}
+
 export interface AdminExpense {
   id: string;
   title: string;

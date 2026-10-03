@@ -25,7 +25,11 @@ import {
   AlertTriangle,
   Filter,
   Check,
-  RotateCcw
+  RotateCcw,
+  FileText,
+  Ban,
+  Search,
+  ExternalLink,
 } from "lucide-react";
 import { formatPaise, rupeesToPaise, paiseToRupees } from "@/lib/money";
 import { toast } from "sonner";
@@ -38,6 +42,7 @@ import type {
   AdminExpense,
   AdminTeamMember,
   AdminMilestone,
+  AdminBill,
 } from "@/types/admin";
 
 export type RefreshScope =
@@ -49,7 +54,8 @@ export type RefreshScope =
   | "inquiries"
   | "clients"
   | "operations"
-  | "cms";
+  | "cms"
+  | "bills";
 
 export interface CrmTabProps {
   inquiries: AdminInquiry[];
@@ -57,6 +63,7 @@ export interface CrmTabProps {
   projects: AdminProject[];
   payments: AdminPayment[];
   expenses: AdminExpense[];
+  bills?: AdminBill[];
   teamMembers: AdminTeamMember[];
   canViewFinance: boolean;
   isOwner?: boolean;
@@ -69,12 +76,13 @@ export function CrmTab({
   projects,
   payments,
   expenses,
+  bills = [],
   teamMembers,
   canViewFinance,
   isOwner = true,
   onRefresh,
 }: CrmTabProps) {
-  const [subTab, setSubTab] = useState<"inquiries" | "clients" | "projects" | "payments" | "expenses">("inquiries");
+  const [subTab, setSubTab] = useState<"inquiries" | "clients" | "projects" | "payments" | "expenses" | "bills">("inquiries");
 
   // Client Modal
   const [clientModalOpen, setClientModalOpen] = useState(false);
@@ -209,6 +217,30 @@ export function CrmTab({
     notes: "",
     isReimbursed: false,
     allowOverpayment: false,
+  });
+
+  // Bills State
+  const [billSearch, setBillSearch] = useState("");
+  const [billModalOpen, setBillModalOpen] = useState(false);
+  const [savingBill, setSavingBill] = useState(false);
+  const [voidingBillId, setVoidingBillId] = useState<string | null>(null);
+
+  interface BillItemForm {
+    description: string;
+    amountRupees: string;
+  }
+
+  const [billForm, setBillForm] = useState({
+    orderId: "",
+    clientId: "",
+    projectId: "",
+    clientName: "",
+    projectName: "",
+    issuedDate: new Date().toISOString().split("T")[0],
+    status: "final" as "final" | "draft",
+    notes: "Payment due within 7 days. UPI / Bank Transfer accepted.",
+    discountRupees: "0",
+    lineItems: [{ description: "Full-Stack Web Engineering Services", amountRupees: "15000" }] as BillItemForm[],
   });
 
   // Group personal expenses by (member, project) with chronological running balance snapshots
@@ -999,6 +1031,194 @@ export function CrmTab({
     window.open(`/api/admin/expenses?type=${type}&format=csv`, "_blank");
   };
 
+  // Bills Handlers
+  const handleOpenGenerateBill = (presetClient?: AdminClient, presetProject?: AdminProject) => {
+    const nextOrderId = `TC-B${1001 + (bills?.length || 0)}`;
+    const today = new Date().toISOString().split("T")[0];
+
+    let cId = presetClient?.id || "";
+    let cName = presetClient?.name || "";
+    let pId = presetProject?.id || "";
+    let pName = presetProject?.title || presetProject?.name || "";
+
+    if (presetProject && !cId && presetProject.clientId) {
+      cId = presetProject.clientId;
+      const foundClient = clients.find((c) => c.id === cId);
+      if (foundClient) cName = foundClient.name;
+    }
+
+    if (!cId && clients.length > 0) {
+      cId = clients[0].id;
+      cName = clients[0].name;
+    }
+
+    const defaultItems: BillItemForm[] = presetProject
+      ? [
+          {
+            description: `${pName || "Custom Project"} - Core Development & Delivery`,
+            amountRupees: String(paiseToRupees(presetProject.quotedAmountPaise || 0) || "15000"),
+          },
+        ]
+      : [
+          {
+            description: "Full-Stack Web Engineering & Delivery",
+            amountRupees: "15000",
+          },
+        ];
+
+    setBillForm({
+      orderId: nextOrderId,
+      clientId: cId,
+      projectId: pId,
+      clientName: cName,
+      projectName: pName,
+      issuedDate: today,
+      status: "final",
+      notes: "Payment due within 7 days. UPI / Bank Transfer accepted.",
+      discountRupees: "0",
+      lineItems: defaultItems,
+    });
+    setBillModalOpen(true);
+  };
+
+  const handleAddLineItem = () => {
+    setBillForm((prev) => ({
+      ...prev,
+      lineItems: [...prev.lineItems, { description: "", amountRupees: "0" }],
+    }));
+  };
+
+  const handleUpdateLineItem = (index: number, field: keyof BillItemForm, val: string) => {
+    setBillForm((prev) => {
+      const items = [...prev.lineItems];
+      items[index] = { ...items[index], [field]: val };
+      return { ...prev, lineItems: items };
+    });
+  };
+
+  const handleRemoveLineItem = (index: number) => {
+    setBillForm((prev) => {
+      if (prev.lineItems.length <= 1) return prev;
+      return {
+        ...prev,
+        lineItems: prev.lineItems.filter((_, i) => i !== index),
+      };
+    });
+  };
+
+  const billSubtotalPaise = useMemo(() => {
+    return billForm.lineItems.reduce((acc: number, item) => {
+      const val = parseFloat(item.amountRupees) || 0;
+      return acc + rupeesToPaise(val);
+    }, 0);
+  }, [billForm.lineItems]);
+
+  const billDiscountPaise = useMemo(() => {
+    const val = parseFloat(billForm.discountRupees) || 0;
+    return rupeesToPaise(val);
+  }, [billForm.discountRupees]);
+
+  const billTotalPaise = useMemo(() => {
+    return Math.max(0, billSubtotalPaise - billDiscountPaise);
+  }, [billSubtotalPaise, billDiscountPaise]);
+
+  const handleSaveBill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!billForm.clientId) {
+      toast.error("Please select a client.");
+      return;
+    }
+    if (billForm.lineItems.length === 0 || !billForm.lineItems.some((i) => i.description.trim())) {
+      toast.error("Please add at least one line item with a description.");
+      return;
+    }
+
+    setSavingBill(true);
+    try {
+      const client = clients.find((c) => c.id === billForm.clientId);
+      const proj = projects.find((p) => p.id === billForm.projectId);
+
+      const payload = {
+        orderId: billForm.orderId.trim() || undefined,
+        clientId: billForm.clientId,
+        projectId: billForm.projectId || null,
+        clientName: client?.name || billForm.clientName || "Direct Client",
+        projectName: proj?.title || proj?.name || billForm.projectName || null,
+        lineItems: billForm.lineItems.map((item) => ({
+          description: item.description.trim() || "Service Item",
+          amountPaise: rupeesToPaise(parseFloat(item.amountRupees) || 0),
+        })),
+        subtotalPaise: billSubtotalPaise,
+        discountPaise: billDiscountPaise,
+        totalPaise: billTotalPaise,
+        issuedDate: billForm.issuedDate,
+        status: billForm.status,
+        notes: billForm.notes.trim() || null,
+      };
+
+      const res = await fetch("/api/admin/bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("[handleSaveBill] Error response:", data, "Payload was:", payload);
+        toast.error(data.error || "Failed to generate bill.");
+        return;
+      }
+
+      toast.success(`Bill ${data.bill.orderId} generated successfully!`);
+      setBillModalOpen(false);
+      await onRefresh("bills");
+    } catch {
+      toast.error("Network error while generating bill.");
+    } finally {
+      setSavingBill(false);
+    }
+  };
+
+  const handleMarkVoid = async (bill: AdminBill) => {
+    if (bill.status === "void") return;
+    if (!confirm(`Are you sure you want to mark Bill ${bill.orderId} as VOID? Finalized bills cannot be deleted, but will be marked as invalid.`)) {
+      return;
+    }
+
+    setVoidingBillId(bill.id);
+    try {
+      const res = await fetch("/api/admin/bills", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bill.id, status: "void" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to void bill.");
+        return;
+      }
+
+      toast.success(`Bill ${bill.orderId} marked as VOID.`);
+      await onRefresh("bills");
+    } catch {
+      toast.error("Network error while voiding bill.");
+    } finally {
+      setVoidingBillId(null);
+    }
+  };
+
+  const filteredBills = useMemo(() => {
+    if (!bills) return [];
+    if (!billSearch.trim()) return bills;
+    const q = billSearch.toLowerCase();
+    return bills.filter(
+      (b) =>
+        b.orderId?.toLowerCase().includes(q) ||
+        b.clientName?.toLowerCase().includes(q) ||
+        b.projectName?.toLowerCase().includes(q)
+    );
+  }, [bills, billSearch]);
+
   return (
     <div className="space-y-6">
       {/* Sub-Navigation Tabs */}
@@ -1044,6 +1264,15 @@ export function CrmTab({
         >
           Expenses ({expenses.length})
         </button>
+        {canViewFinance && (
+          <button
+            onClick={() => setSubTab("bills")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "bills" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+              }`}
+          >
+            Bills & Invoices ({bills.length})
+          </button>
+        )}
       </div>
 
       {/* SUBTAB: INQUIRIES */}
@@ -1181,6 +1410,15 @@ export function CrmTab({
                     <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold capitalize">
                       {c.status || "Active"}
                     </span>
+                    {canViewFinance && (
+                      <button
+                        onClick={() => handleOpenGenerateBill(c)}
+                        title="Generate Bill for Client"
+                        className="p-1.5 rounded-lg border border-black/15 hover:border-[#374BFF] text-[#2B2B38] hover:text-[#374BFF] hover:bg-blue-50 transition-all cursor-pointer"
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleOpenEditClient(c)}
                       title="Edit Client"
@@ -1290,6 +1528,15 @@ export function CrmTab({
                     </div>
 
                     <div className="flex items-center gap-1.5 pl-2 border-l border-black/10">
+                      {canViewFinance && (
+                        <button
+                          onClick={() => handleOpenGenerateBill(undefined, p)}
+                          className="p-1.5 rounded-lg border border-black/10 text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer"
+                          title="Generate Bill for Project"
+                        >
+                          <Receipt className="h-4 w-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleOpenEditProject(p)}
                         className="p-1.5 rounded-lg border border-black/10 text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all cursor-pointer"
@@ -1963,6 +2210,137 @@ export function CrmTab({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* SUBTAB: BILLS & INVOICES */}
+      {subTab === "bills" && canViewFinance && (
+        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-heading text-lg font-bold text-[#14141A]">
+                Bills & Invoices
+              </h3>
+              <p className="text-xs text-[#2B2B38]">
+                Itemized billing • Automatic order IDs • Print-ready tax invoices
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search Order ID / Client..."
+                  value={billSearch}
+                  onChange={(e) => setBillSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 rounded-xl border border-black/15 text-xs bg-[#F5F6FC] focus:outline-none focus:border-[#374BFF] w-48 sm:w-64"
+                />
+              </div>
+              <button
+                onClick={() => handleOpenGenerateBill()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer shrink-0"
+              >
+                <Plus className="h-4 w-4" /> Generate Bill
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto border border-black/10 rounded-2xl">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#F5F6FC] border-b border-black/10 text-[#2B2B38] font-bold uppercase text-[10px] tracking-wider">
+                  <th className="py-3 px-4">Order ID</th>
+                  <th className="py-3 px-4">Client & Project</th>
+                  <th className="py-3 px-4">Issued Date</th>
+                  <th className="py-3 px-4 text-right">Subtotal</th>
+                  <th className="py-3 px-4 text-right">Discount</th>
+                  <th className="py-3 px-4 text-right">Total Payable</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/10">
+                {filteredBills.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-gray-500 font-medium">
+                      No bills found. Click &quot;Generate Bill&quot; to create a new invoice.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredBills.map((b) => (
+                    <tr key={b.id} className="hover:bg-black/[0.01]">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#14141A]">
+                        {b.orderId}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-[#14141A] block">{b.clientName || "Direct Client"}</span>
+                        {b.projectName && (
+                          <span className="text-[11px] text-[#2B2B38] block">{b.projectName}</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-[#2B2B38]">
+                        {b.issuedDate ? new Date(b.issuedDate).toLocaleDateString("en-IN") : "N/A"}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono text-[#2B2B38]">
+                        {formatPaise(b.subtotalPaise)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono text-emerald-600">
+                        {b.discountPaise > 0 ? `-${formatPaise(b.discountPaise)}` : "—"}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-[#14141A]">
+                        {formatPaise(b.totalPaise)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            b.status === "final"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : b.status === "draft"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          }`}
+                        >
+                          {b.status === "final" && <CheckCircle2 className="h-3 w-3" />}
+                          {b.status === "draft" && <AlertTriangle className="h-3 w-3" />}
+                          {b.status === "void" && <Ban className="h-3 w-3" />}
+                          <span className="capitalize">{b.status}</span>
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <a
+                            href={`/admin/bills/${b.id}/print`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-black/15 text-[#14141A] hover:border-[#374BFF] hover:text-[#374BFF] transition-all font-bold text-xs"
+                            title="Print / Reprint Bill"
+                          >
+                            <Printer className="h-3.5 w-3.5" /> Print
+                          </a>
+                          {b.status !== "void" && (
+                            <button
+                              type="button"
+                              onClick={() => handleMarkVoid(b)}
+                              disabled={voidingBillId === b.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 transition-all font-bold text-xs cursor-pointer"
+                              title="Mark as Void (Finalized bills are never deleted)"
+                            >
+                              {voidingBillId === b.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Ban className="h-3.5 w-3.5" />
+                              )}
+                              Void
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -3504,6 +3882,222 @@ export function CrmTab({
                         onChange={(e) => setExpenseEditForm({ ...expenseEditForm, notes: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                       />
+                    </div>
+                  </AdminModal>
+
+                  {/* MODAL: GENERATE CUSTOM BILL */}
+                  <AdminModal
+                    isOpen={billModalOpen}
+                    onClose={() => setBillModalOpen(false)}
+                    title="Generate Custom Bill / Invoice"
+                    onSubmit={handleSaveBill}
+                    footer={
+                      <div className="flex gap-2 w-full">
+                        <button
+                          type="button"
+                          onClick={() => setBillModalOpen(false)}
+                          className="flex-1 py-2.5 rounded-xl border border-black/15 text-xs font-bold text-[#14141A] hover:bg-[#F5F6FC] cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={savingBill}
+                          className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        >
+                          {savingBill ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" /> Generating...
+                            </>
+                          ) : (
+                            "Save & Generate Bill"
+                          )}
+                        </button>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A] block mb-1">Client *</label>
+                          <select
+                            value={billForm.clientId}
+                            onChange={(e) => {
+                              const selClient = clients.find((c) => c.id === e.target.value);
+                              setBillForm((prev) => ({
+                                ...prev,
+                                clientId: e.target.value,
+                                clientName: selClient?.name || "",
+                              }));
+                            }}
+                            required
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                          >
+                            <option value="">Select a client...</option>
+                            {clients.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name} {c.company ? `(${c.company})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A] block mb-1">Associated Project (Optional)</label>
+                          <select
+                            value={billForm.projectId}
+                            onChange={(e) => {
+                              const selProj = projects.find((p) => p.id === e.target.value);
+                              setBillForm((prev) => ({
+                                ...prev,
+                                projectId: e.target.value,
+                                projectName: selProj?.title || selProj?.name || "",
+                              }));
+                            }}
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                          >
+                            <option value="">No specific project / Direct service</option>
+                            {projects.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name || p.title} ({p.category})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A] block mb-1">Order / Bill ID</label>
+                          <input
+                            type="text"
+                            value={billForm.orderId}
+                            onChange={(e) => setBillForm({ ...billForm, orderId: e.target.value })}
+                            placeholder="e.g. TC-B1001"
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] font-mono text-xs font-bold focus:outline-none focus:border-[#374BFF]"
+                          />
+                          <span className="text-[10px] text-gray-500 mt-0.5 block">Auto-generated if blank</span>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A] block mb-1">Issue Date</label>
+                          <input
+                            type="date"
+                            value={billForm.issuedDate}
+                            onChange={(e) => setBillForm({ ...billForm, issuedDate: e.target.value })}
+                            required
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#14141A] block mb-1">Status</label>
+                          <select
+                            value={billForm.status}
+                            onChange={(e) => setBillForm({ ...billForm, status: e.target.value as "final" | "draft" })}
+                            className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-bold focus:outline-none focus:border-[#374BFF]"
+                          >
+                            <option value="final">Final (Official Invoice)</option>
+                            <option value="draft">Draft (Estimate)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Itemized Line Items */}
+                      <div className="space-y-2 pt-2 border-t border-black/10">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-[#14141A] uppercase tracking-wider">
+                            Line Items (INR)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleAddLineItem}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#374BFF] hover:underline cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" /> Add Item
+                          </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {billForm.lineItems.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="Description / Scope"
+                                value={item.description}
+                                onChange={(e) => handleUpdateLineItem(index, "description", e.target.value)}
+                                required
+                                className="flex-1 px-3 py-1.5 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                              />
+                              <div className="w-28 sm:w-32 relative">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">₹</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  placeholder="Amount"
+                                  value={item.amountRupees}
+                                  onChange={(e) => handleUpdateLineItem(index, "amountRupees", e.target.value)}
+                                  required
+                                  className="w-full pl-6 pr-2 py-1.5 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                                />
+                              </div>
+                              {billForm.lineItems.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveLineItem(index)}
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                  title="Remove line item"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Pricing Totals Box */}
+                      <div className="p-3.5 rounded-2xl bg-[#F5F6FC] border border-black/10 space-y-2 text-xs">
+                        <div className="flex justify-between items-center text-[#2B2B38]">
+                          <span>Subtotal:</span>
+                          <span className="font-mono font-bold text-[#14141A]">
+                            {formatPaise(billSubtotalPaise)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[#2B2B38]">
+                          <span>Discount (₹):</span>
+                          <div className="w-28 relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">₹</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={billForm.discountRupees}
+                              onChange={(e) => setBillForm({ ...billForm, discountRupees: e.target.value })}
+                              className="w-full pl-6 pr-2 py-1 rounded-lg border border-black/15 bg-white text-xs font-mono font-bold focus:outline-none focus:border-[#374BFF]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-black/10 font-bold">
+                          <span className="text-sm text-[#14141A]">Total Payable:</span>
+                          <span className="font-mono text-base text-[#374BFF]">
+                            {formatPaise(billTotalPaise)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-[#14141A] block mb-1">Notes & Terms (Optional)</label>
+                        <textarea
+                          rows={2}
+                          value={billForm.notes}
+                          onChange={(e) => setBillForm({ ...billForm, notes: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                        />
+                      </div>
                     </div>
                   </AdminModal>
 

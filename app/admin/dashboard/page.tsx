@@ -52,6 +52,7 @@ import type {
   AdminFeedbackReport,
   AdminInvite,
   AdminSiteContent,
+  AdminBill,
 } from "@/types/admin";
 
 type MainTab = "overview" | "crm" | "operations" | "cms";
@@ -134,6 +135,7 @@ export default function AdminDashboardPage() {
   const [unreadFeedbackCount, setUnreadFeedbackCount] = useState(0);
   const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
   const [siteContent, setSiteContent] = useState<AdminSiteContent[]>([]);
+  const [bills, setBills] = useState<AdminBill[]>([]);
 
   // User privileges
   const [userRole, setUserRole] = useState("owner");
@@ -234,6 +236,7 @@ export default function AdminDashboardPage() {
         notesRes,
         contRes,
         accessRes,
+        billsRes,
       ] = await Promise.all([
         fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
         fetchWithRetry("/api/admin/team").then((r) => (r.ok ? r.json() : { members: [] })),
@@ -252,6 +255,7 @@ export default function AdminDashboardPage() {
           if (r.status === 403) setUserRole("member");
           return r.ok ? r.json() : { members: [] };
         }),
+        fetchWithRetry("/api/admin/bills").then((r) => (r.ok ? r.json() : { bills: [] })),
       ]);
 
       setClients(clientRes.clients || []);
@@ -267,6 +271,7 @@ export default function AdminDashboardPage() {
       setLegalDocs(legalRes.documents || []);
       setNotes(notesRes.notes || []);
       setSiteContent(contRes.content || []);
+      setBills(billsRes.bills || []);
       if (accessRes.members && accessRes.members.length > 0) {
         setUserRole("owner");
       }
@@ -354,8 +359,13 @@ export default function AdminDashboardPage() {
         setLegalDocs(legalRes.documents || []);
         return;
       }
+      if (scope === "bills") {
+        const billsRes = await fetchWithRetry("/api/admin/bills").then((r) => (r.ok ? r.json() : { bills: [] }));
+        setBills(billsRes.bills || []);
+        return;
+      }
       if (scope === "crm") {
-        const [inqRes, projRes, payRes, expRes, clientRes] = await Promise.all([
+        const [inqRes, projRes, payRes, expRes, clientRes, billsRes] = await Promise.all([
           fetchWithRetry("/api/admin/inquiries").then((r) => (r.ok ? r.json() : { inquiries: [] })),
           fetchWithRetry("/api/admin/business-projects").then((r) => (r.ok ? r.json() : { projects: [] })),
           fetchWithRetry("/api/admin/payments").then((r) => {
@@ -364,12 +374,14 @@ export default function AdminDashboardPage() {
           }),
           fetchWithRetry("/api/admin/expenses").then((r) => (r.ok ? r.json() : { expenses: [] })),
           fetchWithRetry("/api/admin/clients").then((r) => (r.ok ? r.json() : { clients: [] })),
+          fetchWithRetry("/api/admin/bills").then((r) => (r.ok ? r.json() : { bills: [] })),
         ]);
         setInquiries(inqRes.inquiries || []);
         setBusinessProjects(projRes.projects || []);
         setPayments(payRes.payments || []);
         setExpenses(expRes.expenses || []);
         setClients(clientRes.clients || []);
+        setBills(billsRes.bills || []);
         return;
       }
 
@@ -549,6 +561,7 @@ export default function AdminDashboardPage() {
                 projects={businessProjects}
                 payments={payments}
                 expenses={expenses}
+                bills={bills}
                 teamMembers={teamMembers}
                 canViewFinance={canViewFinance}
                 isOwner={userRole === "owner"}
