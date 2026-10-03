@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Users,
   FolderGit2,
@@ -73,15 +73,31 @@ export interface CrmTabProps {
 export function CrmTab({
   inquiries,
   clients,
-  projects,
-  payments,
-  expenses,
+  projects: propProjects,
+  payments: propPayments,
+  expenses: propExpenses,
   bills = [],
   teamMembers,
   canViewFinance,
   isOwner = true,
   onRefresh,
 }: CrmTabProps) {
+  const [expenses, setExpenses] = useState<AdminExpense[]>(propExpenses);
+  const [projects, setProjects] = useState<AdminProject[]>(propProjects);
+  const [payments, setPayments] = useState<AdminPayment[]>(propPayments);
+
+  useEffect(() => {
+    setExpenses(propExpenses);
+  }, [propExpenses]);
+
+  useEffect(() => {
+    setProjects(propProjects);
+  }, [propProjects]);
+
+  useEffect(() => {
+    setPayments(propPayments);
+  }, [propPayments]);
+
   const [subTab, setSubTab] = useState<"inquiries" | "clients" | "projects" | "payments" | "expenses" | "bills">("inquiries");
 
   // Client Modal
@@ -590,33 +606,59 @@ export function CrmTab({
   // Update Project
   const handleUpdateProject = async (e: React.FormEvent) => {
     e.preventDefault();
+    const quotedAmountPaise = rupeesToPaise(Number(projectEditForm.quotedRupees) || 0);
+    const prevProjects = [...projects];
+
+    // Optimistic update
+    setProjects((cur) =>
+      cur.map((p) =>
+        p.id === projectEditForm.id
+          ? {
+              ...p,
+              clientId: projectEditForm.clientId,
+              name: projectEditForm.name,
+              title: projectEditForm.name,
+              category: projectEditForm.category,
+              quotedAmountPaise,
+              deadline: projectEditForm.deadline ? new Date(projectEditForm.deadline).toISOString() : null,
+              status: projectEditForm.status,
+              assignedMemberIds: projectEditForm.assignedMemberIds,
+            }
+          : p
+      )
+    );
+    setEditProjectModalOpen(false);
+    toast.success("Project updated successfully!");
+
     setSavingProject(true);
-    try {
-      const quotedAmountPaise = rupeesToPaise(Number(projectEditForm.quotedRupees) || 0);
-      const res = await fetch("/api/admin/business-projects", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: projectEditForm.id,
-          clientId: projectEditForm.clientId,
-          name: projectEditForm.name,
-          category: projectEditForm.category,
-          quotedAmountPaise,
-          deadline: projectEditForm.deadline ? new Date(projectEditForm.deadline).toISOString() : null,
-          status: projectEditForm.status,
-          assignedMemberIds: projectEditForm.assignedMemberIds,
-        }),
+    fetch("/api/admin/business-projects", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: projectEditForm.id,
+        clientId: projectEditForm.clientId,
+        name: projectEditForm.name,
+        category: projectEditForm.category,
+        quotedAmountPaise,
+        deadline: projectEditForm.deadline ? new Date(projectEditForm.deadline).toISOString() : null,
+        status: projectEditForm.status,
+        assignedMemberIds: projectEditForm.assignedMemberIds,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update project");
+        if (data.project) {
+          setProjects((cur) => cur.map((p) => (p.id === projectEditForm.id ? { ...p, ...data.project } : p)));
+        }
+      })
+      .catch((err) => {
+        setProjects(prevProjects);
+        toast.error((err as Error).message || "Failed to update project");
+      })
+      .finally(() => {
+        setSavingProject(false);
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update project");
-      toast.success("Project updated successfully!");
-      setEditProjectModalOpen(false);
-      await onRefresh("projects");
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setSavingProject(false);
-    }
   };
 
   // Delete Project Confirm
@@ -768,28 +810,78 @@ export function CrmTab({
   // Record Payment
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const amountPaise = rupeesToPaise(Number(paymentForm.amountRupees) || 0);
-      const selectedProj = projects.find((p) => p.id === paymentForm.projectId);
-      const res = await fetch("/api/admin/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId: paymentForm.projectId || null,
-          clientId: selectedProj?.clientId || null,
-          amountPaise,
-          method: paymentForm.method,
-          reference: paymentForm.reference,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to record payment");
-      toast.success("Payment recorded and ledger updated!");
-      setPaymentModalOpen(false);
-      await onRefresh("payments");
-    } catch (err) {
-      toast.error((err as Error).message);
+    const amountPaise = rupeesToPaise(Number(paymentForm.amountRupees) || 0);
+    const selectedProj = projects.find((p) => p.id === paymentForm.projectId);
+    const tempId = "temp-pay-" + Date.now();
+    const optimisticPayment: AdminPayment = {
+      id: tempId,
+      clientId: selectedProj?.clientId || "",
+      projectId: paymentForm.projectId || null,
+      amountPaise,
+      method: paymentForm.method,
+      type: "incoming",
+      reference: paymentForm.reference || null,
+      receivedDate: new Date().toISOString(),
+      paidAt: new Date().toISOString(),
+      projectName: selectedProj?.title || selectedProj?.name || "Independent",
+      clientName: selectedProj?.clientName || "Direct Client",
+      formattedAmount: formatPaise(amountPaise),
+      amountRupees: paiseToRupees(amountPaise),
+      status: "received",
+      createdAt: new Date().toISOString(),
+    };
+
+    const prevPayments = [...payments];
+    const prevProjects = [...projects];
+
+    setPayments((cur) => [optimisticPayment, ...cur]);
+    if (paymentForm.projectId) {
+      setProjects((cur) =>
+        cur.map((p) => {
+          if (p.id !== paymentForm.projectId) return p;
+          const newReceived = (p.receivedPaise || 0) + amountPaise;
+          const newPending = Math.max(0, (p.quotedAmountPaise || 0) - newReceived);
+          return { ...p, receivedPaise: newReceived, pendingPaise: newPending };
+        })
+      );
     }
+    setPaymentModalOpen(false);
+    toast.success("Payment recorded and ledger updated!");
+    const submittedForm = { ...paymentForm };
+    setPaymentForm({
+      projectId: "",
+      amountRupees: "20000",
+      method: "UPI",
+      reference: "",
+    });
+
+    setSavingPayment(true);
+    fetch("/api/admin/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId: submittedForm.projectId || null,
+        clientId: selectedProj?.clientId || null,
+        amountPaise,
+        method: submittedForm.method,
+        reference: submittedForm.reference,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to record payment");
+        if (data.payment) {
+          setPayments((cur) => cur.map((p) => (p.id === tempId ? { ...p, ...data.payment } : p)));
+        }
+      })
+      .catch((err) => {
+        setPayments(prevPayments);
+        setProjects(prevProjects);
+        toast.error((err as Error).message || "Failed to record payment");
+      })
+      .finally(() => {
+        setSavingPayment(false);
+      });
   };
 
   // Export CSV
@@ -865,59 +957,91 @@ export function CrmTab({
   // Create Expense
   const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault();
+    const amountPaise = rupeesToPaise(Number(expenseForm.amountRupees) || 0);
+    const allocatedAmountPaise =
+      expenseForm.expenseType === "personal"
+        ? rupeesToPaise(Number(expenseForm.allocatedAmountRupees) || 0)
+        : 0;
+
+    const tempId = "temp-exp-" + Date.now();
+    const optimisticExpense: AdminExpense = {
+      id: tempId,
+      title: expenseForm.title,
+      category: expenseForm.expenseType === "personal" ? "personal" : expenseForm.category,
+      amountPaise,
+      amountLeftPaise: Math.max(0, allocatedAmountPaise - amountPaise),
+      allocatedAmountPaise,
+      date: expenseForm.date,
+      paidBy: expenseForm.paidBy || null,
+      projectId:
+        expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom"
+          ? expenseForm.selectedProjectId
+          : null,
+      memberId: expenseForm.expenseType === "personal" ? expenseForm.memberId || null : null,
+      expenseType: expenseForm.expenseType,
+      notes: expenseForm.notes || null,
+      isReimbursed: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    const prevExpenses = [...expenses];
+    setExpenses((cur) => [optimisticExpense, ...cur]);
+    setCreateExpenseModalOpen(false);
+    toast.success("Expense recorded successfully!");
+
+    const submittedForm = { ...expenseForm };
+    setExpenseForm({
+      title: "",
+      category: "tools",
+      amountRupees: "2000",
+      amountLeftRupees: "0",
+      allocatedAmountRupees: "0",
+      totalBudgetRupees: "0",
+      memberCount: "4",
+      selectedProjectId: "",
+      date: new Date().toISOString().slice(0, 10),
+      paidBy: "",
+      memberId: "",
+      expenseType: "studio",
+      notes: "",
+      allowOverpayment: false,
+    });
+
     setSavingExpense(true);
-    try {
-      const amountPaise = rupeesToPaise(Number(expenseForm.amountRupees) || 0);
-      const allocatedAmountPaise =
-        expenseForm.expenseType === "personal"
-          ? rupeesToPaise(Number(expenseForm.allocatedAmountRupees) || 0)
-          : 0;
-      const res = await fetch("/api/admin/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: expenseForm.title,
-          category: expenseForm.expenseType === "personal" ? "personal" : expenseForm.category,
-          amountPaise,
-          allocatedAmountPaise,
-          allowOverpayment: expenseForm.allowOverpayment,
-          date: expenseForm.date,
-          paidBy: expenseForm.paidBy || null,
-          projectId:
-            expenseForm.selectedProjectId && expenseForm.selectedProjectId !== "custom"
-              ? expenseForm.selectedProjectId
-              : null,
-          memberId: expenseForm.expenseType === "personal" ? expenseForm.memberId || null : null,
-          expenseType: expenseForm.expenseType,
-          notes: expenseForm.notes || null,
-        }),
+    fetch("/api/admin/expenses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: submittedForm.title,
+        category: submittedForm.expenseType === "personal" ? "personal" : submittedForm.category,
+        amountPaise,
+        allocatedAmountPaise,
+        allowOverpayment: submittedForm.allowOverpayment,
+        date: submittedForm.date,
+        paidBy: submittedForm.paidBy || null,
+        projectId:
+          submittedForm.selectedProjectId && submittedForm.selectedProjectId !== "custom"
+            ? submittedForm.selectedProjectId
+            : null,
+        memberId: submittedForm.expenseType === "personal" ? submittedForm.memberId || null : null,
+        expenseType: submittedForm.expenseType,
+        notes: submittedForm.notes || null,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to add expense");
+        if (data.expense) {
+          setExpenses((cur) => cur.map((exp) => (exp.id === tempId ? { ...exp, ...data.expense } : exp)));
+        }
+      })
+      .catch((err) => {
+        setExpenses(prevExpenses);
+        toast.error((err as Error).message || "Failed to add expense");
+      })
+      .finally(() => {
+        setSavingExpense(false);
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add expense");
-      toast.success("Expense recorded successfully!");
-      setCreateExpenseModalOpen(false);
-      setExpenseForm({
-        title: "",
-        category: "tools",
-        amountRupees: "2000",
-        amountLeftRupees: "0",
-        allocatedAmountRupees: "0",
-        totalBudgetRupees: "0",
-        memberCount: "4",
-        selectedProjectId: "",
-        date: new Date().toISOString().slice(0, 10),
-        paidBy: "",
-        memberId: "",
-        expenseType: "studio",
-        notes: "",
-        allowOverpayment: false,
-      });
-      await onRefresh("expenses");
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setSavingExpense(false);
-    }
   };
 
   // Open Edit Expense
@@ -2902,9 +3026,10 @@ export function CrmTab({
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer"
+              disabled={savingPayment}
+              className="flex-1 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
-              Record Payment
+              {savingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Record Payment"}
             </button>
           </div>
         }

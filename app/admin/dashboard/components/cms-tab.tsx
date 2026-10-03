@@ -60,7 +60,7 @@ interface CmsTabProps {
 export function CmsTab({
   initialContent,
   services,
-  pricing,
+  pricing: propPricing,
   pricingCategories: initialPricingCategories = [],
   stats,
   projects,
@@ -71,6 +71,11 @@ export function CmsTab({
   legalDocs,
   onRefresh,
 }: CmsTabProps) {
+  const [pricing, setPricing] = useState<AdminPricingPlan[]>(propPricing);
+  useEffect(() => {
+    setPricing(propPricing);
+  }, [propPricing]);
+  const [savingPricing, setSavingPricing] = useState(false);
   const [activeSection, setActiveSection] = useState<CmsSection>("hero");
 
   // Hero form
@@ -232,29 +237,68 @@ export function CmsTab({
 
   // 4. Pricing Save, Delete & Reorder
   const handleSavePricing = async (planData: Partial<AdminPricingPlan>) => {
-    try {
-      const method = planData.id ? "PUT" : "POST";
-      const featuresArray = Array.isArray(planData.features)
-        ? planData.features
-        : typeof planData.features === "string"
-        ? (planData.features as string).split("\n").map((f) => f.trim()).filter(Boolean)
-        : [];
+    const method = planData.id ? "PUT" : "POST";
+    const featuresArray = Array.isArray(planData.features)
+      ? planData.features
+      : typeof planData.features === "string"
+      ? (planData.features as string).split("\n").map((f) => f.trim()).filter(Boolean)
+      : [];
 
-      const res = await fetch("/api/admin/pricing", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...planData, features: featuresArray }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to save plan");
-      }
-      setPricingModal(null);
-      showSavedLive("/#pricing", "Pricing Section");
-      await onRefresh("cms");
-    } catch (err) {
-      toast.error((err as Error).message);
+    const prevPricing = [...pricing];
+    const tempId = planData.id || "temp-plan-" + Date.now();
+
+    if (planData.id) {
+      setPricing((cur) =>
+        cur.map((p) =>
+          p.id === planData.id
+            ? { ...p, ...planData, features: featuresArray }
+            : p
+        )
+      );
+    } else {
+      const optimisticPlan: AdminPricingPlan = {
+        id: tempId,
+        name: planData.name || "",
+        category: planData.category || "websites",
+        price: planData.price || "",
+        priceType: planData.priceType || "flat",
+        period: planData.period || "",
+        originalPrice: planData.originalPrice || null,
+        savings: planData.savings || null,
+        desc: planData.desc || "",
+        features: featuresArray,
+        badge: planData.badge || "",
+        order: planData.order ?? pricing.length,
+        isPopular: Boolean(planData.isPopular),
+        isBestValue: Boolean(planData.isBestValue),
+        isPublished: planData.isPublished !== false,
+      };
+      setPricing((cur) => [...cur, optimisticPlan]);
     }
+
+    setPricingModal(null);
+    showSavedLive("/#pricing", "Pricing Section");
+
+    setSavingPricing(true);
+    fetch("/api/admin/pricing", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...planData, features: featuresArray }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Failed to save plan");
+        if (data.plan) {
+          setPricing((cur) => cur.map((p) => (p.id === tempId ? { ...p, ...data.plan } : p)));
+        }
+      })
+      .catch((err) => {
+        setPricing(prevPricing);
+        toast.error((err as Error).message || "Failed to save plan");
+      })
+      .finally(() => {
+        setSavingPricing(false);
+      });
   };
 
   const handleDeletePricing = async (id: string) => {
@@ -2055,10 +2099,10 @@ export function CmsTab({
                 <button
                   type="button"
                   onClick={() => handleSavePricing(pricingModal)}
-                  disabled={!pricingModal.name || !pricingModal.price || !pricingModal.desc}
-                  className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer"
+                  disabled={savingPricing || !pricingModal.name || !pricingModal.price || !pricingModal.desc}
+                  className="px-4 py-2 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  Save Plan
+                  {savingPricing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Plan"}
                 </button>
               </div>
             </div>
