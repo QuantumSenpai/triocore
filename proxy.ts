@@ -35,10 +35,24 @@ export async function proxy(request: NextRequest) {
     "frame-ancestors 'none'",
   ];
 
-  const scriptSrc = isDev
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
-  const csp = [scriptSrc, ...commonDirectives].join("; ");
+  let csp: string;
+  if (pathname.startsWith("/admin")) {
+    // Dynamic Admin routes: Strict nonce-based CSP, no unsafe-eval in production
+    const scriptSrc = isDev
+      ? `script-src 'self' 'nonce-${nonce}' 'unsafe-eval'`
+      : `script-src 'self' 'nonce-${nonce}'`;
+    csp = [scriptSrc, ...commonDirectives].join("; ");
+  } else {
+    // Public routes: unsafe-inline only for client script bundles, no unsafe-eval in production
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      : "script-src 'self' 'unsafe-inline'";
+    csp = [scriptSrc, ...commonDirectives].join("; ");
+  }
+
+  // Set Content-Security-Policy on requestHeaders so Next.js server renderer
+  // extracts the nonce and attaches nonce={nonce} to all rendered script tags!
+  requestHeaders.set("Content-Security-Policy", csp);
 
   const response = NextResponse.next({
     request: {
