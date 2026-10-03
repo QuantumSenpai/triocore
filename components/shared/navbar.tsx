@@ -4,10 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, ArrowUpRight, MessageSquarePlus } from "lucide-react";
 import { Logo } from "./logo";
+import dynamic from "next/dynamic";
 import { buttonVariants } from "@/components/ui/button";
-import { FeedbackModal } from "./feedback-modal";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
+
+const FeedbackModal = dynamic(
+  () => import("./feedback-modal").then((m) => m.FeedbackModal),
+  { ssr: false }
+);
 
 const navLinks = [
   { name: "About", href: "#about" },

@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, Code2, Cpu, Rocket, CheckCircle2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Counter } from "@/components/motion/counter";
-import { Reveal } from "@/components/motion/reveal";
 import { AnimatedGridBg } from "@/components/shared/animated-grid-bg";
 
 interface StatRecord {

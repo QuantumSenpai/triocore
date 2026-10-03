@@ -31,9 +31,14 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPaise } from "@/lib/money";
 import type { LaunchOfferConfig, PricingCategoryItem } from "@/lib/dal/content";
+import dynamic from "next/dynamic";
 import { CategoryPill } from "@/components/ui/category-pill";
-import { WaitlistModal } from "@/components/shared/waitlist-modal";
 import { Clock } from "lucide-react";
+
+const WaitlistModal = dynamic(
+  () => import("@/components/shared/waitlist-modal").then((m) => m.WaitlistModal),
+  { ssr: false }
+);
 
 export interface PlanItem {
   id: string;
