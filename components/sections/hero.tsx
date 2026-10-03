@@ -69,96 +69,71 @@ export function HeroSection({ initialData }: HeroSectionProps) {
 
       <div className="relative z-10 mx-auto max-w-6xl w-full text-center">
         <div className="flex flex-wrap items-center justify-center gap-x-3.5 sm:gap-x-6 gap-y-1.5">
-          <motion.span
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#14141A]"
-          >
+          <span className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#14141A]">
             {headlineParts[0] || "Think."}
-          </motion.span>
-
-          <motion.span
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]"
-          >
+          </span>
+          <span className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]">
             {headlineParts[1] || "Build."}
-          </motion.span>
-
-          <motion.span
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]"
-          >
+          </span>
+          <span className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]">
             {headlineParts.slice(2).join(" ") || "Scale."}
-          </motion.span>
+          </span>
         </div>
 
-        <Reveal direction="up" delay={0.15} duration={0.25}>
-          <p className="mx-auto mt-8 sm:mt-10 max-w-xl text-base sm:text-lg md:text-xl text-[#14141A] font-sans leading-relaxed font-medium px-2 sm:px-0">
-            {subtext}
-          </p>
-        </Reveal>
+        <p className="mx-auto mt-8 sm:mt-10 max-w-xl text-base sm:text-lg md:text-xl text-[#14141A] font-sans leading-relaxed font-medium px-2 sm:px-0">
+          {subtext}
+        </p>
 
-        <Reveal direction="up" delay={0.35} duration={0.5}>
-          <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full max-w-md sm:max-w-none mx-auto">
-            <Link
-              href="#pricing"
-              className={buttonVariants({ variant: "primary", size: "lg", className: "w-full sm:w-auto" })}
-            >
-              <span>View Pricing</span>
-              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-150 group-hover:translate-x-0.5" />
-            </Link>
+        <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full max-w-md sm:max-w-none mx-auto">
+          <Link
+            href="#pricing"
+            className={buttonVariants({ variant: "primary", size: "lg", className: "w-full sm:w-auto" })}
+          >
+            <span>View Pricing</span>
+            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-150 group-hover:translate-x-0.5" />
+          </Link>
 
-            <Link
-              href="#showcase"
-              className={buttonVariants({ variant: "outline", size: "lg", className: "w-full sm:w-auto" })}
-            >
-              <span>View Our Work</span>
-            </Link>
-          </div>
-        </Reveal>
+          <Link
+            href="#showcase"
+            className={buttonVariants({ variant: "outline", size: "lg", className: "w-full sm:w-auto" })}
+          >
+            <span>View Our Work</span>
+          </Link>
+        </div>
 
-        <Reveal direction="up" delay={0.45} duration={0.6}>
-          <div className="mt-16 sm:mt-20 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            {statsData.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.key}
-                  className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/10 hover:-translate-y-1.5 transition-transform duration-300"
-                >
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Icon className="h-5 w-5 text-[#374BFF]" />
-                    <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] tracking-tight">
-                      {renderStatValue(stat.value)}
-                    </span>
-                  </div>
-                  <p className="text-xs uppercase tracking-widest font-bold text-[#14141A]">
-                    {stat.label}
-                  </p>
+        <div className="mt-16 sm:mt-20 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+          {statsData.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.key}
+                className="glass-card rounded-3xl p-6 text-center border border-[#14141A]/10 hover:-translate-y-1.5 transition-transform duration-300"
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Icon className="h-5 w-5 text-[#374BFF]" />
+                  <span className="font-heading text-2xl sm:text-3xl font-black text-[#14141A] tracking-tight">
+                    {renderStatValue(stat.value)}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </Reveal>
+                <p className="text-xs uppercase tracking-widest font-bold text-[#14141A]">
+                  {stat.label}
+                </p>
+              </div>
+            );
+          })}
+        </div>
 
-        <Reveal direction="up" delay={0.55} duration={0.6}>
-          <div className="mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-[#14141A]">
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Full Code Ownership
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Interactive Staging Previews
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Serving Clients Across India 🇮🇳
-            </span>
-          </div>
-        </Reveal>
+        <div className="mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs font-bold text-[#14141A]">
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Full Code Ownership
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Interactive Staging Previews
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#374BFF]" /> Serving Clients Across India 🇮🇳
+          </span>
+        </div>
       </div>
     </section>
   );

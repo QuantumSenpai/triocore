@@ -43,7 +43,7 @@ export function Logo({ className, showText = true, size = "md", iconOnly = false
         "group inline-flex items-center gap-3.5 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] rounded-xl transition-transform ",
         className
       )}
-      aria-label="TrioCore Home"
+      aria-label={!showText || iconOnly ? "TrioCore Home" : undefined}
     >
       <div className="flex items-center justify-center text-[#14141A] transition-transform duration-300 group-interactive-lift">
         <TrioCoreMark className={sizeMap[size].icon} />

@@ -146,7 +146,7 @@ function PricingPlanCard({
               </span>
             )}
             {plan.savings && (
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-sans">
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 font-sans">
                 {plan.savings}
               </span>
             )}
@@ -386,7 +386,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  </span>
  </div>
  {offer.savings && (
- <span className="mt-1 inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 ">
+ <span className="mt-1 inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
  {offer.savings}
  </span>
  )}
@@ -419,6 +419,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  </div>
  </Reveal>
 
+        <div className="min-h-[500px]">
         {activeCategory === "websites" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {websitePlans.map((plan, idx) => {
@@ -698,6 +699,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
             )}
           </div>
         )}
+      </div>
 
  <Reveal direction="up" delay={0.1}>
  <div className="mt-16 sm:mt-20 glass-card rounded-3xl p-6 sm:p-8">

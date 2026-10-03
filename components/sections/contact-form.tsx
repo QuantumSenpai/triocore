@@ -10,7 +10,6 @@ import {
  RefreshCw 
 } from "lucide-react";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { contactSchema, type ContactFormData } from "@/lib/validations/contact";
@@ -90,8 +89,9 @@ export function ContactFormSection() {
  toast.success("Inquiry sent successfully! We'll reply within 24 hours.");
 
  try {
- confetti({
- particleCount: 80,
+ const confetti = (await import("canvas-confetti")).default;
+          confetti({
+            particleCount: 80,
  spread: 70,
  origin: { y: 0.6 },
  colors: ["#374BFF", "#CFFF04", "#14141A", "#FFFFFF"],

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { X, Sparkles, CheckCircle2, Clock, ArrowRight, ShieldCheck, Mail, User } from "lucide-react";
 import { toast } from "sonner";
-import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 
 export interface WaitlistModalProps {
@@ -50,6 +49,7 @@ export function WaitlistModal({ serviceName, isOpen, onClose }: WaitlistModalPro
 
       setSubmitted(true);
       try {
+        const confetti = (await import("canvas-confetti")).default;
         confetti({
           particleCount: 50,
           spread: 60,

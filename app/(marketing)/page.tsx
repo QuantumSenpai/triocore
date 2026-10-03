@@ -1,16 +1,36 @@
+import dynamic from "next/dynamic";
 import { HeroSection } from "@/components/sections/hero";
 import { AboutSection } from "@/components/sections/about";
 import { TeamBentoSection } from "@/components/sections/team-bento";
 import { ServicesBentoSection } from "@/components/sections/services-bento";
-import { PricingSection } from "@/components/sections/pricing";
-import { InnovationLabSection } from "@/components/sections/innovation-lab";
-import { ShowcaseGridSection } from "@/components/sections/showcase-grid";
-import { WhyUsSection } from "@/components/sections/why-us";
-import { FAQSection } from "@/components/sections/faq";
-import { RoadmapSection } from "@/components/sections/roadmap";
-import { TechMarqueeSection } from "@/components/sections/tech-marquee";
-import { ContactFormSection } from "@/components/sections/contact-form";
-import { FeedbackSection } from "@/components/sections/feedback-section";
+
+const PricingSection = dynamic(() =>
+  import("@/components/sections/pricing").then((mod) => mod.PricingSection)
+);
+const InnovationLabSection = dynamic(() =>
+  import("@/components/sections/innovation-lab").then((mod) => mod.InnovationLabSection)
+);
+const ShowcaseGridSection = dynamic(() =>
+  import("@/components/sections/showcase-grid").then((mod) => mod.ShowcaseGridSection)
+);
+const WhyUsSection = dynamic(() =>
+  import("@/components/sections/why-us").then((mod) => mod.WhyUsSection)
+);
+const FAQSection = dynamic(() =>
+  import("@/components/sections/faq").then((mod) => mod.FAQSection)
+);
+const RoadmapSection = dynamic(() =>
+  import("@/components/sections/roadmap").then((mod) => mod.RoadmapSection)
+);
+const TechMarqueeSection = dynamic(() =>
+  import("@/components/sections/tech-marquee").then((mod) => mod.TechMarqueeSection)
+);
+const ContactFormSection = dynamic(() =>
+  import("@/components/sections/contact-form").then((mod) => mod.ContactFormSection)
+);
+const FeedbackSection = dynamic(() =>
+  import("@/components/sections/feedback-section").then((mod) => mod.FeedbackSection)
+);
 import {
   getHeroContent,
   getServicesContent,
