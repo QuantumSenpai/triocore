@@ -236,6 +236,12 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
     ? initialCategories.filter((c) => c.slug !== "addons")
     : defaultCategories;
 
+  const isLaunchOfferActive = Boolean(
+    initialLaunchOffer &&
+    initialLaunchOffer.isActive !== false &&
+    (initialLaunchOffer as any).is_active !== false
+  );
+
   const [activeCategory, setActiveCategory] = useState<string>("websites");
   const [showTerms, setShowTerms] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
@@ -321,7 +327,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  return (
  <section id="pricing" className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">
  <div className="mx-auto max-w-7xl">
- <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+ <div className={cn("text-center max-w-3xl mx-auto", isLaunchOfferActive ? "mb-12 sm:mb-16" : "mb-8 sm:mb-10")}>
         <Reveal direction="down">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#374BFF] text-xs font-bold uppercase tracking-widest text-white font-heading mb-3 shadow-sm shadow-[#374BFF]/20">
             <Tag className="h-3.5 w-3.5 text-white" /> Pricing
@@ -344,7 +350,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  </Reveal>
  </div>
 
- {initialLaunchOffer?.isActive !== false && (
+ {isLaunchOfferActive ? (
  <Reveal direction="up" delay={0.2}>
  <div id="launch-offer-banner" className="mb-12 sm:mb-16 rounded-3xl border-2 border-[#CFFF04] bg-gradient-to-br from-[#374BFF] via-[#FFFFFF] to-[#CFFF04] p-6 sm:p-8 shadow-xl relative overflow-hidden">
  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
@@ -401,7 +407,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  </div>
  </div>
  </Reveal>
- )}
+ ) : null}
 
  <Reveal direction="down">
  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">

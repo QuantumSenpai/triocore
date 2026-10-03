@@ -438,9 +438,15 @@ export async function getLaunchOfferContent(): Promise<LaunchOfferConfig> {
       .limit(1);
 
     if (rows.length > 0 && rows[0].value) {
-      const val = rows[0].value as Partial<LaunchOfferConfig>;
+      const val = rows[0].value as any;
+      const isActive = val.isActive !== undefined
+        ? Boolean(val.isActive)
+        : val.is_active !== undefined
+        ? Boolean(val.is_active)
+        : defaultLaunchOffer.isActive;
+
       return {
-        isActive: val.isActive !== undefined ? Boolean(val.isActive) : defaultLaunchOffer.isActive,
+        isActive,
         headline: val.headline || defaultLaunchOffer.headline,
         subtext: val.subtext || defaultLaunchOffer.subtext,
         tag: val.tag || defaultLaunchOffer.tag,
