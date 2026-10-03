@@ -215,6 +215,7 @@ export interface AdminPricingCategory {
   label: string;
   order: number;
   isPublished?: boolean;
+  isComingSoon?: boolean;
 }
 
 export interface AdminShowcaseProject {

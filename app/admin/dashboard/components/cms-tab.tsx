@@ -2201,6 +2201,19 @@ export function CmsTab({
                   className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-mono text-[#14141A]"
                 />
               </div>
+
+              <div className="flex items-center gap-2 pt-1 sm:col-span-2">
+                <input
+                  type="checkbox"
+                  id="cat-coming-soon"
+                  checked={pricingCategoryModal.isComingSoon || false}
+                  onChange={(e) => setPricingCategoryModal({ ...pricingCategoryModal, isComingSoon: e.target.checked })}
+                  className="rounded border-black/20 text-[#374BFF] focus:ring-[#374BFF] cursor-pointer"
+                />
+                <label htmlFor="cat-coming-soon" className="text-xs font-bold text-[#14141A] cursor-pointer">
+                  Mark as "Coming Soon" (displays waitlist prompt)
+                </label>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-black/5">

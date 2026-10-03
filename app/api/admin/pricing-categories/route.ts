@@ -11,6 +11,7 @@ const createCategorySchema = z.object({
   label: z.string().min(1, "Label is required"),
   order: z.number().int().default(0),
   isPublished: z.boolean().default(true),
+  isComingSoon: z.boolean().default(false),
 });
 
 const updateCategorySchema = z.object({
@@ -19,6 +20,7 @@ const updateCategorySchema = z.object({
   label: z.string().min(1).optional(),
   order: z.number().int().optional(),
   isPublished: z.boolean().optional(),
+  isComingSoon: z.boolean().optional(),
 });
 
 const deleteCategorySchema = z.object({
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { slug, label, order, isPublished } = parseResult.data;
+    const { slug, label, order, isPublished, isComingSoon } = parseResult.data;
     if (!db) return NextResponse.json({ error: "Database not connected" }, { status: 500 });
 
     const existing = await db.select().from(pricingCategories).where(eq(pricingCategories.slug, slug)).limit(1);
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
         label,
         order,
         isPublished,
+        isComingSoon,
       })
       .returning();
 

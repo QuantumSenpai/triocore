@@ -46,7 +46,7 @@ export function HeroSection({ initialData }: HeroSectionProps) {
     return fromProp || defaultStat;
   });
   const headline = initialData?.headline || "Think. Build. Scale.";
-  const subtext = initialData?.subtext || "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India.";
+  const subtext = initialData?.subtext || "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India. Now expanding with tailored portfolio engineering, career documentation suites, and next-generation creative brand assets.";
   const headlineParts = headline.split(" ");
 
   const renderStatValue = (valStr: string) => {
@@ -60,7 +60,7 @@ export function HeroSection({ initialData }: HeroSectionProps) {
   };
 
   return (
-    <section className="relative min-h-[94vh] flex items-center justify-center pt-36 sm:pt-40 pb-24 sm:pb-28 px-5 sm:px-6 lg:px-8 overflow-hidden">
+    <section id="hero" className="relative min-h-[94vh] flex items-center justify-center pt-36 sm:pt-40 pb-24 sm:pb-28 px-5 sm:px-6 lg:px-8 overflow-hidden">
       <AnimatedGridBg showGrid={true} showOrbs={true} />
 
       <div className="absolute top-[44%] sm:top-[48%] left-1/2 -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none -z-0 opacity-[0.03] font-heading font-black text-[16vw] sm:text-[20vw] leading-none tracking-tighter text-stroke-subtle whitespace-nowrap uppercase">

@@ -41,7 +41,7 @@ export async function getHeroContent(): Promise<HeroData> {
   const fallback: HeroData = {
     headline: "Think. Build. Scale.",
     subtext:
-      "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India.",
+      "A forward-engineering digital solutions studio founded by CSE innovators. We craft custom web architectures, Mobile & Web Apps, contactless NFC systems, machine learning pipelines, and robotics hardware across India. Now expanding with tailored portfolio engineering, career documentation suites, and next-generation creative brand assets.",
     stats: [
       { key: "hero_innovators", value: "3", label: "Core Innovators" },
       { key: "hero_services", value: "6", label: "Service Capabilities" },
@@ -315,6 +315,7 @@ export interface PricingCategoryItem {
   label: string;
   order: number;
   isPublished: boolean;
+  isComingSoon?: boolean;
 }
 
 export const fallbackPricingCategories: PricingCategoryItem[] = [
@@ -325,7 +326,13 @@ export const fallbackPricingCategories: PricingCategoryItem[] = [
   { id: "cat-apps", slug: "apps", label: "Web Apps & SaaS", order: 4, isPublished: true },
   { id: "cat-design-seo", slug: "design-seo", label: "Design & SEO", order: 5, isPublished: true },
   { id: "cat-maintenance", slug: "maintenance", label: "Maintenance", order: 6, isPublished: true },
-  { id: "cat-addons", slug: "addons", label: "Modular Add-Ons", order: 7, isPublished: true },
+  { id: "cat-portfolio", slug: "portfolio", label: "Portfolio Development", order: 7, isPublished: true, isComingSoon: false },
+  { id: "cat-career-docs", slug: "career-docs", label: "Career & Professional Documents", order: 8, isPublished: true, isComingSoon: false },
+  { id: "cat-digital-invitations", slug: "digital-invitations", label: "Digital Invitations", order: 9, isPublished: true, isComingSoon: true },
+  { id: "cat-celebration-cards", slug: "celebration-cards", label: "Personalized Celebration Cards", order: 10, isPublished: true, isComingSoon: true },
+  { id: "cat-creative-assets", slug: "creative-assets", label: "Creative & Brand Assets", order: 11, isPublished: true, isComingSoon: true },
+  { id: "cat-ai-creative", slug: "ai-creative", label: "AI-Assisted Creative Services", order: 12, isPublished: true, isComingSoon: true },
+  { id: "cat-addons", slug: "addons", label: "Modular Add-Ons", order: 13, isPublished: true },
 ];
 
 export async function getPricingCategories(): Promise<PricingCategoryItem[]> {

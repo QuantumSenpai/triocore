@@ -16,13 +16,19 @@ import { Button } from "@/components/ui/button";
 import { contactSchema, type ContactFormData } from "@/lib/validations/contact";
 
 const needCategories = [
- "Business Website",
- "Mobile & Web Apps",
- "E-Commerce Store",
- "Web Application / SaaS",
- "NFC & Hardware Project",
- "Logo & Brand Identity",
- "Not Sure Yet — Let's Talk",
+	"Business Website",
+	"Mobile & Web Apps",
+	"E-Commerce Store",
+	"Web Application / SaaS",
+	"Portfolio Development",
+	"Career & Professional Documents",
+	"Digital Invitations (Coming Soon / Waitlist)",
+	"Personalized Celebration Cards (Coming Soon / Waitlist)",
+	"Creative & Brand Assets (Coming Soon / Waitlist)",
+	"AI-Assisted Creative Services (Coming Soon / Waitlist)",
+	"NFC & Hardware Project",
+	"Logo & Brand Identity",
+	"Not Sure Yet — Let's Talk",
 ];
 
 export function ContactFormSection() {

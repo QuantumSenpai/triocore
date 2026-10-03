@@ -153,6 +153,7 @@ export const pricingCategories = pgTable("pricing_categories", {
   label: text("label").notNull(),
   order: integer("order").default(0).notNull(),
   isPublished: boolean("is_published").notNull().default(true),
+  isComingSoon: boolean("is_coming_soon").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

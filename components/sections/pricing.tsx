@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { formatPaise } from "@/lib/money";
 import type { LaunchOfferConfig, PricingCategoryItem } from "@/lib/dal/content";
 import { CategoryPill } from "@/components/ui/category-pill";
+import { WaitlistModal } from "@/components/shared/waitlist-modal";
+import { Clock } from "lucide-react";
 
 export interface PlanItem {
   id: string;
@@ -76,6 +78,7 @@ interface PricingPlanCardProps {
   expanded: boolean;
   onToggleExpand: () => void;
   ctaText?: string;
+  onOpenWaitlist?: (serviceName: string) => void;
 }
 
 function PricingPlanCard({
@@ -84,8 +87,12 @@ function PricingPlanCard({
   expanded,
   onToggleExpand,
   ctaText,
+  onOpenWaitlist,
 }: PricingPlanCardProps) {
   const features = plan.features || [];
+  const isComingSoon =
+    Boolean(plan.badge?.toLowerCase().includes("coming soon")) ||
+    Boolean(plan.price?.toLowerCase().includes("coming"));
   const hasMore = features.length > 3;
   const visibleFeatures = expanded || !hasMore ? features : features.slice(0, 3);
 
@@ -110,15 +117,23 @@ function PricingPlanCard({
               {plan.name}
             </h3>
             {plan.badge && (
-              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#CFFF04] text-[#14141A] shadow-sm">
-                {plan.badge}
+              <span
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1",
+                  isComingSoon
+                    ? "bg-amber-100 text-amber-900 border border-amber-300"
+                    : "bg-[#CFFF04] text-[#14141A]"
+                )}
+              >
+                {isComingSoon && <Clock className="h-3 w-3 text-amber-600" />}
+                <span>{plan.badge}</span>
               </span>
             )}
           </div>
 
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="font-heading text-3xl sm:text-4xl font-black text-[#374BFF]">
-              {formattedPrice}
+              {plan.price.toLowerCase().includes("coming") ? "Coming Soon" : formattedPrice}
             </span>
             {formattedOriginalPrice && (
               <span className="text-xs sm:text-sm text-[#2B2B38] line-through font-medium">
@@ -177,13 +192,24 @@ function PricingPlanCard({
         </div>
 
         <div className="pt-6 mt-6 border-t border-[#14141A]/10">
-          <Link
-            href="#contact"
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF]/20 hover:bg-[#14141A] transition-all"
-          >
-            <span>{ctaText || `Choose ${plan.name}`}</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          {isComingSoon ? (
+            <button
+              type="button"
+              onClick={() => onOpenWaitlist?.(plan.name)}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#14141A] py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#374BFF] transition-all cursor-pointer"
+            >
+              <Clock className="h-4 w-4 text-amber-400" />
+              <span>Join Priority Waitlist</span>
+            </button>
+          ) : (
+            <Link
+              href="#contact"
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#374BFF] py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-[#374BFF]/20 hover:bg-[#14141A] transition-all"
+            >
+              <span>{ctaText || `Choose ${plan.name}`}</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
         </div>
       </div>
     </Reveal>
@@ -208,6 +234,7 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
   const [activeCategory, setActiveCategory] = useState<string>("websites");
   const [showTerms, setShowTerms] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Set<string>>(new Set());
+  const [waitlistService, setWaitlistService] = useState<string | null>(null);
 
   const togglePlan = (id: string) => {
     setExpandedPlans((prev) => {
@@ -378,6 +405,13 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
 							key={tab.slug}
 							active={activeCategory === tab.slug}
 							onClick={() => setActiveCategory(tab.slug)}
+							badge={
+								tab.isComingSoon ? (
+									<span className="ml-1 text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">
+										Soon
+									</span>
+								) : undefined
+							}
 						>
 							{tab.label}
 						</CategoryPill>
@@ -614,20 +648,54 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
         )}
 
         {!["websites", "local", "ecommerce", "combos", "apps", "design-seo", "maintenance"].includes(activeCategory) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {list.filter((p) => p.category === activeCategory).map((plan, idx) => {
-              const planId = plan.id || plan.name;
-              return (
-                <PricingPlanCard
-                  key={planId}
-                  plan={plan}
-                  delay={idx * 0.06}
-                  expanded={expandedPlans.has(planId)}
-                  onToggleExpand={() => togglePlan(planId)}
-                  ctaText="Inquire Plan"
-                />
-              );
-            })}
+          <div>
+            {list.filter((p) => p.category === activeCategory).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {list
+                  .filter((p) => p.category === activeCategory)
+                  .map((plan, idx) => {
+                    const planId = plan.id || plan.name;
+                    return (
+                      <PricingPlanCard
+                        key={planId}
+                        plan={plan}
+                        delay={idx * 0.06}
+                        expanded={expandedPlans.has(planId)}
+                        onToggleExpand={() => togglePlan(planId)}
+                        ctaText="Inquire Plan"
+                        onOpenWaitlist={(name) => setWaitlistService(name)}
+                      />
+                    );
+                  })}
+              </div>
+            ) : (
+              <div className="max-w-2xl mx-auto glass-card rounded-3xl p-8 sm:p-10 text-center space-y-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-wider">
+                  <Clock className="h-3.5 w-3.5 text-amber-600" />
+                  <span>Under Active Development</span>
+                </div>
+                <h3 className="font-heading text-2xl sm:text-3xl font-black text-[#14141A]">
+                  {categories.find((c) => c.slug === activeCategory)?.label || "Upcoming Capability"}
+                </h3>
+                <p className="text-xs sm:text-sm text-[#2B2B38] font-medium max-w-lg mx-auto leading-relaxed">
+                  We are actively engineering tailored solutions for this category. Reserve your spot on our priority waitlist to get early-bird access and launch discounts.
+                </p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setWaitlistService(
+                        categories.find((c) => c.slug === activeCategory)?.label || "Upcoming Service"
+                      )
+                    }
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#374BFF] text-white text-xs sm:text-sm font-bold hover:bg-[#2A3DE0] shadow-md transition-all cursor-pointer"
+                  >
+                    <span>Join Priority Waitlist</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -702,6 +770,11 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  </div>
  </Reveal>
  </div>
- </section>
+ <WaitlistModal
+        serviceName={waitlistService}
+        isOpen={Boolean(waitlistService)}
+        onClose={() => setWaitlistService(null)}
+      />
+    </section>
  );
 }

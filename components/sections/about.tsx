@@ -32,7 +32,7 @@ export function AboutSection() {
  </Reveal>
  <Reveal direction="up" delay={0.16}>
  <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-[#2B2B38]  font-sans leading-relaxed font-medium">
- TrioCore is a forward-thinking digital solutions studio founded by Computer Science and Engineering innovators in India with a shared mission: delivering high-performance, custom-crafted digital solutions with speed and transparency.
+ TrioCore is a forward-thinking digital solutions studio founded by Computer Science and Engineering innovators in India with a shared mission: delivering high-performance, custom-crafted digital solutions with speed and transparency. We continually expand our technical scope across web platforms, career acceleration assets, and creative design engineering.
  </p>
  </Reveal>
  </div>
