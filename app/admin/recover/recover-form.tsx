@@ -20,7 +20,7 @@ export function RecoverForm() {
     if (loading) return;
 
     if (!setupKey.trim()) {
-      toast.error("ADMIN_SETUP_KEY is required.");
+      toast.error("Admin setup key is required.");
       return;
     }
     if (!email.trim()) {
@@ -89,7 +89,7 @@ export function RecoverForm() {
                 required
                 value={setupKey}
                 onChange={(e) => setSetupKey(e.target.value)}
-                placeholder="Enter ADMIN_SETUP_KEY"
+                placeholder="Enter setup key"
                 className="mt-1 block w-full px-3 py-2.5 sm:text-sm border border-black/15 rounded-xl bg-[#F5F6FC] text-[#14141A] focus:border-[#374BFF] focus:outline-none"
               />
             </div>

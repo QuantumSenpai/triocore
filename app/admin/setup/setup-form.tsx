@@ -23,7 +23,7 @@ export function SetupForm() {
     if (loading) return;
 
     if (!setupKey.trim()) {
-      toast.error("ADMIN_SETUP_KEY is required.");
+      toast.error("Admin setup key is required.");
       return;
     }
     if (!name.trim() || !email.trim()) {
@@ -104,7 +104,7 @@ export function SetupForm() {
                   required
                   value={setupKey}
                   onChange={(e) => setSetupKey(e.target.value)}
-                  placeholder="Enter ADMIN_SETUP_KEY"
+                  placeholder="Enter setup key"
                   className="block w-full pl-10 pr-3 py-2.5 sm:text-sm border border-black/15 rounded-xl bg-[#F5F6FC] text-[#14141A] placeholder-[#2B2B38] focus:border-[#374BFF] focus:ring-1 focus:ring-[#374BFF] focus:outline-none"
                 />
               </div>
