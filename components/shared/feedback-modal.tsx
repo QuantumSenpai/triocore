@@ -160,10 +160,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                         key={c.id}
                         type="button"
                         onClick={() => setType(c.id)}
-                        className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        className={`flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl border text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
                           isSelected
                             ? "bg-[#374BFF] text-white border-[#374BFF] shadow-xs"
-                            : "bg-[#F5F6FC] text-[#14141A] border-[#14141A]/10 hover:border-[#374BFF]"
+                            : "bg-white text-[#2B2B38] border-[#14141A]/10 hover:border-[#374BFF] hover:text-[#374BFF] hover:bg-[#374BFF]/5 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0"
                         }`}
                       >
                         <Icon className="h-3.5 w-3.5" />

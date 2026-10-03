@@ -91,3 +91,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
+export { CategoryPill } from "./category-pill";
+export type { CategoryPillProps } from "./category-pill";

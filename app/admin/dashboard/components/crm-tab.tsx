@@ -1225,22 +1225,31 @@ export function CrmTab({
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white border border-black/10 shadow-xs">
         <button
           onClick={() => setSubTab("inquiries")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "inquiries" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-            }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "inquiries"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+          }`}
         >
           Inquiries ({inquiries.length})
         </button>
         <button
           onClick={() => setSubTab("clients")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "clients" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-            }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "clients"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+          }`}
         >
           Clients ({clients.length})
         </button>
         <button
           onClick={() => setSubTab("projects")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "projects" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-            }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "projects"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+          }`}
         >
           Projects ({projects.length})
         </button>
@@ -1248,8 +1257,11 @@ export function CrmTab({
         {canViewFinance && (
           <button
             onClick={() => setSubTab("payments")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "payments" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-              }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+              subTab === "payments"
+                ? "bg-[#374BFF] text-white shadow-xs"
+                : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+            }`}
           >
             Payments Ledger
           </button>
@@ -1259,16 +1271,22 @@ export function CrmTab({
             setSubTab("expenses");
             if (!canViewFinance) setExpenseTab("personal");
           }}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "expenses" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-            }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "expenses"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+          }`}
         >
           Expenses ({expenses.length})
         </button>
         {canViewFinance && (
           <button
             onClick={() => setSubTab("bills")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${subTab === "bills" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
-              }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+              subTab === "bills"
+                ? "bg-[#374BFF] text-white shadow-xs"
+                : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+            }`}
           >
             Bills & Invoices ({bills.length})
           </button>
@@ -1785,10 +1803,11 @@ export function CrmTab({
               {canViewFinance && (
                 <button
                   onClick={() => setExpenseTab("studio")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${expenseTab === "studio"
-                      ? "bg-[#14141A] text-white shadow-xs"
-                      : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+                    expenseTab === "studio"
+                      ? "bg-[#374BFF] text-white shadow-xs"
+                      : "text-[#2B2B38] bg-[#F5F6FC] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+                  }`}
                 >
                   🏢 Studio Expenses (
                   {expenses.filter((e) => (e.expenseType || "studio") === "studio").length}
@@ -1797,10 +1816,11 @@ export function CrmTab({
               )}
               <button
                 onClick={() => setExpenseTab("personal")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${expenseTab === "personal"
-                    ? "bg-[#14141A] text-white shadow-xs"
-                    : "text-[#2B2B38] hover:text-[#14141A] bg-[#F5F6FC]"
-                  }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+                  expenseTab === "personal"
+                    ? "bg-[#374BFF] text-white shadow-xs"
+                    : "text-[#2B2B38] bg-[#F5F6FC] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
+                }`}
               >
                 👤 Personal Expenses & Reimbursements (
                 {expenses.filter((e) => e.expenseType === "personal").length}

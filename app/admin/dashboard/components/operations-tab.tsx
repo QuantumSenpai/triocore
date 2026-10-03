@@ -192,8 +192,10 @@ export function OperationsTab({
       <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-white border border-black/10 shadow-xs">
         <button
           onClick={() => setSubTab("reports")}
-          className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "reports" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+          className={`relative px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "reports"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
           }`}
         >
           Reports & Feedback
@@ -206,8 +208,10 @@ export function OperationsTab({
 
         <button
           onClick={() => setSubTab("notes")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            subTab === "notes" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+            subTab === "notes"
+              ? "bg-[#374BFF] text-white shadow-xs"
+              : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
           }`}
         >
           Private Info ({notes.length})
@@ -216,8 +220,10 @@ export function OperationsTab({
         {isOwner && (
           <button
             onClick={() => setSubTab("team-access")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              subTab === "team-access" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
+              subTab === "team-access"
+                ? "bg-[#374BFF] text-white shadow-xs"
+                : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             Team Access & Roles
@@ -243,8 +249,10 @@ export function OperationsTab({
                 <button
                   key={filter}
                   onClick={() => setReportFilter(filter)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
-                    reportFilter === filter ? "bg-white text-[#374BFF] shadow-xs" : "text-[#2B2B38]"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all duration-150 ease-out cursor-pointer ${
+                    reportFilter === filter
+                      ? "bg-white text-[#374BFF] shadow-xs"
+                      : "text-[#2B2B38] hover:text-[#374BFF] hover:bg-white/80 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                   }`}
                 >
                   {filter}

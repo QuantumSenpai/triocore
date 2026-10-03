@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatPaise } from "@/lib/money";
 import type { LaunchOfferConfig, PricingCategoryItem } from "@/lib/dal/content";
+import { CategoryPill } from "@/components/ui/category-pill";
 
 export interface PlanItem {
   id: string;
@@ -372,20 +373,15 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
 
  <Reveal direction="down">
  <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
- {categories.map((tab) => (
- <button
- key={tab.slug}
- onClick={() => setActiveCategory(tab.slug)}
- className={cn(
- "px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer",
- activeCategory === tab.slug
- ? "bg-[#374BFF] text-white shadow-lg shadow-[#374BFF] scale-105"
- : "border border-[#14141A] bg-white text-[#2B2B38]  hover:border-[#374BFF]"
- )}
- >
- {tab.label}
- </button>
- ))}
+					{categories.map((tab) => (
+						<CategoryPill
+							key={tab.slug}
+							active={activeCategory === tab.slug}
+							onClick={() => setActiveCategory(tab.slug)}
+						>
+							{tab.label}
+						</CategoryPill>
+					))}
  </div>
  </Reveal>
 

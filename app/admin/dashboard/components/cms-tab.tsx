@@ -659,10 +659,10 @@ export function CmsTab({
           <button
             key={sec.id}
             onClick={() => setActiveSection(sec.id as CmsSection)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
               activeSection === sec.id
                 ? "bg-[#374BFF] text-white shadow-xs"
-                : "text-[#14141A] hover:text-[#374BFF]"
+                : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             {sec.label}
@@ -973,10 +973,10 @@ export function CmsTab({
                   <button
                     key={cat.slug}
                     onClick={() => setPricingCategoryFilter(cat.slug)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
                       pricingCategoryFilter === cat.slug
                         ? "bg-white text-[#374BFF] shadow-xs"
-                        : "text-[#2B2B38] hover:text-[#14141A]"
+                        : "text-[#2B2B38] hover:text-[#374BFF] hover:bg-white/80 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                     }`}
                   >
                     {cat.label} ({count})

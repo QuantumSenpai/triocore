@@ -448,24 +448,24 @@ export default function AdminDashboardPage() {
         <nav className="hidden lg:flex items-center gap-1.5 p-1 rounded-2xl bg-[#F5F6FC] border border-black/10">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "overview" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ease-out ${
+              activeTab === "overview" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab("crm")}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "crm" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ease-out ${
+              activeTab === "crm" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             Business & CRM
           </button>
           <button
             onClick={() => setActiveTab("operations")}
-            className={`relative px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "operations" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            className={`relative px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ease-out ${
+              activeTab === "operations" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             Operations & Team
@@ -477,8 +477,8 @@ export default function AdminDashboardPage() {
           </button>
           <button
             onClick={() => setActiveTab("cms")}
-            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              activeTab === "cms" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF]"
+            className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ease-out ${
+              activeTab === "cms" ? "bg-[#374BFF] text-white shadow-xs" : "text-[#14141A] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
             }`}
           >
             Website CMS

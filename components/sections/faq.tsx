@@ -1,4 +1,5 @@
 "use client";
+import { CategoryPill } from "@/components/ui/category-pill";
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -108,20 +109,16 @@ export function FAQSection({ initialFaqs, initialCategories }: FAQSectionProps) 
  </div>
 
  <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
- {categories.map((cat) => (
- <button
- key={cat}
- onClick={() => setSelectedCategory(cat)}
- className={cn(
- "px-3 py-1.5 rounded-xl text-xs font-bold transition-all",
- selectedCategory === cat
- ? "bg-[#374BFF] text-white shadow-sm"
- : "text-[#14141A]  hover:bg-[#14141A] "
- )}
- >
- {cat}
- </button>
- ))}
+						{categories.map((cat) => (
+							<CategoryPill
+								key={cat}
+								size="sm"
+								active={selectedCategory === cat}
+								onClick={() => setSelectedCategory(cat)}
+							>
+								{cat}
+							</CategoryPill>
+						))}
  </div>
  </div>
  </Reveal>
