@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView } from "framer-motion";
+import { useInView, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CounterProps {
@@ -23,9 +23,14 @@ export function Counter({
 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-40px" });
-  const [count, setCount] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+  const [count, setCount] = useState(() => (shouldReduceMotion ? value : 0));
 
   useEffect(() => {
+    if (shouldReduceMotion) {
+      setCount(value);
+      return;
+    }
     if (!isInView || staticText) return;
 
     const start = 0;

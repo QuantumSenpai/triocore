@@ -38,7 +38,7 @@ export const CategoryPill = forwardRef<HTMLButtonElement, CategoryPillProps>(
         type="button"
         disabled={disabled}
         className={cn(
-          "inline-flex items-center justify-center font-bold transition-all duration-150 ease-out cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
+          "inline-flex items-center justify-center font-bold transition-all duration-150 ease-out cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none motion-reduce:transform-none motion-reduce:transition-none",
           pillSizeStyles[size],
           active
             ? "bg-[#374BFF] text-white border border-[#374BFF] shadow-xs hover:bg-[#2A3DE0] hover:border-[#2A3DE0] hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0"

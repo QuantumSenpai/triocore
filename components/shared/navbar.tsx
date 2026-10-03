@@ -7,7 +7,7 @@ import { Logo } from "./logo";
 import dynamic from "next/dynamic";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const FeedbackModal = dynamic(
   () => import("./feedback-modal").then((m) => m.FeedbackModal),
@@ -29,6 +29,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -140,10 +141,10 @@ export function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: shouldReduceMotion ? 0.01 : 0.2, ease: "easeOut" }}
             className="fixed inset-x-4 top-20 z-50 lg:hidden rounded-2xl p-5 sm:p-6 shadow-xl border border-[#14141A]/10 overflow-hidden bg-white/98 backdrop-blur-md"
           >
             <div className="flex flex-col gap-1.5">
