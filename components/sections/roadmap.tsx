@@ -36,7 +36,7 @@ export function RoadmapSection() {
  initial={{ width: "0%" }}
  whileInView={{ width: "52%" }}
  viewport={{ once: true }}
- transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+ transition={{ duration: 0.3, ease: "easeOut" }}
  className="h-full bg-[#374BFF] rounded-full"
  />
  </div>
@@ -46,7 +46,7 @@ export function RoadmapSection() {
  initial={{ height: "0%" }}
  whileInView={{ height: "52%" }}
  viewport={{ once: true }}
- transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+ transition={{ duration: 0.3, ease: "easeOut" }}
  className="w-full bg-[#374BFF] rounded-full"
  />
  </div>

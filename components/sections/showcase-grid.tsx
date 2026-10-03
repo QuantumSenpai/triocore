@@ -109,7 +109,7 @@ export function ShowcaseGridSection({
  fill
  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
  onError={() => setFailedImages((prev) => ({ ...prev, [project.id]: true }))}
- className="object-cover transition-transform duration-500 group-interactive-lift"
+ className="object-cover transition-transform duration-300 ease-out group-interactive-lift"
  />
  <div className="absolute inset-0 bg-gradient-to-t from-[#14141A] via-transparent to-transparent opacity-80" />
 

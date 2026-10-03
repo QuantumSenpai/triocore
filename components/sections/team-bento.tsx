@@ -76,7 +76,7 @@ export function TeamBentoSection({
                 >
                   <div
                     className={cn(
-                      "relative h-full w-full transition-transform duration-700 [transform-style:preserve-3d]",
+                      "relative h-full w-full transition-transform duration-300 ease-out [transform-style:preserve-3d]",
                       isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
                     )}
                   >

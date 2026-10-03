@@ -72,7 +72,7 @@ export function HeroSection({ initialData }: HeroSectionProps) {
           <motion.span
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#14141A]"
           >
             {headlineParts[0] || "Think."}
@@ -81,7 +81,7 @@ export function HeroSection({ initialData }: HeroSectionProps) {
           <motion.span
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]"
           >
             {headlineParts[1] || "Build."}
@@ -90,14 +90,14 @@ export function HeroSection({ initialData }: HeroSectionProps) {
           <motion.span
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.05] sm:leading-[0.95] text-[#374BFF]"
           >
             {headlineParts.slice(2).join(" ") || "Scale."}
           </motion.span>
         </div>
 
-        <Reveal direction="up" delay={0.25} duration={0.5}>
+        <Reveal direction="up" delay={0.15} duration={0.25}>
           <p className="mx-auto mt-8 sm:mt-10 max-w-xl text-base sm:text-lg md:text-xl text-[#14141A] font-sans leading-relaxed font-medium px-2 sm:px-0">
             {subtext}
           </p>
