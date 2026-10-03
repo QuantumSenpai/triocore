@@ -78,7 +78,10 @@ export async function verifyAdminSession(req: NextRequest, options: VerifyAdminO
       }
 
       // 2. Verify admin_members directly or via deduplicated in-memory cache
-      const member = await getAdminMemberWithCache(session.user.id, isDestructive);
+      const member = await getAdminMemberWithCache(
+        session.user.id,
+        isRoleChangingRoute || options.bypassCache === true
+      );
 
       if (!member) {
         return {

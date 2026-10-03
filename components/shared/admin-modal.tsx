@@ -72,7 +72,7 @@ export function AdminModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`bg-white rounded-3xl w-full ${maxWidthClasses} border border-black/10 shadow-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 ${className}`}
+        className={`bg-white rounded-3xl w-full ${maxWidthClasses} border border-black/10 shadow-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in duration-150 ${className}`}
       >
         {/* Header - Fixed & Sticky at top */}
         <div

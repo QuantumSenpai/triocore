@@ -328,26 +328,20 @@ export function PricingSection({ initialPlans, initialCategories, initialLaunchO
  <section id="pricing" className="relative py-24 sm:py-32 px-5 sm:px-6 lg:px-8">
  <div className="mx-auto max-w-7xl">
  <div className={cn("text-center max-w-3xl mx-auto", isLaunchOfferActive ? "mb-12 sm:mb-16" : "mb-8 sm:mb-10")}>
-        <Reveal direction="down">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#374BFF] text-xs font-bold uppercase tracking-widest text-white font-heading mb-3 shadow-sm shadow-[#374BFF]/20">
             <Tag className="h-3.5 w-3.5 text-white" /> Pricing
           </span>
-        </Reveal>
 
- <Reveal direction="up" delay={0.08}>
- <h2 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[#14141A]">
- Affordable Engineering. <br />
- <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#374BFF] via-[#374BFF] to-[#CFFF04]">
- Built for Indian Businesses.
- </span>
- </h2>
- </Reveal>
+          <h2 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-[#14141A]">
+            Affordable Engineering. <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#374BFF] via-[#374BFF] to-[#CFFF04]">
+              Built for Indian Businesses.
+            </span>
+          </h2>
 
- <Reveal direction="up" delay={0.16}>
- <p className="mt-4 text-sm sm:text-base md:text-lg text-[#2B2B38]  font-sans font-medium">
- Transparent, student-friendly rates with zero agency markups. From rapid ₹999 launch pages to scalable Next.js enterprise web applications.
- </p>
- </Reveal>
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-[#2B2B38] font-sans font-medium">
+            Transparent, student-friendly rates with zero agency markups. From rapid ₹999 launch pages to scalable Next.js enterprise web applications.
+          </p>
  </div>
 
  {isLaunchOfferActive ? (
