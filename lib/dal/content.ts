@@ -23,6 +23,8 @@ import {
   ServiceItem,
   ShowcaseProject,
   TeamMember,
+  RoadmapPhase,
+  roadmapData,
 } from "@/lib/data/site-content";
 import { eq, asc, or } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
@@ -482,6 +484,27 @@ export async function getLaunchOfferContent(): Promise<LaunchOfferConfig> {
     return defaultLaunchOffer;
   } catch {
     return defaultLaunchOffer;
+  }
+}
+
+export async function getRoadmapContent(): Promise<RoadmapPhase[]> {
+  if (!db) return roadmapData;
+  try {
+    const rows = await db
+      .select()
+      .from(siteSettings)
+      .where(eq(siteSettings.key, "roadmap"))
+      .limit(1);
+
+    if (rows.length > 0 && rows[0].value) {
+      const val = rows[0].value;
+      if (Array.isArray(val) && val.length > 0) {
+        return val as RoadmapPhase[];
+      }
+    }
+    return roadmapData;
+  } catch {
+    return roadmapData;
   }
 }
 

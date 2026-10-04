@@ -70,7 +70,7 @@ export interface StatItem {
 
 export interface RoadmapMilestone {
  text: string;
- status: "completed" | "in-progress" | "future";
+ status: "completed" | "in-progress" | "pending" | "future";
 }
 
 export interface RoadmapPhase {
@@ -79,8 +79,8 @@ export interface RoadmapPhase {
  title: string;
  status: string;
  statusType: "active" | "upcoming" | "future";
- badgeBg: string;
- nodeBorder: string;
+ badgeBg?: string;
+ nodeBorder?: string;
  milestones: RoadmapMilestone[];
 }
 
@@ -464,10 +464,10 @@ export const roadmapData: RoadmapPhase[] = [
  badgeBg: "border-[#374BFF]/30 bg-[#374BFF]/10 text-[#374BFF]",
  nodeBorder: "border-[#374BFF] shadow-sm",
  milestones: [
- { text: "Launch TrioCore studio brand & digital platform", status: "completed" },
- { text: "Deploy open-source prototypes & live showcase", status: "completed" },
- { text: "Onboard first client web applications & QR menus", status: "in-progress" },
- { text: "Standardize rapid milestone delivery pipelines", status: "in-progress" },
+ { text: "TrioCore website and digital platform fully built", status: "completed" },
+ { text: "1 real client project with active engineering work", status: "in-progress" },
+ { text: "1 prospective client in discovery discussion stage", status: "in-progress" },
+ { text: "Standardize rapid milestone delivery pipelines", status: "pending" },
  ],
  },
  {
@@ -479,10 +479,10 @@ export const roadmapData: RoadmapPhase[] = [
  badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
  nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
- { text: "Launch proprietary micro-SaaS web products", status: "future" },
- { text: "Expand engineering collective & developer network", status: "future" },
- { text: "Roll out subscription-based maintenance suites", status: "future" },
- { text: "Pilot commercial hardware safety IoT deployments", status: "future" },
+ { text: "Launch proprietary micro-SaaS web products", status: "pending" },
+ { text: "Expand engineering collective & developer network", status: "pending" },
+ { text: "Roll out subscription-based maintenance suites", status: "pending" },
+ { text: "Pilot commercial hardware safety IoT deployments", status: "pending" },
  ],
  },
  {
@@ -494,10 +494,10 @@ export const roadmapData: RoadmapPhase[] = [
  badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
  nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
- { text: "Enterprise custom AI agents & automated pipelines", status: "future" },
- { text: "Autonomous hardware & robotics commercial fleet", status: "future" },
- { text: "Full-scale international digital client footprint", status: "future" },
- { text: "End-to-end intelligent automation ecosystem", status: "future" },
+ { text: "Enterprise custom AI agents & automated pipelines", status: "pending" },
+ { text: "Autonomous hardware & robotics commercial fleet", status: "pending" },
+ { text: "Full-scale international digital client footprint", status: "pending" },
+ { text: "End-to-end intelligent automation ecosystem", status: "pending" },
  ],
  },
 ];

@@ -21,9 +21,11 @@ import {
   Link2,
   Flame,
   Loader2,
+  Milestone,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { LaunchOfferConfig } from "@/lib/dal/content";
+import type { RoadmapPhase } from "@/lib/data/site-content";
 import type {
   AdminSiteContent,
   AdminService,
@@ -38,7 +40,7 @@ import type {
   AdminLegalDoc,
 } from "@/types/admin";
 
-type CmsSection = "hero" | "services" | "pricing" | "stats" | "projects" | "team-emp" | "faqs" | "legal" | "seo";
+type CmsSection = "hero" | "services" | "pricing" | "roadmap" | "stats" | "projects" | "team-emp" | "faqs" | "legal" | "seo";
 
 import type { RefreshScope } from "./crm-tab";
 
@@ -163,6 +165,82 @@ export function CmsTab({
     } finally {
       setLaunchOfferSaving(false);
     }
+  };
+
+  const [roadmapPhases, setRoadmapPhases] = useState<RoadmapPhase[]>([]);
+  const [roadmapSaving, setRoadmapSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/roadmap")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data?.phases) {
+          setRoadmapPhases(data.phases);
+        }
+      })
+      .catch((err) => console.error("Failed to load roadmap:", err));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSaveRoadmap = async () => {
+    if (!roadmapPhases || roadmapPhases.length === 0) return;
+    setRoadmapSaving(true);
+    try {
+      const res = await fetch("/api/admin/roadmap", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phases: roadmapPhases }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update roadmap");
+      toast.success("Roadmap updated! Changes are live on public site.");
+      setRoadmapPhases(data.phases);
+      showSavedLive("/#roadmap", "Roadmap & Milestones");
+      await onRefresh("cms");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRoadmapSaving(false);
+    }
+  };
+
+  const updatePhaseField = (phaseIdx: number, field: keyof RoadmapPhase, val: any) => {
+    setRoadmapPhases((prev) => {
+      const next = [...prev];
+      next[phaseIdx] = { ...next[phaseIdx], [field]: val };
+      return next;
+    });
+  };
+
+  const updateMilestone = (phaseIdx: number, mIdx: number, field: "text" | "status", val: string) => {
+    setRoadmapPhases((prev) => {
+      const next = [...prev];
+      const milestones = [...next[phaseIdx].milestones];
+      milestones[mIdx] = { ...milestones[mIdx], [field]: val };
+      next[phaseIdx] = { ...next[phaseIdx], milestones };
+      return next;
+    });
+  };
+
+  const addMilestone = (phaseIdx: number) => {
+    setRoadmapPhases((prev) => {
+      const next = [...prev];
+      const milestones = [...next[phaseIdx].milestones, { text: "New milestone deliverable", status: "pending" as const }];
+      next[phaseIdx] = { ...next[phaseIdx], milestones };
+      return next;
+    });
+  };
+
+  const removeMilestone = (phaseIdx: number, mIdx: number) => {
+    setRoadmapPhases((prev) => {
+      const next = [...prev];
+      const milestones = next[phaseIdx].milestones.filter((_, i) => i !== mIdx);
+      next[phaseIdx] = { ...next[phaseIdx], milestones };
+      return next;
+    });
   };
   const [statModal, setStatModal] = useState<AdminStat | Partial<AdminStat> | null>(null);
   const [projectModal, setProjectModal] = useState<AdminShowcaseProject | Partial<AdminShowcaseProject> | null>(null);
@@ -693,6 +771,7 @@ export function CmsTab({
           { id: "hero", label: "Hero" },
           { id: "services", label: "Services" },
           { id: "pricing", label: "Pricing" },
+          { id: "roadmap", label: "Roadmap" },
           { id: "stats", label: "Counters" },
           { id: "projects", label: "Showcase" },
           { id: "team-emp", label: "Team & Employees" },
@@ -1666,6 +1745,154 @@ export function CmsTab({
                 className="w-full mt-1 px-4 py-2.5 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF] resize-none"
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION: ROADMAP */}
+      {activeSection === "roadmap" && (
+        <div className="rounded-3xl bg-white border border-black/10 p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-black/10">
+            <div>
+              <div className="flex items-center gap-2">
+                <Milestone className="h-5 w-5 text-[#374BFF]" />
+                <h3 className="font-heading text-lg font-bold text-[#14141A]">Roadmap & Milestone Progression</h3>
+              </div>
+              <p className="text-xs text-[#14141A]/70 mt-1">
+                Edit strategic vision phases, status badges, and milestone deliverables displayed on the public roadmap.
+              </p>
+            </div>
+            <button
+              onClick={handleSaveRoadmap}
+              disabled={roadmapSaving}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#374BFF] text-white text-xs font-bold hover:bg-[#14141A] transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+            >
+              {roadmapSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {roadmapSaving ? "Saving..." : "Save Roadmap"}
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {roadmapPhases.map((phase, pIdx) => (
+              <div
+                key={phase.phase || pIdx}
+                className="rounded-2xl border border-black/10 bg-[#FAFAFC] p-5 sm:p-6 space-y-4 shadow-2xs"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-[#374BFF] px-2 py-0.5 rounded-md bg-[#374BFF]/10">
+                      Phase 0{pIdx + 1}
+                    </span>
+                    <span className="text-xs font-bold text-[#14141A]">
+                      {phase.phase}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-[#14141A]/60">Status Type:</span>
+                    <select
+                      value={phase.statusType}
+                      onChange={(e) => updatePhaseField(pIdx, "statusType", e.target.value as any)}
+                      className="px-2.5 py-1 rounded-lg border border-black/15 bg-white text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    >
+                      <option value="active">Active (Current)</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="future">Future</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-[#14141A]">Phase Name</label>
+                    <input
+                      type="text"
+                      value={phase.phase}
+                      onChange={(e) => updatePhaseField(pIdx, "phase", e.target.value)}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      placeholder="e.g. Phase 01"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-[#14141A]">Year / Timeline</label>
+                    <input
+                      type="text"
+                      value={phase.year}
+                      onChange={(e) => updatePhaseField(pIdx, "year", e.target.value)}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      placeholder="e.g. 2026"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-[#14141A]">Status Badge Label</label>
+                    <input
+                      type="text"
+                      value={phase.status}
+                      onChange={(e) => updatePhaseField(pIdx, "status", e.target.value)}
+                      className="w-full mt-1 px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                      placeholder="e.g. Active Phase"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-[#14141A]">Phase Title</label>
+                  <input
+                    type="text"
+                    value={phase.title}
+                    onChange={(e) => updatePhaseField(pIdx, "title", e.target.value)}
+                    className="w-full mt-1 px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-medium focus:outline-none focus:border-[#374BFF]"
+                    placeholder="e.g. Foundation & Rapid Commercial Execution"
+                  />
+                </div>
+
+                {/* Milestones list */}
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#14141A]/70">
+                      Checklist Objectives & Status
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addMilestone(pIdx)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-[#374BFF] hover:underline cursor-pointer"
+                    >
+                      <Plus className="h-3 w-3" /> Add Objective
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {phase.milestones.map((m, mIdx) => (
+                      <div key={mIdx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-black/10">
+                        <input
+                          type="text"
+                          value={m.text}
+                          onChange={(e) => updateMilestone(pIdx, mIdx, "text", e.target.value)}
+                          className="flex-1 px-2.5 py-1 text-xs border border-transparent focus:border-black/20 rounded-lg outline-none"
+                          placeholder="Milestone description"
+                        />
+                        <select
+                          value={m.status}
+                          onChange={(e) => updateMilestone(pIdx, mIdx, "status", e.target.value as any)}
+                          className="px-2 py-1 rounded-lg border border-black/15 bg-[#F5F6FC] text-xs font-semibold text-[#14141A]"
+                        >
+                          <option value="completed">Done</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeMilestone(pIdx, mIdx)}
+                          className="p-1 rounded-lg text-black/40 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Remove milestone"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
