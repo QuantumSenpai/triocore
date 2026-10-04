@@ -473,16 +473,16 @@ export const roadmapData: RoadmapPhase[] = [
  {
  year: "2027",
  phase: "Phase 02",
- title: "Expansion & SaaS",
+ title: "Expansion & Capabilities",
  status: "Upcoming Horizon",
  statusType: "upcoming",
  badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
  nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
- { text: "Launch proprietary micro-SaaS web products", status: "pending" },
- { text: "Expand engineering collective & developer network", status: "pending" },
- { text: "Roll out subscription-based maintenance suites", status: "pending" },
- { text: "Pilot commercial hardware safety IoT deployments", status: "pending" },
+ { text: "Expanding into subscription-based products and new service lines", status: "pending" },
+ { text: "Grow client engagements across custom web and mobile apps", status: "pending" },
+ { text: "Roll out recurring website maintenance & support packages", status: "pending" },
+ { text: "Explore pilot applications from innovation lab research", status: "pending" },
  ],
  },
  {
@@ -494,10 +494,10 @@ export const roadmapData: RoadmapPhase[] = [
  badgeBg: "border-[#14141A]/20 bg-[#F5F6FC] text-[#14141A]",
  nodeBorder: "border-2 border-dashed border-[#14141A]/30 shadow-none",
  milestones: [
- { text: "Enterprise custom AI agents & automated pipelines", status: "pending" },
- { text: "Autonomous hardware & robotics commercial fleet", status: "pending" },
- { text: "Full-scale international digital client footprint", status: "pending" },
- { text: "End-to-end intelligent automation ecosystem", status: "pending" },
+ { text: "Full-lifecycle digital product development partnerships", status: "pending" },
+ { text: "Custom AI integrations and intelligent workflow automation", status: "pending" },
+ { text: "Expanded multi-city and remote client footprint", status: "pending" },
+ { text: "Commercial transition of select hardware & robotics prototypes", status: "pending" },
  ],
  },
 ];
