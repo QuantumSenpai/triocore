@@ -497,7 +497,7 @@ export const roadmapData: RoadmapPhase[] = [
  { text: "Full-lifecycle digital product development partnerships", status: "pending" },
  { text: "Custom AI integrations and intelligent workflow automation", status: "pending" },
  { text: "Expanded multi-city and remote client footprint", status: "pending" },
- { text: "Commercial transition of select hardware & robotics prototypes", status: "pending" },
+ { text: "Expanding capabilities into scalable cloud and system architecture", status: "pending" },
  ],
  },
 ];
