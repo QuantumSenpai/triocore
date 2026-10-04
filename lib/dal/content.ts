@@ -19,6 +19,7 @@ import {
   services as staticServices,
   showcaseProjects as staticProjects,
   teamMembers as staticTeam,
+  siteConfig,
   ServiceItem,
   ShowcaseProject,
   TeamMember,
@@ -396,6 +397,31 @@ export async function getSiteSettings(key: string) {
   } catch {
     return null;
   }
+}
+
+export interface CompanyContactInfo {
+  companyName: string;
+  email: string;
+  website: string;
+  url: string;
+}
+
+export async function getCompanyContactInfo(): Promise<CompanyContactInfo> {
+  const [emailSetting, websiteSetting] = await Promise.all([
+    getSiteSettings("company_email"),
+    getSiteSettings("company_website"),
+  ]);
+
+  const email = (typeof emailSetting === "string" && emailSetting.trim()) || siteConfig.email;
+  const rawUrl = (typeof websiteSetting === "string" && websiteSetting.trim()) || siteConfig.url;
+  const website = rawUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+
+  return {
+    companyName: siteConfig.name,
+    email,
+    website,
+    url: rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`,
+  };
 }
 
 export interface LaunchOfferItem {

@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, AlertCircle, FileText, Ban } from "lucide-reac
 import Link from "next/link";
 import { PrintBillButton } from "./print-button";
 import type { AdminBillLineItem } from "@/types/admin";
+import { getCompanyContactInfo } from "@/lib/dal/content";
 
 interface BillPageProps {
   params: Promise<{ id: string }>;
@@ -63,6 +64,7 @@ export default async function BillPrintPage({ params }: BillPageProps) {
     : "N/A";
 
   const lineItems = (Array.isArray(bill.lineItems) ? bill.lineItems : []) as AdminBillLineItem[];
+  const companyInfo = await getCompanyContactInfo();
 
   return (
     <div className="min-h-screen bg-[#F5F6FC] py-8 sm:py-12 px-4 sm:px-6 print:bg-white print:py-0 print:px-0">
@@ -86,13 +88,13 @@ export default async function BillPrintPage({ params }: BillPageProps) {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 border-b border-black/10 pb-6">
             <div>
               <span className="font-heading font-black text-2xl sm:text-3xl text-[#374BFF] tracking-tight">
-                TRIOCORE
+                {companyInfo.companyName.toUpperCase()}
               </span>
               <p className="text-[12px] font-semibold text-[#14141A] tracking-normal mt-0.5">
                 Digital Engineering & Web Systems
               </p>
               <p className="text-[11px] text-[#2B2B38] mt-0.5">
-                contact@triocore.tech • www.triocore.tech
+                {companyInfo.email} • {companyInfo.website}
               </p>
             </div>
             <div className="text-left sm:text-right space-y-1">

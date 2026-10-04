@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { contactSchema, type ContactFormData } from "@/lib/validations/contact";
+import { siteConfig } from "@/lib/data/site-content";
 
 const needCategories = [
 	"Business Website",
@@ -146,7 +147,7 @@ export function ContactFormSection() {
 
  <div className="space-y-4 pt-2">
  <a
- href="mailto:triocorebusiness@gmail.com"
+ href={`mailto:${siteConfig.email}`}
  className="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border border-[#14141A] bg-white hover:border-[#374BFF] hover:shadow-md transition-all group"
  >
  <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-[#374BFF] text-white">
@@ -157,7 +158,7 @@ export function ContactFormSection() {
  Official Business Inbox
  </p>
  <p className="text-xs sm:text-sm font-black text-[#14141A] group-hover:text-[#374BFF] transition-colors truncate">
- triocorebusiness@gmail.com
+ {siteConfig.email}
  </p>
  </div>
  </a>
