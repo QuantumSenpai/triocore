@@ -96,8 +96,9 @@ export function OverviewTab({
           <span className="text-xs font-bold uppercase tracking-widest text-[#374BFF] font-heading">
             TrioCore OS • Executive Overview
           </span>
-          <h2 className="mt-1 font-heading text-2xl sm:text-3xl font-black text-[#14141A]">
-            {greeting}, Studio Lead 👋
+          <h2 className="mt-1 font-heading text-2xl sm:text-3xl font-black text-[#14141A] flex items-center gap-2">
+            <span>{greeting}, Studio Lead</span>
+            <Sparkles className="h-5 w-5 text-[#374BFF]" />
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-[#2B2B38] font-medium">
             Kolkata HQ • Full operational visibility and real-time ledger metrics.
@@ -132,7 +133,7 @@ export function OverviewTab({
             {formatPaise(earnedPaise)}
           </p>
           <span className="mt-1 block text-[11px] font-medium text-[#2B2B38]">
-            Cleared payments in integer paise
+            Total cleared payments received
           </span>
         </div>
 
@@ -153,7 +154,7 @@ export function OverviewTab({
             {formatPaise(netProfitPaise)}
           </p>
           <span className="mt-1 block text-[11px] font-medium text-[#2B2B38]">
-            Earned − Studio Exp ({formatPaise(studioExpensesPaise)})
+            Revenue after studio expenses ({formatPaise(studioExpensesPaise)})
           </span>
         </div>
 

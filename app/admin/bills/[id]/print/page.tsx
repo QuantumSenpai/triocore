@@ -132,8 +132,9 @@ export default async function BillPrintPage({ params }: BillPageProps) {
 
           {/* Void Banner if status is void */}
           {bill.status === "void" && (
-            <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs font-bold text-center">
-              ⚠️ THIS BILL HAS BEEN MARKED AS VOID AND IS NO LONGER VALID FOR PAYMENT OR ACCOUNTING.
+            <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs font-bold text-center flex items-center justify-center gap-2">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+              <span>THIS BILL HAS BEEN MARKED AS VOID AND IS NO LONGER VALID FOR PAYMENT OR ACCOUNTING.</span>
             </div>
           )}
 

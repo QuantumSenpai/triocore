@@ -29,6 +29,9 @@ import {
   Ban,
   Search,
   ExternalLink,
+  Building2,
+  User,
+  Clock,
 } from "lucide-react";
 import { formatPaise, rupeesToPaise, paiseToRupees } from "@/lib/money";
 import { toast } from "sonner";
@@ -579,7 +582,7 @@ export function CrmTab({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create project");
-      toast.success("Project created with quoted amount in integer paise!");
+      toast.success("Project created successfully!");
       setProjectModalOpen(false);
       await onRefresh("projects");
     } catch (err) {
@@ -1598,7 +1601,7 @@ export function CrmTab({
                 Business Projects
               </h3>
               <p className="text-xs text-[#2B2B38]">
-                Money in integer paise • Milestones % • Multi-assignee support
+                Direct milestone tracking • Progress % • Multi-assignee support
               </p>
             </div>
             <button
@@ -1765,7 +1768,7 @@ export function CrmTab({
                           >
                             <span className="font-medium block break-words">{m.title}</span>
                             <span className="text-[10px] font-bold block mt-0.5">
-                              {m.status === "completed" ? "✓ Done" : m.status === "in_progress" ? "⏳ In Progress" : "○ Pending"}
+                              {m.status === "completed" ? "Done" : m.status === "in_progress" ? "In Progress" : "Pending"}
                             </span>
                           </div>
 
@@ -1821,7 +1824,7 @@ export function CrmTab({
                 Payments Ledger
               </h3>
               <p className="text-xs text-[#2B2B38]">
-                Integer paise recorded • Instant CSV Export & Printable Receipts
+                Audited payment ledger • Instant CSV Export & Printable Receipts
               </p>
             </div>
 
@@ -1930,9 +1933,10 @@ export function CrmTab({
                       : "text-[#2B2B38] bg-[#F5F6FC] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                   }`}
                 >
-                  🏢 Studio Expenses (
-                  {expenses.filter((e) => (e.expenseType || "studio") === "studio").length}
-                  )
+                  <span className="inline-flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5" />
+                    <span>Studio Expenses ({expenses.filter((e) => (e.expenseType || "studio") === "studio").length})</span>
+                  </span>
                 </button>
               )}
               <button
@@ -1943,9 +1947,10 @@ export function CrmTab({
                     : "text-[#2B2B38] bg-[#F5F6FC] hover:text-[#374BFF] hover:bg-[#374BFF]/10 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0"
                 }`}
               >
-                👤 Personal Expenses & Reimbursements (
-                {expenses.filter((e) => e.expenseType === "personal").length}
-                )
+                <span className="inline-flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
+                  <span>Personal Expenses & Reimbursements ({expenses.filter((e) => e.expenseType === "personal").length})</span>
+                </span>
               </button>
             </div>
 
@@ -2095,8 +2100,9 @@ export function CrmTab({
               {/* REIMBURSEMENT TRACKER SUMMARY CARDS */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-5 rounded-3xl bg-amber-50/70 border border-amber-200">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 block">
-                    ⏳ Unreimbursed Pending
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-amber-700" />
+                    <span>Unreimbursed Pending</span>
                   </span>
                   <p className="mt-2 font-mono text-2xl font-black text-amber-700">
                     {formatPaise(
@@ -2111,8 +2117,9 @@ export function CrmTab({
                 </div>
 
                 <div className="p-5 rounded-3xl bg-emerald-50/70 border border-emerald-200">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 block">
-                    ✓ Total Reimbursed
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" />
+                    <span>Total Reimbursed</span>
                   </span>
                   <p className="mt-2 font-mono text-2xl font-black text-emerald-700">
                     {formatPaise(
@@ -2127,8 +2134,9 @@ export function CrmTab({
                 </div>
 
                 <div className="p-5 rounded-3xl bg-white border border-black/10">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38] block">
-                    📋 Total Personal Submissions
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38] flex items-center gap-1.5">
+                    <Receipt className="h-3.5 w-3.5 text-[#374BFF]" />
+                    <span>Total Personal Submissions</span>
                   </span>
                   <p className="mt-2 font-heading text-2xl font-black text-[#14141A]">
                     {expenses.filter((e) => e.expenseType === "personal").length}
@@ -2226,7 +2234,10 @@ export function CrmTab({
                               <td colSpan={8} className="py-2.5 px-3">
                                 <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-bold text-[#14141A]">👤 {group.memberName}</span>
+                                    <span className="font-bold text-[#14141A] inline-flex items-center gap-1.5">
+                                      <User className="h-3.5 w-3.5 text-[#2B2B38]" />
+                                      <span>{group.memberName}</span>
+                                    </span>
                                     <span className="text-black/30">•</span>
                                     <span className="font-bold text-[#374BFF]">{group.projectTitle}</span>
                                     <span className="px-2 py-0.5 rounded-full bg-white border border-black/10 text-[10px] font-medium text-[#2B2B38]">
@@ -2293,7 +2304,7 @@ export function CrmTab({
                                           : "bg-amber-100 text-amber-800"
                                       }`}
                                     >
-                                      {isRowReimbursed ? "✓ Reimbursed" : isRowCleared ? "✓ Cleared" : "⏳ Pending"}
+                                      {isRowReimbursed ? "Reimbursed" : isRowCleared ? "Cleared" : "Pending"}
                                     </span>
                                   </td>
                                   <td className="py-3 px-3 text-right">
@@ -3406,8 +3417,8 @@ export function CrmTab({
                       }
                       className="w-full px-3 py-2 rounded-xl border border-black/15 bg-[#F5F6FC] text-xs font-medium focus:outline-none focus:border-[#374BFF]"
                     >
-                      <option value="studio">🏢 Studio Operational Expense (Deducted from Profit)</option>
-                      <option value="personal">👤 Personal Expense (Reimbursable to Member)</option>
+                      <option value="studio">Studio Operational Expense (Deducted from Studio Profit)</option>
+                      <option value="personal">Personal Expense (Reimbursable to Team Member)</option>
                     </select>
                   </div>
                 )}

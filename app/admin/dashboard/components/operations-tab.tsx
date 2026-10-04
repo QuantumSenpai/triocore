@@ -296,7 +296,7 @@ export function OperationsTab({
                           : "bg-emerald-600 text-white hover:bg-emerald-700"
                       }`}
                     >
-                      {r.status === "resolved" ? "Mark Unresolved" : "✓ Resolve"}
+                      {r.status === "resolved" ? "Mark Unresolved" : "Resolve"}
                     </button>
                   </div>
 
@@ -468,7 +468,7 @@ export function OperationsTab({
                             m.canViewFinance ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "bg-white border-black/15 text-[#2B2B38]"
                           }`}
                         >
-                          {m.canViewFinance ? "✓ Allowed" : "Restricted"}
+                          {m.canViewFinance ? "Allowed" : "Restricted"}
                         </button>
                       )}
                     </td>
@@ -561,8 +561,10 @@ export function OperationsTab({
             {createdInviteUrl ? (
               <div className="space-y-4 py-2">
                 <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1">
-                  <span className="font-bold block">✓ Invitation Link Generated</span>
-                  <span>Single-use link valid for 48 hours. Send this to the invited engineer:</span>
+                  <span className="font-bold inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Invitation Link Generated
+                  </span>
+                  <span className="block">Single-use link valid for 48 hours. Send this to the invited engineer:</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#F5F6FC] border border-black/10 font-mono text-xs break-all select-all">
                   {createdInviteUrl}
