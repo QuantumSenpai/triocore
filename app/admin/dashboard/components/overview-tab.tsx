@@ -91,7 +91,7 @@ export function OverviewTab({
   return (
     <div className="space-y-8">
       {/* Top Banner: Greeting + Live IST Clock */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-white border border-black/10 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-7 rounded-3xl bg-white border border-black/10 shadow-sm">
         <div>
           <span className="text-xs font-bold uppercase tracking-widest text-[#374BFF] font-heading">
             TrioCore OS • Executive Overview
@@ -105,7 +105,7 @@ export function OverviewTab({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-[#F5F6FC] border border-black/10">
+        <div className="flex items-center gap-3 self-start sm:self-auto px-4 py-2 rounded-2xl bg-[#F5F6FC] border border-black/10 shadow-2xs">
           <Clock className="h-4 w-4 text-[#374BFF]" />
           <div>
             <span className="block text-[10px] font-bold text-[#2B2B38] uppercase tracking-wider">
@@ -119,10 +119,10 @@ export function OverviewTab({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
-        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/10 shadow-2xs hover:border-[#374BFF]/30 transition-all duration-200 ease-out">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38]">
               Total Earned
             </span>
             <div className="h-8 w-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -137,9 +137,9 @@ export function OverviewTab({
           </span>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/10 shadow-2xs hover:border-[#374BFF]/30 transition-all duration-200 ease-out">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38]">
               Net Profit
             </span>
             <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${
@@ -158,9 +158,9 @@ export function OverviewTab({
           </span>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/10 shadow-2xs hover:border-[#374BFF]/30 transition-all duration-200 ease-out">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38]">
               Total Pending
             </span>
             <div className="h-8 w-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -175,9 +175,9 @@ export function OverviewTab({
           </span>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/10 shadow-2xs hover:border-[#374BFF]/30 transition-all duration-200 ease-out">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38]">
               Active Projects
             </span>
             <div className="h-8 w-8 rounded-xl bg-[#374BFF]/10 text-[#374BFF] flex items-center justify-center">
@@ -192,9 +192,9 @@ export function OverviewTab({
           </span>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-black/10 shadow-sm">
+        <div className="p-5 sm:p-6 rounded-3xl bg-white border border-black/10 shadow-2xs hover:border-[#374BFF]/30 transition-all duration-200 ease-out">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#2B2B38]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#2B2B38]">
               Total Inquiries
             </span>
             <div className="h-8 w-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -211,7 +211,7 @@ export function OverviewTab({
       </div>
 
       {/* Monthly Goal Progress Bar */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
+      <div className="p-5 sm:p-7 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="font-heading text-lg sm:text-xl font-bold text-[#14141A]">
@@ -234,13 +234,13 @@ export function OverviewTab({
                 />
                 <button
                   onClick={handleSaveGoal}
-                  className="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#374BFF] text-white hover:bg-[#14141A] transition-all"
+                  className="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#374BFF] text-white hover:bg-[#14141A] transition-all cursor-pointer"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setEditingGoal(false)}
-                  className="px-3 py-1.5 text-xs font-bold rounded-xl border border-black/15 text-[#14141A]"
+                  className="px-3 py-1.5 text-xs font-bold rounded-xl border border-black/15 text-[#14141A] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -248,7 +248,7 @@ export function OverviewTab({
             ) : (
               <button
                 onClick={() => setEditingGoal(true)}
-                className="text-xs font-bold text-[#374BFF] hover:underline"
+                className="px-3 py-1.5 rounded-xl border border-black/10 bg-[#F5F6FC] text-[#14141A] hover:bg-[#374BFF]/10 hover:text-[#374BFF] hover:border-[#374BFF]/30 text-xs font-bold transition-all duration-150 ease-out cursor-pointer shadow-2xs"
               >
                 Change Goal
               </button>
@@ -262,9 +262,9 @@ export function OverviewTab({
             <span>Progress: {progressPercent}%</span>
             <span>{formatPaise(earnedPaise)} of {formatPaise(goalPaise)}</span>
           </div>
-          <div className="w-full h-4 bg-[#F5F6FC] rounded-full overflow-hidden border border-black/10 p-0.5">
+          <div className="w-full h-3.5 bg-[#F5F6FC] rounded-full overflow-hidden border border-black/10 p-0.5">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#374BFF] to-emerald-500 transition-all duration-500"
+              className="h-full rounded-full bg-[#374BFF] transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -272,20 +272,20 @@ export function OverviewTab({
       </div>
 
       {/* Two Column Layout: Category Earnings & Calendar */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
         {/* Category-wise Earnings */}
-        <div className="lg:col-span-5 p-6 sm:p-8 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
+        <div className="lg:col-span-5 p-5 sm:p-7 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
           <h3 className="font-heading text-lg font-bold text-[#14141A] flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-[#374BFF]" />
             <span>Category-Wise Earnings</span>
           </h3>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2.5 pt-1">
             {Object.keys(categoryEarnings).length > 0 ? (
               Object.entries(categoryEarnings).map(([category, paise]) => (
                 <div
                   key={category}
-                  className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F5F6FC] border border-black/10"
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F5F6FC] border border-black/10 hover:border-[#374BFF]/30 transition-all duration-150 ease-out"
                 >
                   <span className="text-xs font-bold text-[#14141A] capitalize">{category}</span>
                   <span className="font-mono text-xs sm:text-sm font-bold text-emerald-600">
@@ -302,7 +302,7 @@ export function OverviewTab({
         </div>
 
         {/* Project Calendar / Deadlines */}
-        <div className="lg:col-span-7 p-6 sm:p-8 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
+        <div className="lg:col-span-7 p-5 sm:p-7 rounded-3xl bg-white border border-black/10 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-heading text-lg font-bold text-[#14141A] flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-[#374BFF]" />
@@ -312,7 +312,7 @@ export function OverviewTab({
             <div className="flex rounded-xl border border-black/10 p-1 bg-[#F5F6FC]">
               <button
                 onClick={() => setCalendarView("month")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
                   calendarView === "month" ? "bg-white text-[#374BFF] shadow-xs" : "text-[#2B2B38]"
                 }`}
               >
@@ -320,7 +320,7 @@ export function OverviewTab({
               </button>
               <button
                 onClick={() => setCalendarView("agenda")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all duration-150 ease-out cursor-pointer ${
                   calendarView === "agenda" ? "bg-white text-[#374BFF] shadow-xs" : "text-[#2B2B38]"
                 }`}
               >
@@ -330,18 +330,18 @@ export function OverviewTab({
           </div>
 
           {calendarView === "month" ? (
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between text-xs font-bold text-[#14141A] px-1">
                 <span>{new Date().toLocaleString("en-IN", { month: "long", year: "numeric" })}</span>
-                <span className="text-[11px] text-[#2B2B38] font-normal">
+                <span className="text-[11px] text-[#2B2B38] font-medium">
                   {projects.filter((p) => p.deadline).length} Deadline(s) scheduled
                 </span>
               </div>
 
               {/* 7-column Calendar Grid */}
-              <div className="grid grid-cols-7 gap-1 text-center">
+              <div className="grid grid-cols-7 gap-1.5 text-center">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-                  <div key={d} className="text-[10px] font-black text-[#2B2B38] py-1">
+                  <div key={d} className="text-[10px] font-bold uppercase tracking-wider text-[#14141A]/50 py-1">
                     {d}
                   </div>
                 ))}
@@ -356,7 +356,7 @@ export function OverviewTab({
                   // Empty offset cells
                   for (let i = 0; i < startDayOfWeek; i++) {
                     cells.push(
-                      <div key={`empty-${i}`} className="h-9 sm:h-10 rounded-xl bg-transparent" />
+                      <div key={`empty-${i}`} className="h-9 sm:h-11 rounded-xl bg-transparent" />
                     );
                   }
 
@@ -388,21 +388,21 @@ export function OverviewTab({
                             ? dayProjects.map((p) => `${p.name} (${p.clientName})`).join(", ")
                             : undefined
                         }
-                        className={`h-9 sm:h-10 p-1 rounded-xl text-xs font-bold flex flex-col items-center justify-between border transition-all ${
+                        className={`h-9 sm:h-11 p-1 rounded-xl text-xs font-bold flex flex-col items-center justify-between border transition-all duration-150 ease-out ${
                           hasOverdue
-                            ? "bg-red-50 border-red-300 text-red-700"
+                            ? "bg-rose-50 border-rose-300 text-rose-700 shadow-2xs"
                             : hasDeadlines
-                            ? "bg-[#374BFF]/10 border-[#374BFF] text-[#374BFF] shadow-xs"
+                            ? "bg-[#374BFF]/10 border-[#374BFF] text-[#374BFF] shadow-2xs"
                             : isToday
-                            ? "bg-[#F5F6FC] border-black/20 text-[#14141A]"
-                            : "bg-[#F5F6FC]/60 border-black/5 text-[#2B2B38] hover:bg-[#F5F6FC]"
+                            ? "bg-white border-[#374BFF] text-[#374BFF] font-black shadow-xs ring-1 ring-[#374BFF]/20"
+                            : "bg-[#F5F6FC] border-black/10 text-[#14141A]/70 hover:bg-white hover:border-[#374BFF]/30"
                         }`}
                       >
-                        <span className="text-[10px] leading-none">{day}</span>
+                        <span className="text-[10px] sm:text-[11px] leading-none pt-0.5">{day}</span>
                         {hasDeadlines && (
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              hasOverdue ? "bg-red-600" : "bg-[#374BFF]"
+                            className={`w-1.5 h-1.5 rounded-full mb-0.5 ${
+                              hasOverdue ? "bg-rose-600" : "bg-[#374BFF]"
                             }`}
                           />
                         )}
