@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X, ArrowUpRight, MessageSquarePlus } from "lucide-react";
+import { Menu, X, ArrowUpRight, MessageSquarePlus, Share2 } from "lucide-react";
 import { Logo } from "./logo";
 import dynamic from "next/dynamic";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { siteConfig } from "@/lib/data/site-content";
 
 const FeedbackModal = dynamic(
   () => import("./feedback-modal").then((m) => m.FeedbackModal),
+  { ssr: false }
+);
+
+const ContactCardModal = dynamic(
+  () => import("./contact-card-modal").then((m) => m.ContactCardModal),
   { ssr: false }
 );
 
@@ -28,6 +34,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const shouldReduceMotion = useReducedMotion();
 
@@ -98,6 +105,17 @@ export function Navbar() {
             </nav>
 
             <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Share Card Button: Desktop */}
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="hidden sm:inline-flex items-center justify-center h-9 w-9 rounded-full border border-[#14141A]/10 bg-white text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#374BFF]"
+                aria-label="Share Digital Contact Card"
+                title="Share Digital Contact Card"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+
               {/* Feedback Button: Desktop */}
               <button
                 type="button"
@@ -163,6 +181,18 @@ export function Navbar() {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
+                  setShareOpen(true);
+                }}
+                className="flex items-center gap-2 min-h-[44px] px-4 rounded-xl text-sm font-bold text-[#14141A] hover:bg-[#374BFF]/10 hover:text-[#374BFF] transition-colors w-full text-left cursor-pointer"
+              >
+                <Share2 className="h-4 w-4 text-[#374BFF]" />
+                <span>Share Contact Card</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
                   setFeedbackOpen(true);
                 }}
                 className="flex items-center gap-2 min-h-[44px] px-4 rounded-xl text-sm font-bold text-[#14141A] hover:bg-[#374BFF]/10 hover:text-[#374BFF] transition-colors w-full text-left cursor-pointer"
@@ -193,6 +223,17 @@ export function Navbar() {
       <FeedbackModal
         isOpen={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
+      />
+
+      <ContactCardModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        contactInfo={{
+          companyName: siteConfig.name,
+          email: siteConfig.email,
+          website: "triocore.vercel.app",
+          url: siteConfig.url,
+        }}
       />
     </>
   );

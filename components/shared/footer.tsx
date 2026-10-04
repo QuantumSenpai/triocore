@@ -4,9 +4,12 @@ import { GithubIcon } from "./icons";
 import { Mail, MapPin, ArrowUpRight, ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/lib/data/site-content";
 import { CookieSettingsButton } from "./cookie-settings-button";
+import { getCompanyContactInfo } from "@/lib/dal/content";
+import { ShareContactButton } from "./share-contact-button";
 
-export function Footer() {
+export async function Footer() {
   const currentYear = new Date().getFullYear();
+  const contactInfo = await getCompanyContactInfo();
 
   return (
     <footer className="relative border-t border-[#14141A]/10 bg-white py-12 sm:py-16 overflow-hidden">
@@ -28,12 +31,13 @@ export function Footer() {
                 <GithubIcon className="h-4 w-4" />
               </a>
               <a
-                href={`mailto:${siteConfig.email}`}
+                href={`mailto:${contactInfo.email}`}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#14141A]/10 bg-[#F5F6FC] text-[#14141A] hover:text-[#374BFF] hover:border-[#374BFF] transition-all"
                 aria-label="Email TrioCore"
               >
                 <Mail className="h-4 w-4" />
               </a>
+              <ShareContactButton contactInfo={contactInfo} variant="icon" />
             </div>
           </div>
 
@@ -122,11 +126,11 @@ export function Footer() {
             <ul className="space-y-2.5 sm:space-y-3 text-xs sm:text-sm font-medium">
               <li>
                 <a
-                  href={`mailto:${siteConfig.email}`}
+                  href={`mailto:${contactInfo.email}`}
                   className="inline-flex items-center gap-2 text-[#14141A] hover:text-[#374BFF] transition-colors truncate max-w-full"
                 >
                   <Mail className="h-4 w-4 text-[#374BFF] shrink-0" />
-                  <span className="truncate">{siteConfig.email}</span>
+                  <span className="truncate">{contactInfo.email}</span>
                 </a>
               </li>
               <li className="flex items-start gap-2 text-[#14141A]">
@@ -136,6 +140,9 @@ export function Footer() {
               <li className="flex items-center gap-2 text-xs text-[#374BFF] font-bold">
                 <ShieldCheck className="h-4 w-4" />
                 <span>Client Code Ownership</span>
+              </li>
+              <li className="pt-1">
+                <ShareContactButton contactInfo={contactInfo} variant="button" />
               </li>
             </ul>
           </div>
